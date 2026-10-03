@@ -1,0 +1,169 @@
+erDiagram
+    organizations {
+        bigint id PK
+        varchar name
+        varchar code UK
+        varchar description
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users {
+        bigint id PK
+        bigint organization_id FK "NULL for admins"
+        varchar role
+        varchar student_number UK
+        varchar email UK
+        varchar password "NULL until set"
+        varchar first_name
+        varchar last_name
+        varchar status
+        timestamp last_login_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    user_qr_credentials {
+        bigint id PK
+        bigint user_id FK, UK
+        varchar token UK
+        timestamp last_used_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    devices {
+        bigint id PK
+        varchar device_code UK
+        varchar name
+        varchar location
+        text secret "encrypted"
+        varchar firmware_version
+        varchar status
+        timestamp last_seen_at
+        decimal empty_distance_mm
+        decimal fill_threshold_percent
+        decimal weight_offset
+        decimal weight_scale_factor
+        timestamp calibrated_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    bin_telemetry {
+        bigint id PK
+        bigint device_id FK
+        decimal distance_mm
+        decimal fill_percent
+        varchar status
+        timestamp created_at
+    }
+
+    deposit_sessions {
+        char id PK "UUID"
+        bigint user_id FK
+        bigint device_id FK
+        varchar status
+        timestamp expires_at
+        timestamp closed_at
+        varchar failure_code
+        decimal net_weight_g
+        int sample_count
+        boolean is_weight_stable
+        varchar verification_method
+        boolean verification_passed
+        decimal verification_score
+        boolean actuator_ok
+        int actuator_cycle_ms
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    reward_rules {
+        bigint id PK
+        varchar name
+        decimal points_per_gram
+        decimal minimum_weight_g
+        decimal maximum_weight_g
+        int daily_points_cap
+        timestamp effective_from
+        timestamp effective_to
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transactions {
+        bigint id PK
+        varchar transaction_code UK
+        char session_id FK, UK
+        bigint reward_rule_id FK
+        int points_awarded
+        varchar status
+        varchar void_reason
+        bigint voided_by FK
+        timestamp voided_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    point_ledger {
+        bigint id PK
+        bigint user_id FK
+        bigint transaction_id FK
+        bigint redemption_id FK
+        varchar entry_type
+        int points_delta
+        varchar description
+        timestamp created_at
+    }
+
+    rewards {
+        bigint id PK
+        varchar name
+        text description
+        int points_cost
+        int stock_quantity
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    redemptions {
+        bigint id PK
+        varchar redemption_code UK
+        bigint user_id FK
+        bigint reward_id FK
+        int quantity
+        int points_cost
+        varchar status
+        timestamp fulfilled_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        varchar type
+        varchar title
+        text message
+        timestamp read_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    organizations |o--o{ users : "groups"
+    users ||--o| user_qr_credentials : "holds"
+    users ||--o{ deposit_sessions : "initiates"
+    devices ||--o{ bin_telemetry : "reports"
+    devices ||--o{ deposit_sessions : "hosts"
+    deposit_sessions ||--o| transactions : "produces"
+    reward_rules ||--o{ transactions : "prices"
+    users |o--o{ transactions : "voids"
+    users ||--o{ point_ledger : "owns"
+    transactions |o--o{ point_ledger : "earn and reversal"
+    redemptions |o--o{ point_ledger : "redeem and reversal"
+    users ||--o{ redemptions : "makes"
+    rewards ||--o{ redemptions : "redeemed as"
+    users ||--o{ notifications : "receives"

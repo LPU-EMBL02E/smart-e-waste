@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Laravel app (web/)
+# ---------------------------------------------------------------------------
+/web/vendor/
+/web/node_modules/
+/web/public/build/
+/web/public/hot
+/web/public/storage
+/web/storage/*.key
+/web/storage/pail
+/web/bootstrap/cache/*.php
+/web/.phpunit.result.cache
+/web/.phpunit.cache
+
+# .env holds APP_KEY, which device secrets are encrypted with, and the database
+# and mail credentials. It is never committed. Keep a copy somewhere safe
+# instead (System_Plan.md §7, step 9).
+/web/.env
+/web/.env.*
+!/web/.env.example
+
+# Laravel ships these; they are not ours to commit
+/web/auth.json
+/web/.phpactor.json
+
+# ---------------------------------------------------------------------------
+# Firmware (PlatformIO)
+# ---------------------------------------------------------------------------
+.pio/
+.pioenvs/
+.piolibdeps/
+/firmware/*/.vscode/
+# Generated from the vendor template, with board-specific settings
+/firmware/display/include/lv_conf.h
+
+# ---------------------------------------------------------------------------
+# Tools
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+
+# ---------------------------------------------------------------------------
+# Database dumps and backups — may contain personal data
+# ---------------------------------------------------------------------------
+*.sql
+*.sql.gz
+*.dump
+
+# ---------------------------------------------------------------------------
+# Editors and OS
+# ---------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
