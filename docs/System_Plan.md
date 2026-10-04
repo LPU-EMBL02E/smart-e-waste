@@ -264,7 +264,9 @@ integration testing. Nothing else in the app changes.
    returns the original 200 response, not an error.
 4. Other device writes are guarded by the session state machine
    (`OPEN → ACCEPTED → COMPLETED`, or `REJECTED/FAILED/EXPIRED/CANCELLED`), so a
-   replayed request can't advance or duplicate a session.
+   replayed request can't advance or duplicate a session. Each transition locks
+   the session row and checks its state first, so two requests can't both act on
+   the same state.
 5. The server computes fill level from `distance_mm` and the bin's
    `empty_distance_mm`. The device only reports the raw distance.
 6. Only `OPEN` sessions expire. Once a session is `ACCEPTED` the item may already
@@ -469,6 +471,17 @@ is the source of truth.
 - **Redeeming:** inside one database transaction, lock the user's row
   (`SELECT … FOR UPDATE`), sum the ledger, then insert the redemption and its
   ledger row. Without the lock, two simultaneous redemptions can overdraw.
+- **Lock first:** take the lock before any other read in the transaction. InnoDB
+  reads from a snapshot taken at the transaction's first plain read, so a sum
+  read after an earlier plain read can miss rows another request just committed.
+- **Status changes:** every status change on a session, a redemption or a
+  transaction locks that row and checks its current status in the same database
+  transaction. Two requests can't both act on the same state, so a redemption
+  can't be both fulfilled and cancelled, and a cancelled session can't later be
+  accepted.
+- **New sessions:** the checks and the insert run in one database transaction
+  that locks the bin's device row, then the user's row. Two scans can't both pass
+  the active-session or daily-cap check.
 - **Stock:** decrement with `WHERE stock_quantity >= ?` and check the affected row
   count, so stock can't go negative.
 - **Negative balances:** voiding a transaction whose points were already

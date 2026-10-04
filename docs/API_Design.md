@@ -205,6 +205,15 @@ other five are final.
 - `closed_at` is set when a session reaches a final state **[P11]**.
 - `failure_code` holds the error code for a `REJECTED` session and
   `ACTUATOR_FAILED` for a `FAILED` session. It stays NULL otherwise **[P11]**.
+- **Every transition is made under a row lock** **[P24]**. In one database
+  transaction the server locks the session row (`SELECT … FOR UPDATE`) as its
+  first read, checks the current state, then writes. A request that finds the
+  state already changed gets the reply for the new state (Section 4.2). The lock
+  comes first because InnoDB reads from a snapshot taken at the transaction's
+  first plain read, so anything read before the lock can be out of date. The
+  timeout sweep uses a conditional update instead, `WHERE status = 'OPEN' AND
+  expires_at <= now`, so it never overwrites a session another request has moved
+  on.
 - **The rule a session uses** is the one in effect when it opened: the
   `reward_rules` row whose `effective_from` is at or before the session's
   `created_at` and whose `effective_to` is NULL or later. `deposit_sessions` has
@@ -385,6 +394,13 @@ POST /api/v1/device/sessions
 **Checks, in order.** The first failure ends the request and no session row is
 created.
 
+Step 1 is a plain lookup. Steps 2 to 6 and the writes run in one database
+transaction that first locks the calling device's `devices` row and then the
+user's `users` row (`SELECT … FOR UPDATE`), always in that order **[P24]**. Two
+scans on the same bin, or two scans by the same user, are then handled one after
+the other, so they can't both pass the active-session or daily-cap check. A
+failed check rolls the transaction back, so the request changes nothing.
+
 | Step | Check | On failure |
 |---|---|---|
 | 1 | `qr_token` matches a `user_qr_credentials` row | 401 `INVALID_QR` |
@@ -404,7 +420,7 @@ created.
   `deposit_sessions.user_id`. Voided transactions still count.
 - **Step 6** is placed last **[P13]**.
 
-**On success,** in one database transaction:
+**On success,** in that same transaction:
 
 - Close any earlier `OPEN` session of this device as `CANCELLED` (Section 4.3)
   **[P13]**.
@@ -439,6 +455,10 @@ POST /api/v1/device/sessions/b3f1…/deposit
 The six values are stored on the session whether the deposit is accepted or
 rejected **[P22]**.
 
+In one database transaction, the server locks the session row and confirms it is
+`OPEN` and before `expires_at` (Section 4.1) **[P24]**. The checks and the
+session update run in that same transaction.
+
 **Checks, in order,** using the rule the session opened under (Section 4.1):
 
 | Step | Check | On failure |
@@ -469,15 +489,18 @@ POST /api/v1/device/sessions/b3f1…/complete
 | `actuator_ok` | Required. Boolean. True only when the limit switches confirm the transfer | `actuator_ok` |
 | `cycle_ms` | Optional. Integer, 0 or more | `actuator_cycle_ms` |
 
-**When `actuator_ok` is true,** in one database transaction:
+Both outcomes run in one database transaction that first locks the session row
+and confirms it is still `ACCEPTED` **[P24]**. A session that is already
+`COMPLETED` or `FAILED` gets its recorded result (Section 4.2).
 
-1. Lock the session row and confirm it is still `ACCEPTED` **[P24]**.
-2. Insert the `transactions` row: `transaction_code` **[P25]**, `session_id`,
+**When `actuator_ok` is true:**
+
+1. Insert the `transactions` row: `transaction_code` **[P25]**, `session_id`,
    `reward_rule_id` = the rule the session opened under, `points_awarded` =
    `floor(net_weight_g × points_per_gram)`, `status` = `COMPLETED`.
-3. Call `PointsService` to write the `EARN` ledger row for the session's user.
+2. Call `PointsService` to write the `EARN` ledger row for the session's user.
    Deposits never inserts into `point_ledger` itself.
-4. Set the session to `COMPLETED` with `actuator_ok`, `actuator_cycle_ms` and
+3. Set the session to `COMPLETED` with `actuator_ok`, `actuator_cycle_ms` and
    `closed_at`.
 
 After the commit, dispatch `DepositCompleted`. The reply carries
@@ -506,8 +529,9 @@ POST /api/v1/device/sessions/b3f1…/cancel
 → 200 { "status": "CANCELLED" }
 ```
 
-No body **[P27]**. Only an `OPEN` session can be cancelled. The session becomes
-`CANCELLED` and `closed_at` is set.
+No body **[P27]**. Only an `OPEN` session can be cancelled. In one database
+transaction the server locks the session row, confirms it is still `OPEN`
+**[P24]**, and sets `status` = `CANCELLED` and `closed_at`.
 
 ---
 
@@ -834,7 +858,9 @@ stops the old one at once.
 
 In one database transaction, through `RedemptionService`:
 
-1. Lock the user's row (`SELECT … FOR UPDATE`) and sum the ledger.
+1. Lock the user's row (`SELECT … FOR UPDATE`) as the first read in the
+   transaction, then sum the ledger. Reading the reward or anything else before
+   the lock would let the sum come from an older snapshot (Section 4.1).
 2. Refuse if the balance is below `rewards.points_cost` × `quantity`.
 3. Decrement stock with `WHERE stock_quantity >= ?` and check the affected row
    count. Refuse if no row changed.
@@ -846,10 +872,14 @@ A refusal redirects back with a message and changes nothing.
 
 **Fulfil or cancel a redemption**
 
+Both run in one database transaction that first locks the redemption row and
+confirms it is still `PENDING` **[P24]**, so a redemption can't be both fulfilled
+and cancelled.
+
 - **Fulfil:** only while `PENDING`. Sets `status` = `FULFILLED` and
-  `fulfilled_at`, then dispatches `RedemptionFulfilled`.
-- **Cancel:** only while `PENDING`. In one database transaction the status becomes
-  `CANCELLED`, the stock is returned, and `PointsService` writes a `REVERSAL` row
+  `fulfilled_at`. After the commit, dispatches `RedemptionFulfilled`.
+- **Cancel:** only while `PENDING`. The status becomes `CANCELLED`, the stock is
+  returned, and `PointsService` writes a `REVERSAL` row
   that gives the points back. A `FULFILLED` redemption can't be cancelled.
 
 **Void a transaction** (`POST /admin/transactions/{transaction}/void`)
@@ -858,7 +888,8 @@ A refusal redirects back with a message and changes nothing.
 |---|---|
 | `void_reason` | Required, at most 500 characters **[P41]** |
 
-Only a `COMPLETED` transaction can be voided. In one database transaction: set
+Only a `COMPLETED` transaction can be voided. In one database transaction: lock
+the transaction row and confirm it is still `COMPLETED` **[P24]**, set
 `status` = `VOIDED`, `void_reason`, `voided_by` and `voided_at`, and have
 `PointsService` write a `REVERSAL` row with the opposite `points_delta`. The
 unique `(transaction_id, entry_type)` constraint stops a second reversal. The
@@ -885,6 +916,9 @@ simulator before real hardware is used:
 - Both signing test vectors in Section 3.4 pass on the firmware and the server.
 - A `complete` sent twice credits points once and returns 200 both times.
 - A `deposit` or `cancel` sent twice returns the recorded outcome.
+- Two calls on one session sent at the same moment, or a call racing a new
+  `POST /device/sessions` from the same bin, leave the session in exactly one
+  state.
 - A second `POST /device/sessions` from the same bin cancels the first session
   and opens a new one.
 - An `OPEN` session past `expires_at` returns `SESSION_EXPIRED`, with or without
@@ -925,7 +959,7 @@ written as if each is accepted.
 | P21 | `display_name` | `users.first_name` |
 | P22 | Deposit evidence | Weight and verification values are stored on rejected sessions as well |
 | P23 | Weight codes | `NO_ITEM` for a weight of 0 or less; `ZERO_WEIGHT` for a weight above 0 but below the minimum. Both limits are inclusive |
-| P24 | Row locks | `complete` locks the session row before writing |
+| P24 | Row locks | Every status change locks its row (`SELECT … FOR UPDATE`) as the first read of its database transaction and checks the current status before writing: sessions in `deposit`, `complete` and `cancel`; redemptions on fulfil and cancel; transactions on void. A new session locks the device row, then the user row. The timeout sweep uses `WHERE status = 'OPEN'`. On a device route, a deadlock or lock wait timeout is answered as 503 `DB_UNAVAILABLE` |
 | P25 | Code formats | `transaction_code` is `TXN-` + date as `YYYYMMDD` + `-` + 6 random upper-case letters and digits. `redemption_code` is the same with `RDM-`. The unique index catches a collision |
 | P26 | Actuator failure reply | 200 with `transaction_id` null, `points_awarded` 0 and the current balance |
 | P27 | `cancel` | No request body. Reply is `{ "status": "CANCELLED" }` |
