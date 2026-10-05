@@ -5,7 +5,7 @@ students — who earn points for deposits and redeem them for rewards — and fo
 admins, who monitor bins and manage users, transactions and rewards.
 
 A student scans their QR code, places an item on the weighing platform, and the
-bin measures it, confirms with a camera that something is really there,
+bin measures it, confirms with a camera that something is actually there,
 transfers it into the collection container, and records the deposit. Points are
 credited only after both the verification and the actuator confirm — never
 because the load cell felt weight.
