@@ -7,11 +7,13 @@ status: done
 
 ## Goal
 
-Create a practical DESIGN.md for Smart E-Waste UI designers and frontend
+Create a practical web/DESIGN.md for Smart E-Waste UI designers and frontend
 developers, using minimalist neobrutalism with lavender purple and white.
 
 ## Progress Log
 
+- 2026-10-07: Moved the guide into web/DESIGN.md and corrected its relative
+  source links and this recap. The relocation is not yet committed or pushed.
 - 2026-10-07: Created root DESIGN.md using the emil-design-eng and
   frontend-design skills. Grounded the guide in repository UI requirements and
   reviewed it against the source docs. It covers palette tokens, typography,
@@ -27,7 +29,7 @@ developers, using minimalist neobrutalism with lavender purple and white.
 
 ## Files Touched
 
-- `DESIGN.md`: new UI design guide.
+- [web/DESIGN.md](../web/DESIGN.md): UI design guide.
 - `sessions/lavender-design-guide.md`: this handoff note.
 
 ## Decisions & Rationale
@@ -42,9 +44,9 @@ developers, using minimalist neobrutalism with lavender purple and white.
 
 ## Open Issues / Blockers
 
-No blockers for the completed document. DESIGN.md is untracked and uncommitted
-on `docs/lavender-design-guide`; no commit, push, or PR was requested. HEAD remains
-`107432d` (merge of PR #3). Existing `web-app-lead.md` was left untouched.
+No blockers for the completed document. The guide and recap were committed and
+pushed as aff6d56 on docs/lavender-design-guide. The current relocation to
+web/DESIGN.md is pending commit. Existing web-app-lead.md was left untouched.
 Browser, QR-scanner, and assistive-technology checks apply when UI is implemented.
 
 ## Next Steps
