@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Wireframe — Smart E-Waste (Low Fidelity)</title>
+<!--
+  LOW-FIDELITY ADMIN WIREFRAME — design artifact, not application code.
+  Content and flow come from the docs:
+    - API_Design.md §7.4 (admin routes), §7.5 (live summary), §7.6 (form rules)
+    - System_Plan.md §4 (modules), §5.6 (pages), §5.7 (points mechanism)
+    - Database_Schema.md for field names
+  Grayscale only on purpose. Boxes, labels and placeholders stand in for
+  visual design. Click the left nav to move between screens.
+-->
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #d9d9d9;
+  }
+  /* ---------- page header ---------- */
+  .wf-page-head {
+    background: #2b2b2b;
+    color: #fff;
+    padding: 14px 22px;
+    border-bottom: 3px solid #000;
+  }
+  .wf-page-head h1 { margin: 0; font-size: 18px; letter-spacing: .5px; }
+  .wf-page-head p { margin: 4px 0 0; font-size: 12px; color: #bbb; font-family: "Consolas", monospace; }
+
+  /* ---------- app shell ---------- */
+  .wf-app { display: flex; align-items: stretch; min-height: calc(100vh - 66px); }
+
+  .wf-sidebar {
+    width: 230px;
+    flex: 0 0 230px;
+    background: #3a3a3a;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #000;
+  }
+  .wf-logo {
+    padding: 14px 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #555;
+    font-size: 13px;
+  }
+  .wf-logo small { display: block; font-weight: normal; color: #aaa; font-size: 10px; letter-spacing: 0; }
+  .wf-nav-group {
+    padding: 12px 16px 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+  }
+  .wf-nav {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-left: 4px solid transparent;
+    color: #ddd;
+    padding: 7px 16px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .wf-nav:hover { background: #484848; }
+  .wf-nav.active { background: #565656; border-left-color: #eee; color: #fff; font-weight: bold; }
+  .wf-nav .badge {
+    float: right;
+    background: #777;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+  }
+  .wf-sidebar-foot { margin-top: auto; border-top: 1px solid #555; padding: 10px 0; }
+  .wf-user { padding: 6px 16px 10px; font-size: 12px; color: #bbb; line-height: 1.5; }
+
+  .wf-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .wf-topbar {
+    background: #f2f2f2;
+    border-bottom: 2px solid #000;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .wf-crumb { font-family: "Consolas", monospace; font-size: 12px; color: #444; }
+  .wf-crumb b { color: #000; }
+  .wf-topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .wf-live { font-family: "Consolas", monospace; font-size: 11px; border: 1px solid #888; padding: 2px 8px; background: #fff; }
+  .wf-live::before { content: "\25CF "; }
+
+  .wf-canvas { padding: 22px; overflow: auto; }
+
+  /* ---------- screen ---------- */
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .screen-head { margin-bottom: 14px; }
+  .screen-head h2 { margin: 0; font-size: 20px; }
+  .screen-head .meta {
+    font-family: "Consolas", monospace;
+    font-size: 11px;
+    color: #555;
+    margin-top: 4px;
+  }
+  .screen-head .meta .tag {
+    display: inline-block;
+    border: 1px solid #999;
+    background: #eee;
+    padding: 0 5px;
+    margin-right: 6px;
+  }
+
+  /* ---------- wireframe primitives ---------- */
+  .card {
+    background: #fff;
+    border: 2px solid #777;
+    margin-bottom: 18px;
+  }
+  .card > .card-title {
+    border-bottom: 1px solid #bbb;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 13px;
+    background: #f4f4f4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card > .card-body { padding: 14px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .col { flex: 1 1 0; min-width: 140px; }
+
+  .tiles { display: flex; gap: 14px; flex-wrap: wrap; }
+  .tile {
+    flex: 1 1 150px;
+    min-width: 150px;
+    border: 2px solid #777;
+    background: #fff;
+    padding: 12px;
+  }
+  .tile .tile-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #666; }
+  .tile .tile-value {
+    font-size: 26px;
+    font-weight: bold;
+    margin: 6px 0;
+    height: 30px;
+    background: #eee;
+    width: 90px;
+  }
+  .tile .tile-foot { font-size: 11px; color: #888; }
+
+  /* generic box stand-in for an element */
+  .box {
+    border: 1px solid #999;
+    padding: 8px 10px;
+    background: #fafafa;
+    font-size: 12px;
+    color: #444;
+  }
+  .ph {
+    border: 1px dashed #999;
+    background-image: repeating-linear-gradient(45deg, #eee 0 8px, #fff 8px 16px);
+    color: #888;
+    font-size: 11px;
+    font-family: "Consolas", monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 14px;
+    min-height: 44px;
+  }
+
+  .btn {
+    display: inline-block;
+    border: 1px solid #333;
+    background: #e6e6e6;
+    color: #111;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: default;
+  }
+  .btn.primary { background: #444; color: #fff; border-color: #000; }
+  .btn.small { padding: 2px 7px; font-size: 11px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: #555; margin-bottom: 4px; }
+  .field .input {
+    border: 1px solid #888;
+    background: #fff;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    color: #aaa;
+    font-size: 12px;
+  }
+  .field .input.area { height: 62px; align-items: flex-start; padding-top: 6px; }
+  .field .hint { font-size: 11px; color: #777; margin-top: 3px; font-family: "Consolas", monospace; }
+  .field.req label::after { content: " *"; color: #000; }
+  .radio-row { display: flex; gap: 16px; font-size: 12px; color: #444; }
+
+  table.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.wf-table th, table.wf-table td { border: 1px solid #bbb; padding: 7px 9px; text-align: left; vertical-align: top; }
+  table.wf-table th { background: #e8e8e8; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  table.wf-table td .cellph { display: inline-block; width: 60%; height: 10px; background: #e0e0e0; }
+  table.wf-table tr:nth-child(even) td { background: #fafafa; }
+  .actions-cell { white-space: nowrap; }
+  .actions-cell .btn { margin: 1px 0; }
+
+  .pill {
+    display: inline-block;
+    border: 1px solid #888;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: #f0f0f0;
+  }
+  .pill.ok { background: #dcdcdc; }
+  .pill.warn { background: #cfcfcf; border-style: double; }
+  .pill.off { background: #fff; color: #888; }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filters .input { border: 1px solid #999; background: #fff; height: 28px; width: 150px; padding: 0 8px; color: #aaa; font-size: 12px; display: flex; align-items: center; }
+
+  .note {
+    border-left: 4px solid #777;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #444;
+    margin-bottom: 16px;
+    font-family: "Consolas", monospace;
+  }
+  .note b { color: #000; }
+
+  .annotation {
+    font-family: "Consolas", monospace;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+  }
+
+  .bar { height: 16px; background: #ccc; border: 1px solid #999; }
+  .bar span { display: block; height: 100%; background: #777; }
+
+  /* flow diagram */
+  .flow-wrap { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  .flow-col { flex: 1 1 200px; }
+  .flow-node {
+    border: 2px solid #555;
+    background: #fff;
+    padding: 8px 10px;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .flow-node.head { background: #444; color: #fff; font-weight: bold; }
+  .flow-node.pub { background: #eee; border-style: dashed; }
+  .arrow { text-align: center; color: #666; font-size: 14px; margin: 2px 0; }
+  .flow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+  .flow-grid .flow-node { margin: 0; }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: #444; margin-bottom: 16px; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 14px; border: 1px solid #777; display: inline-block; }
+  .legend i.dash { border-style: dashed; }
+  .legend i.fill { background: #ddd; }
+
+  .split { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .split > .col { flex: 1 1 320px; }
+</style>
+</head>
+<body>
+
+<header class="wf-page-head">
+  <h1>Smart E-Waste — Admin Web Wireframe</h1>
+  <p>LOW FIDELITY · grayscale, boxes and labels only · click the left nav to change screen</p>
+</header>
+
+<div class="wf-app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="wf-sidebar">
+    <div class="wf-logo">E-WASTE ADMIN<small>collection &amp; monitoring</small></div>
+
+    <nav>
+      <button class="wf-nav active" data-screen="flow" data-crumb="Flow / Sitemap">Flow / Sitemap</button>
+
+      <div class="wf-nav-group">Monitoring</div>
+      <button class="wf-nav" data-screen="dashboard" data-crumb="Dashboard">Dashboard</button>
+      <button class="wf-nav" data-screen="bins" data-crumb="Bins">Bins</button>
+      <button class="wf-nav" data-screen="org-leaderboard" data-crumb="Organization leaderboard">Org leaderboard</button>
+      <button class="wf-nav" data-screen="reports" data-crumb="Reports">Reports</button>
+
+      <div class="wf-nav-group">Deposits</div>
+      <button class="wf-nav" data-screen="transactions" data-crumb="Transactions">Transactions</button>
+      <button class="wf-nav" data-screen="sessions-review" data-crumb="Sessions in review">Sessions in review <span class="badge">0</span></button>
+
+      <div class="wf-nav-group">Identity</div>
+      <button class="wf-nav" data-screen="users" data-crumb="Users">Users</button>
+      <button class="wf-nav" data-screen="organizations" data-crumb="Organizations">Organizations</button>
+
+      <div class="wf-nav-group">Rewards</div>
+      <button class="wf-nav" data-screen="rewards" data-crumb="Rewards">Rewards</button>
+      <button class="wf-nav" data-screen="redemptions" data-crumb="Redemptions">Redemptions <span class="badge">3</span></button>
+      <button class="wf-nav" data-screen="points-rate" data-crumb="Points rate">Points rate</button>
+    </nav>
+
+    <div class="wf-sidebar-foot">
+      <div class="wf-user"><b>Admin Name</b><br>admin@school.edu</div>
+      <button class="wf-nav" data-screen="notifications" data-crumb="Notifications">Notifications <span class="badge">3</span></button>
+      <button class="wf-nav pub" data-screen="login" data-crumb="Login">Log out / Login</button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="wf-main">
+    <div class="wf-topbar">
+      <div class="wf-crumb">Admin / <b id="crumb">Flow / Sitemap</b></div>
+      <div class="wf-topbar-actions">
+        <span class="wf-live">live · 10s</span>
+        <span class="box" style="padding:2px 8px">Admin Name</span>
+        <span class="btn">Log out</span>
+      </div>
+    </div>
+
+    <div class="wf-canvas">
+
+      <!-- ================= FLOW / SITEMAP ================= -->
+      <section class="screen active" id="s-flow">
+        <div class="screen-head">
+          <h2>Flow &amp; Sitemap</h2>
+          <div class="meta"><span class="tag">API_Design.md §7.4</span><span class="tag">System_Plan.md §5.6</span>every admin route, grouped by module</div>
+        </div>
+
+        <div class="legend">
+          <span><i></i> screen</span>
+          <span><i class="dash"></i> public / guest</span>
+          <span><i class="fill"></i> grouping</span>
+        </div>
+
+        <div class="note">
+          <b>Flow:</b> guest opens <b>/login</b> → signs in → role check sends admins to <b>/admin</b>,
+          students to <b>/home</b>. All admin routes sit under <b>/admin</b> behind auth + admin role check.
+          A student who opens an <b>/admin</b> route gets 403. No delete routes — records are deactivated.
+        </div>
+
+        <div class="flow-wrap">
+          <div class="flow-col">
+            <div class="flow-node head">Guest</div>
+            <div class="arrow">↓</div>
+            <div class="flow-node pub">/login</div>
+            <div class="arrow">↓</div>
+            <div class="flow-node pub">/forgot-password → /reset-password/{token}</div>
+            <div class="arrow">↓ sign in · redirect by role</div>
+            <div class="flow-node head">Admin shell (/admin)</div>
+            <div class="arrow">↓</div>
+            <div class="flow-node">Dashboard — live summary</div>
+          </div>
+
+          <div class="flow-col">
+            <div class="flow-node head">Monitoring</div>
+            <div class="flow-grid">
+              <div class="flow-node">Dashboard</div>
+              <div class="flow-node">Bins → detail / create / edit / new secret</div>
+              <div class="flow-node">Org leaderboard</div>
+              <div class="flow-node">Reports</div>
+            </div>
+          </div>
+
+          <div class="flow-col">
+            <div class="flow-node head">Deposits</div>
+            <div class="flow-grid">
+              <div class="flow-node">Transactions → detail / void</div>
+              <div class="flow-node">Sessions in review</div>
+            </div>
+          </div>
+
+          <div class="flow-col">
+            <div class="flow-node head">Identity</div>
+            <div class="flow-grid">
+              <div class="flow-node">Users → create / edit / import CSV / resend email / set password</div>
+              <div class="flow-node">Organizations → create / edit</div>
+            </div>
+          </div>
+
+          <div class="flow-col">
+            <div class="flow-node head">Rewards</div>
+            <div class="flow-grid">
+              <div class="flow-node">Rewards → create / edit</div>
+              <div class="flow-node">Redemptions → fulfil / cancel</div>
+              <div class="flow-node">Points rate → save new rule</div>
+            </div>
+          </div>
+
+          <div class="flow-col">
+            <div class="flow-node head">Supporting</div>
+            <div class="flow-grid">
+              <div class="flow-node">Notifications (shared w/ students)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LOGIN ================= -->
+      <section class="screen" id="s-login">
+        <div class="screen-head">
+          <h2>Login</h2>
+          <div class="meta"><span class="tag">§7.2</span>GET /login · POST /login</div>
+        </div>
+        <div class="split">
+          <div class="col" style="max-width:380px">
+            <div class="card">
+              <div class="card-title">Sign in</div>
+              <div class="card-body">
+                <div class="field req"><label>Email</label><div class="input">you@school.edu</div></div>
+                <div class="field req"><label>Password</label><div class="input">••••••••</div></div>
+                <div class="btn-row">
+                  <span class="btn primary" style="width:100%; text-align:center">Sign in</span>
+                </div>
+                <div style="margin-top:10px"><span class="btn small">Forgot password?</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="note">
+              Login fails for an account with no password (unactivated) and for an inactive user —
+              same message as a wrong password. Limited to 5 attempts / minute per email + IP.
+              Admins land on <b>/admin</b>, students on <b>/home</b>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= DASHBOARD ================= -->
+      <section class="screen" id="s-dashboard">
+        <div class="screen-head">
+          <h2>Dashboard</h2>
+          <div class="meta"><span class="tag">§7.4</span><span class="tag">§7.5</span>GET /admin · GET /admin/dashboard/summary (JSON, polled 10s)</div>
+        </div>
+
+        <div class="toolbar">
+          <div><b>Live summary</b></div>
+          <div class="wf-live">live · 10s</div>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><div class="tile-label">Today&#39;s deposits</div><div class="tile-value"></div><div class="tile-foot">COMPLETED since midnight</div></div>
+          <div class="tile"><div class="tile-label">Today&#39;s weight (g)</div><div class="tile-value"></div><div class="tile-foot">Σ net_weight_g</div></div>
+          <div class="tile"><div class="tile-label">Today&#39;s points awarded</div><div class="tile-value"></div><div class="tile-foot">Σ points_awarded</div></div>
+          <div class="tile"><div class="tile-label">Pending redemptions</div><div class="tile-value"></div><div class="tile-foot">status = PENDING</div></div>
+          <div class="tile"><div class="tile-label">Sessions awaiting review</div><div class="tile-value"></div><div class="tile-foot">ACCEPTED &gt; review threshold</div></div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <div class="card-title">Bins <span class="annotation">/admin/dashboard/summary → bins[]</span></div>
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Bin</th><th>Fill</th><th>Status</th><th>Last seen</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Bin 1</td>
+                  <td><span class="cellph" style="width:60px; background:#999"></span> 17%</td>
+                  <td><span class="pill ok">OK</span></td>
+                  <td>just now</td>
+                  <td class="actions-cell"><span class="btn small">View</span></td>
+                </tr>
+                <tr>
+                  <td>Bin 2</td>
+                  <td><span class="cellph" style="width:60px; background:#999"></span> 92%</td>
+                  <td><span class="pill warn">FULL</span></td>
+                  <td>2 min ago</td>
+                  <td class="actions-cell"><span class="btn small">View</span></td>
+                </tr>
+                <tr>
+                  <td class="cellph" colspan="5"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="annotation">No reading yet → fill_percent and status are null.</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <span class="btn">Go to transactions</span>
+          <span class="btn">Go to redemptions</span>
+          <span class="btn">Go to sessions in review</span>
+        </div>
+      </section>
+
+      <!-- ================= BINS LIST ================= -->
+      <section class="screen" id="s-bins">
+        <div class="screen-head">
+          <h2>Bins</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/bins · create / show / edit / new secret</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters">
+            <div class="input">Search name / code</div>
+            <div class="input">Status: all ▾</div>
+          </div>
+          <div class="btn-row">
+            <button class="wf-nav" data-screen="bin-form" data-crumb="Bins / Register" style="width:auto; border:1px solid #000; background:#444; color:#fff; border-left:1px solid #000; font-weight:bold">+ Register bin</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Device code</th><th>Name</th><th>Location</th><th>Fill</th><th>Status</th><th>Last seen</th><th>Firmware</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>BIN-01</td><td>Bin 1</td><td>Main lobby</td>
+                  <td>17%</td><td><span class="pill ok">Active</span></td><td>just now</td><td>1.0.3</td>
+                  <td class="actions-cell"><span class="btn small">View</span><span class="btn small">Edit</span><span class="btn small">New secret</span></td>
+                </tr>
+                <tr>
+                  <td>BIN-02</td><td>Bin 2</td><td>Science wing</td>
+                  <td>92%</td><td><span class="pill warn">Active</span></td><td>2 min ago</td><td>1.0.3</td>
+                  <td class="actions-cell"><span class="btn small">View</span><span class="btn small">Edit</span><span class="btn small">New secret</span></td>
+                </tr>
+                <tr>
+                  <td>BIN-03</td><td>Bin 3</td><td>Library</td>
+                  <td>—</td><td><span class="pill off">Inactive</span></td><td>3 days ago</td><td>1.0.1</td>
+                  <td class="actions-cell"><span class="btn small">View</span><span class="btn small">Edit</span></td>
+                </tr>
+                <tr><td class="cellph" colspan="8"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">No delete route. Bins are switched off with status = active / inactive / retired.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BIN FORM ================= -->
+      <section class="screen" id="s-bin-form">
+        <div class="screen-head">
+          <h2>Register / Edit bin</h2>
+          <div class="meta"><span class="tag">§7.6</span>POST /admin/bins · PUT /admin/bins/{device} · same form for create and edit</div>
+        </div>
+        <div class="split">
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Bin details</div>
+              <div class="card-body">
+                <div class="field req"><label>Device code</label><div class="input">BIN-01</div><div class="hint">≤ 50 chars, unique</div></div>
+                <div class="field req"><label>Name</label><div class="input">Bin 1</div></div>
+                <div class="field"><label>Location</label><div class="input">optional, ≤ 255 chars</div></div>
+                <div class="field req"><label>Empty distance (mm)</label><div class="input">500</div><div class="hint">&gt; 0 · fill formula divides by this</div></div>
+                <div class="field req"><label>Fill threshold (%)</label><div class="input">90</div><div class="hint">0–100, defaults to 90</div></div>
+                <div class="field"><label>Weight offset</label><div class="input">optional</div><div class="hint">saving sets calibrated_at</div></div>
+                <div class="field"><label>Scale factor</label><div class="input">optional</div><div class="hint">saving sets calibrated_at</div></div>
+                <div class="field"><label>Status</label>
+                  <div class="radio-row"><span>( ) active</span><span>( ) inactive</span><span>( ) retired</span></div>
+                </div>
+                <div class="btn-row"><span class="btn primary">Save</span><span class="btn">Cancel</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Secret — shown once</div>
+              <div class="card-body">
+                <div class="ph" style="min-height:60px">64 hex characters generated by the server</div>
+                <ul style="font-size:12px; color:#555; padding-left:18px">
+                  <li>Shown once after registration or a new-secret request.</li>
+                  <li>Enter it in the bin&#39;s setup portal.</li>
+                  <li>Issuing a new secret stops the old one at once.</li>
+                </ul>
+                <span class="btn">Copy</span> <span class="btn">I have saved it</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BIN DETAIL ================= -->
+      <section class="screen" id="s-bin-show">
+        <div class="screen-head">
+          <h2>Bin detail — BIN-01</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/bins/{device} · fill history · calibration values</div>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><div class="tile-label">Empty distance (mm)</div><div class="tile-value" style="width:100px"></div></div>
+          <div class="tile"><div class="tile-label">Fill threshold (%)</div><div class="tile-value" style="width:100px"></div></div>
+          <div class="tile"><div class="tile-label">Current fill (%)</div><div class="tile-value" style="width:100px"></div></div>
+          <div class="tile"><div class="tile-label">Last seen</div><div class="tile-value" style="width:100%; height:22px"></div></div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <div class="card-title">Calibration <span class="annotation">weight_offset · weight_scale_factor · calibrated_at</span></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col box">weight_offset: ____</div>
+              <div class="col box">weight_scale_factor: ____</div>
+              <div class="col box">calibrated_at: ____</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Fill history <span class="annotation">bin_telemetry rows</span></div>
+          <div class="card-body">
+            <div class="ph" style="height:130px">Fill % over time (chart placeholder)</div>
+            <table class="wf-table" style="margin-top:12px">
+              <thead><tr><th>Recorded at</th><th>Distance (mm)</th><th>Fill %</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>2026-10-03 09:41</td><td>412.5</td><td>17.5</td><td><span class="pill ok">OK</span></td></tr>
+                <tr><td class="cellph" colspan="4"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">Paginated.</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="wf-nav" data-screen="bin-form" data-crumb="Bins / Edit" style="width:auto; border:1px solid #333; background:#e6e6e6; color:#111; border-left:1px solid #333; font-weight:normal">Edit bin</button>
+          <span class="btn">Issue new secret</span>
+        </div>
+      </section>
+
+      <!-- ================= TRANSACTIONS ================= -->
+      <section class="screen" id="s-transactions">
+        <div class="screen-head">
+          <h2>Transactions</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/transactions · total collected weight · void</div>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><div class="tile-label">Total collected weight (g)</div><div class="tile-value" style="width:120px"></div><div class="tile-foot">Σ net_weight_g · COMPLETED only · voided excluded</div></div>
+        </div>
+
+        <div class="toolbar" style="margin-top:16px">
+          <div class="filters">
+            <div class="input">Search code / student</div>
+            <div class="input">Date range ▾</div>
+            <div class="input">Status: all ▾</div>
+            <div class="input">Bin: all ▾</div>
+          </div>
+          <div class="btn-row"><span class="btn">Export ▾</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Code</th><th>Date</th><th>Student</th><th>Bin</th><th>Net weight (g)</th><th>Points</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>TXN-20261003-A7K2Q1</td><td>2026-10-03 09:41</td><td>Juan Dela Cruz</td><td>BIN-01</td>
+                  <td>184.6</td><td>18</td><td><span class="pill ok">COMPLETED</span></td>
+                  <td class="actions-cell"><span class="btn small">View</span><span class="btn small">Void</span></td>
+                </tr>
+                <tr>
+                  <td>TXN-20261003-B1X9M4</td><td>2026-10-03 08:12</td><td>Maria Santos</td><td>BIN-01</td>
+                  <td>220.0</td><td>22</td><td><span class="pill off">VOIDED</span></td>
+                  <td class="actions-cell"><span class="btn small">View</span></td>
+                </tr>
+                <tr><td class="cellph" colspan="8"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">Paginated. One logical change per row. Void writes a REVERSAL ledger row, never a delete.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TRANSACTION DETAIL ================= -->
+      <section class="screen" id="s-transaction-show">
+        <div class="screen-head">
+          <h2>Transaction — TXN-20261003-A7K2Q1</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/transactions/{transaction} · session weight, verification, actuator values</div>
+        </div>
+
+        <div class="split">
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Transaction</div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col box">Student: Juan Dela Cruz</div>
+                  <div class="col box">Organization: ____</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">Bin: BIN-01</div>
+                  <div class="col box">Points awarded: 18</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">Created: 2026-10-03 01:41 UTC</div>
+                  <div class="col box">Status: COMPLETED</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Session evidence</div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col box">net_weight_g: 184.6</div>
+                  <div class="col box">is_weight_stable: true</div>
+                  <div class="col box">sample_count: 20</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">verification_method: cam_diff</div>
+                  <div class="col box">verification_passed: true</div>
+                  <div class="col box">verification_score: 0.87</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">actuator_ok: true</div>
+                  <div class="col box">actuator_cycle_ms: 3200</div>
+                  <div class="col box">reward_rule_id: ____</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Void transaction</div>
+              <div class="card-body">
+                <div class="field req"><label>Void reason</label><div class="input area">required, ≤ 500 chars</div></div>
+                <div class="btn-row"><span class="btn primary">Void</span><span class="btn">Cancel</span></div>
+                <div class="note" style="margin-top:12px">
+                  Only a COMPLETED transaction can be voided. In one DB transaction: status → VOIDED,
+                  write void_reason / voided_by / voided_at, and a REVERSAL ledger row with the opposite
+                  points_delta. Balance may go below zero. The unique (transaction_id, entry_type)
+                  constraint stops a second reversal.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SESSIONS REVIEW ================= -->
+      <section class="screen" id="s-sessions-review">
+        <div class="screen-head">
+          <h2>Sessions in review</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/sessions/review · ACCEPTED sessions older than the review threshold</div>
+        </div>
+
+        <div class="note">
+          An ACCEPTED session may already have the item in the bin, so it is never expired silently.
+          <b>Open question (API_Design.md §10.1):</b> the docs define a list page only — the action(s)
+          an admin can take on a reviewed session are not defined. Shown here as a list with a disabled
+          action area until the team decides.
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Session</th><th>Student</th><th>Bin</th><th>Weight (g)</th><th>Opened at</th><th>Waiting</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>b3f1…</td><td>Juan Dela Cruz</td><td>BIN-01</td><td>184.6</td><td>2026-10-03 09:41</td><td>12 min</td>
+                  <td class="actions-cell"><span class="pill off">action TBD</span></td>
+                </tr>
+                <tr><td class="cellph" colspan="7"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= USERS ================= -->
+      <section class="screen" id="s-users">
+        <div class="screen-head">
+          <h2>Users</h2>
+          <div class="meta"><span class="tag">§7.4</span><span class="tag">§7.6</span>GET /admin/users · shows unactivated accounts</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters">
+            <div class="input">Search name / email</div>
+            <div class="input">Role: all ▾</div>
+            <div class="input">Status: all ▾</div>
+            <div class="input">Organization: all ▾</div>
+          </div>
+          <div class="btn-row">
+            <button class="wf-nav" data-screen="user-form" data-crumb="Users / New" style="width:auto; border:1px solid #000; background:#444; color:#fff; border-left:1px solid #000; font-weight:bold">+ New user</button>
+            <span class="btn">Import CSV</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Student no.</th><th>Role</th><th>Organization</th><th>Enabled</th><th>Activated</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Juan Dela Cruz</td><td>juan@school.edu</td><td>2026-00123</td><td>student</td><td>CCS</td>
+                  <td><span class="pill ok">active</span></td><td><span class="pill ok">activated</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span><span class="btn small">Resend email</span><span class="btn small">Set password</span></td>
+                </tr>
+                <tr>
+                  <td>Maria Santos</td><td>maria@school.edu</td><td>2026-00456</td><td>student</td><td>COE</td>
+                  <td><span class="pill ok">active</span></td><td><span class="pill warn">unactivated</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span><span class="btn small">Resend email</span><span class="btn small">Set password</span></td>
+                </tr>
+                <tr>
+                  <td>Admin Name</td><td>admin@school.edu</td><td>—</td><td>admin</td><td>—</td>
+                  <td><span class="pill ok">active</span></td><td><span class="pill ok">activated</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td>
+                </tr>
+                <tr><td class="cellph" colspan="8"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">Unactivated = users.password is NULL. No delete route; switch off with status instead.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">CSV import <span class="annotation">§7.6 · all rows or none</span></div>
+          <div class="card-body">
+            <div class="ph">Drop CSV here or choose file</div>
+            <div style="margin-top:8px; font-size:12px; color:#555">
+              Header row: <b>student_number, first_name, last_name, email, organization_code</b>.
+              Every row becomes a student; organization_code must match an existing code.
+              No email is sent by the import — send set-password emails afterwards from the list.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= USER FORM ================= -->
+      <section class="screen" id="s-user-form">
+        <div class="screen-head">
+          <h2>Create / Edit user</h2>
+          <div class="meta"><span class="tag">§7.6</span>POST /admin/users · PUT /admin/users/{user} · same form for create and edit</div>
+        </div>
+        <div class="split">
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Account</div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col field req"><label>First name</label><div class="input">≤ 100</div></div>
+                  <div class="col field req"><label>Last name</label><div class="input">≤ 100</div></div>
+                </div>
+                <div class="field req"><label>Email</label><div class="input">valid, ≤ 255, unique</div></div>
+                <div class="field"><label>Student number</label><div class="input">optional, ≤ 50, unique</div></div>
+                <div class="field req"><label>Role</label>
+                  <div class="radio-row"><span>(•) student</span><span>( ) admin</span></div>
+                </div>
+                <div class="field"><label>Organization</label><div class="input">required when role = student · NULL for admin</div></div>
+                <div class="field req"><label>Status</label>
+                  <div class="radio-row"><span>(•) active</span><span>( ) inactive</span></div>
+                </div>
+                <div class="btn-row"><span class="btn primary">Save</span><span class="btn">Cancel</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Set password (admin fallback)</div>
+              <div class="card-body">
+                <div class="field req"><label>Password</label><div class="input">••••••••</div><div class="hint">≥ 8 characters</div></div>
+                <div class="field req"><label>Confirm password</label><div class="input">••••••••</div></div>
+                <div class="btn-row"><span class="btn">Set password</span></div>
+              </div>
+            </div>
+            <div class="note">
+              On create, the server inserts the user with <b>password = NULL</b> plus a QR credential row
+              in one transaction (token = 40 random letters/digits), then sends the set-password email.
+              If the send fails the user is still created and the admin is told.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ORGANIZATIONS ================= -->
+      <section class="screen" id="s-organizations">
+        <div class="screen-head">
+          <h2>Organizations</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/organizations · create / edit</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters"><div class="input">Search name / code</div><div class="input">Active: all ▾</div></div>
+          <div class="btn-row">
+            <button class="wf-nav" data-screen="org-form" data-crumb="Organizations / New" style="width:auto; border:1px solid #000; background:#444; color:#fff; border-left:1px solid #000; font-weight:bold">+ New organization</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Name</th><th>Code</th><th>Description</th><th>Students</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>College of Computer Studies</td><td>CCS</td><td>____</td><td>42</td><td><span class="pill ok">active</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td>College of Engineering</td><td>COE</td><td>____</td><td>31</td><td><span class="pill ok">active</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td>College of Education</td><td>CED</td><td>____</td><td>0</td><td><span class="pill off">inactive</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td class="cellph" colspan="6"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">No delete route. Inactive organizations keep existing memberships.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ORG FORM ================= -->
+      <section class="screen" id="s-org-form">
+        <div class="screen-head">
+          <h2>Create / Edit organization</h2>
+          <div class="meta"><span class="tag">§7.6</span>POST /admin/organizations · PUT /admin/organizations/{organization}</div>
+        </div>
+        <div class="card" style="max-width:560px">
+          <div class="card-body">
+            <div class="field req"><label>Name</label><div class="input">≤ 150</div></div>
+            <div class="field req"><label>Code</label><div class="input">≤ 50, unique</div></div>
+            <div class="field"><label>Description</label><div class="input">optional, ≤ 255</div></div>
+            <div class="field req"><label>Active</label><div class="radio-row"><span>(•) yes</span><span>( ) no</span></div></div>
+            <div class="btn-row"><span class="btn primary">Save</span><span class="btn">Cancel</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REWARDS ================= -->
+      <section class="screen" id="s-rewards">
+        <div class="screen-head">
+          <h2>Rewards</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/rewards · create / edit</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters"><div class="input">Search name</div><div class="input">Active: all ▾</div></div>
+          <div class="btn-row">
+            <button class="wf-nav" data-screen="reward-form" data-crumb="Rewards / New" style="width:auto; border:1px solid #000; background:#444; color:#fff; border-left:1px solid #000; font-weight:bold">+ New reward</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Name</th><th>Description</th><th>Points cost</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>Notebook &amp; pen set</td><td>____</td><td>50</td><td>120</td><td><span class="pill ok">active</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td>Reusable bottle</td><td>____</td><td>300</td><td>8</td><td><span class="pill ok">active</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td>Tote bag</td><td>____</td><td>150</td><td>0</td><td><span class="pill off">inactive</span></td>
+                  <td class="actions-cell"><span class="btn small">Edit</span></td></tr>
+                <tr><td class="cellph" colspan="6"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">No delete route. Switch off with is_active. Price each reward relative to the cheapest.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REWARD FORM ================= -->
+      <section class="screen" id="s-reward-form">
+        <div class="screen-head">
+          <h2>Create / Edit reward</h2>
+          <div class="meta"><span class="tag">§7.6</span>POST /admin/rewards · PUT /admin/rewards/{reward}</div>
+        </div>
+        <div class="card" style="max-width:560px">
+          <div class="card-body">
+            <div class="field req"><label>Name</label><div class="input">≤ 150</div></div>
+            <div class="field"><label>Description</label><div class="input area">optional</div></div>
+            <div class="field req"><label>Points cost</label><div class="input">whole number, ≥ 1</div></div>
+            <div class="field req"><label>Stock quantity</label><div class="input">whole number, ≥ 0</div></div>
+            <div class="field req"><label>Active</label><div class="radio-row"><span>(•) yes</span><span>( ) no</span></div></div>
+            <div class="btn-row"><span class="btn primary">Save</span><span class="btn">Cancel</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REDEMPTIONS ================= -->
+      <section class="screen" id="s-redemptions">
+        <div class="screen-head">
+          <h2>Redemptions</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/redemptions · fulfil / cancel (PENDING only)</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters">
+            <div class="input">Search code / student</div>
+            <div class="input">Status: PENDING ▾</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Code</th><th>Student</th><th>Reward</th><th>Qty</th><th>Points cost</th><th>Status</th><th>Fulfilled at</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>RDM-20261003-C4D8N2</td><td>Juan Dela Cruz</td><td>Notebook &amp; pen set</td><td>1</td><td>50</td>
+                  <td><span class="pill warn">PENDING</span></td><td>—</td>
+                  <td class="actions-cell"><span class="btn small">Fulfil</span><span class="btn small">Cancel</span></td>
+                </tr>
+                <tr>
+                  <td>RDM-20261002-J7P3W9</td><td>Maria Santos</td><td>Reusable bottle</td><td>1</td><td>300</td>
+                  <td><span class="pill ok">FULFILLED</span></td><td>2026-10-02 14:20</td>
+                  <td class="actions-cell"><span class="pill off">—</span></td>
+                </tr>
+                <tr>
+                  <td>RDM-20261001-Q2V6Z8</td><td>Mark Reyes</td><td>Tote bag</td><td>2</td><td>300</td>
+                  <td><span class="pill off">CANCELLED</span></td><td>—</td>
+                  <td class="actions-cell"><span class="pill off">—</span></td>
+                </tr>
+                <tr><td class="cellph" colspan="8"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">
+              Fulfil: PENDING → FULFILLED, set fulfilled_at, dispatch RedemptionFulfilled.
+              Cancel: PENDING only — in one transaction status → CANCELLED, stock returned, REVERSAL ledger row.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= POINTS RATE ================= -->
+      <section class="screen" id="s-points-rate">
+        <div class="screen-head">
+          <h2>Points rate</h2>
+          <div class="meta"><span class="tag">§7.4</span><span class="tag">§5.7</span>GET /admin/points-rate · POST /admin/points-rate · rules are versioned</div>
+        </div>
+
+        <div class="note">
+          points = floor(net_weight_g × points_per_gram). Saving closes the current rule (sets effective_to)
+          and inserts a new one that takes effect at once. A session uses the rule in effect when it opened.
+          A rule must be in effect for the bin to accept deposits.
+        </div>
+
+        <div class="split">
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Rule in effect now</div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col box">name</div>
+                  <div class="col box">points_per_gram</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">minimum_weight_g</div>
+                  <div class="col box">maximum_weight_g (empty = no limit)</div>
+                </div>
+                <div class="row" style="margin-top:10px">
+                  <div class="col box">daily_points_cap (empty = no cap)</div>
+                  <div class="col box">effective_from</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card">
+              <div class="card-title">Save a new rule</div>
+              <div class="card-body">
+                <div class="field req"><label>Name</label><div class="input">≤ 100</div></div>
+                <div class="field req"><label>Points per gram</label><div class="input">&gt; 0</div></div>
+                <div class="field req"><label>Minimum weight (g)</label><div class="input">≥ 1 ÷ points_per_gram</div><div class="hint">so an accepted deposit never earns zero points</div></div>
+                <div class="field"><label>Maximum weight (g)</label><div class="input">optional · &gt; minimum · ≤ hardware limit</div></div>
+                <div class="field"><label>Daily points cap</label><div class="input">optional · whole number ≥ 1</div></div>
+                <div class="btn-row"><span class="btn primary">Save rule</span><span class="btn">Cancel</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Past rules</div>
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Name</th><th>Points / g</th><th>Min (g)</th><th>Max (g)</th><th>Daily cap</th><th>Effective from</th><th>Effective to</th></tr></thead>
+              <tbody>
+                <tr><td>____</td><td>____</td><td>____</td><td>____</td><td>____</td><td>____</td><td>____</td></tr>
+                <tr><td class="cellph" colspan="7"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ORG LEADERBOARD ================= -->
+      <section class="screen" id="s-org-leaderboard">
+        <div class="screen-head">
+          <h2>Organization leaderboard</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/leaderboard/organizations · students only</div>
+        </div>
+
+        <div class="note">
+          Rank by points <b>earned</b> (EARN rows minus reversals of voided transactions), not current balance.
+          An organization&#39;s score is the total for the students currently in it. Filter on
+          <b>role = student</b> before grouping so no NULL org group appears.
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Rank</th><th>Organization</th><th>Code</th><th>Points earned</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>College of Computer Studies</td><td>CCS</td><td>12,480</td></tr>
+                <tr><td>2</td><td>College of Engineering</td><td>COE</td><td>9,120</td></tr>
+                <tr><td>3</td><td>College of Education</td><td>CED</td><td>4,050</td></tr>
+                <tr><td class="cellph" colspan="4"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REPORTS ================= -->
+      <section class="screen" id="s-reports">
+        <div class="screen-head">
+          <h2>Reports</h2>
+          <div class="meta"><span class="tag">§7.4</span>GET /admin/reports · scheduled reports via the Laravel scheduler</div>
+        </div>
+
+        <div class="note">
+          <b>Open question (API_Design.md §10.2):</b> the docs name a reports page and scheduled reports
+          but do not say what they contain. This depends on the project guidelines. Shown here as filters
+          plus an export placeholder until the team confirms the contents.
+        </div>
+
+        <div class="card">
+          <div class="card-title">Generate report</div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col field"><label>Date range</label><div class="input">from ▾ — to ▾</div></div>
+              <div class="col field"><label>Organization</label><div class="input">all ▾</div></div>
+              <div class="col field"><label>Bin</label><div class="input">all ▾</div></div>
+            </div>
+            <div class="btn-row"><span class="btn primary">Generate</span><span class="btn">Export CSV</span><span class="btn">Export PDF</span></div>
+            <div class="ph" style="height:180px; margin-top:12px">Report output (contents TBD)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= NOTIFICATIONS ================= -->
+      <section class="screen" id="s-notifications">
+        <div class="screen-head">
+          <h2>Notifications</h2>
+          <div class="meta"><span class="tag">§7.7</span>GET /notifications · same route students use · mark as read</div>
+        </div>
+
+        <div class="note">
+          In-app only (no email). Types: <b>DEPOSIT_COMPLETED</b> → the depositing user,
+          <b>REDEMPTION_FULFILLED</b> → the redeeming user, <b>BIN_FULL</b> → one row per admin user.
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="wf-table">
+              <thead><tr><th>Type</th><th>Message</th><th>Created</th><th>Read</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>BIN_FULL</td><td>Bin 2 is full (92%). Empty it.</td><td>2 min ago</td><td><span class="pill warn">unread</span></td>
+                  <td class="actions-cell"><span class="btn small">Mark as read</span></td></tr>
+                <tr><td>BIN_FULL</td><td>Bin 2 is full (91%). Empty it.</td><td>1 hr ago</td><td><span class="pill ok">read</span></td>
+                  <td class="actions-cell"><span class="pill off">—</span></td></tr>
+                <tr><td class="cellph" colspan="5"></td></tr>
+              </tbody>
+            </table>
+            <div class="annotation">Paginated.</div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /canvas -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  (function () {
+    var buttons = document.querySelectorAll('.wf-nav[data-screen]');
+    var screens = document.querySelectorAll('.screen');
+    var crumb = document.getElementById('crumb');
+
+    function show(id) {
+      screens.forEach(function (s) { s.classList.toggle('active', s.id === 's-' + id); });
+      buttons.forEach(function (b) { b.classList.toggle('active', b.dataset.screen === id); });
+    }
+
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        show(b.dataset.screen);
+        if (b.dataset.crumb) { crumb.textContent = b.dataset.crumb; }
+        document.querySelector('.wf-canvas').scrollTop = 0;
+      });
+    });
+  })();
+</script>
+</body>
+</html>
