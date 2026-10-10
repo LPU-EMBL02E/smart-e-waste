@@ -87,8 +87,8 @@ every change small and on-task.
   defect.
 - **No speculative abstraction.** No interfaces, base classes, factories, or
   "manager" classes for one implementation. No config options nobody asked for.
-- **Don't touch framework-generated files** unless `SETUP.md` §3 says to edit
-  them.
+- **Don't touch Laravel's stock files** (`bootstrap/`, stock `config/*.php`, `public/`)
+  without the web owner, and never hand-edit `composer.lock` or `package-lock.json`.
 - **Don't delete comments, doc references, or `TODO`s** you don't understand.
 - **Don't invent behaviour.** If the docs don't say what should happen, ask. Do
   not guess a status code, error code, point value, or state transition.

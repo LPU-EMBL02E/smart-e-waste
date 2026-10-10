@@ -56,10 +56,6 @@ scripts/              the two portability checks from System_Plan.md §8.1
 SETUP.md              how to build and run all of it
 ```
 
-`web/` holds this project's own files only. The Laravel framework skeleton comes
-from `composer create-project` — see [SETUP.md](SETUP.md) §1 for why, and §2 for
-the commands.
-
 ---
 
 ## How a deposit works

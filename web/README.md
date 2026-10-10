@@ -1,12 +1,6 @@
 # web/ — the Laravel application
 
-**This directory is not a complete Laravel project.** It holds only this
-project's own files. The framework skeleton — `artisan`, `composer.json`,
-`bootstrap/`, `public/`, the stock `config/*.php` — comes from
-`composer create-project`, and the reasoning is in
-[../SETUP.md](../SETUP.md) §1.
-
-Run the two commands in SETUP.md §2 before expecting anything here to run.
+A Laravel 13 app. Install and run it with [../SETUP.md](../SETUP.md) §1–2.
 
 ## Structure
 
