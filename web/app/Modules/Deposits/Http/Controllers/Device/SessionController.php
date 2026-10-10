@@ -34,9 +34,7 @@ use Illuminate\Http\Request;
  */
 class SessionController
 {
-    public function __construct(private DepositService $deposits)
-    {
-    }
+    public function __construct(private DepositService $deposits) {}
 
     /**
      * -> 201 { session_id, expires_in_s, user: { display_name } }

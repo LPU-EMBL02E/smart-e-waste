@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
  * admin route gets 403, not a redirect, so the existence of the page is not
  * hidden but the data is never exposed.
  *
- * Registered as the `admin` alias in bootstrap/app.php (see SETUP.md).
+ * Registered as the `admin` alias in bootstrap/app.php.
  */
 class EnsureUserIsAdmin
 {

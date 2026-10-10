@@ -32,9 +32,7 @@ use Illuminate\View\View;
  */
 class BinController
 {
-    public function __construct(private BinService $bins)
-    {
-    }
+    public function __construct(private BinService $bins) {}
 
     public function index(): View
     {

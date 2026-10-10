@@ -24,6 +24,7 @@ class BinTelemetry extends Model
     public const UPDATED_AT = null;
 
     public const STATUS_OK = 'OK';
+
     public const STATUS_FULL = 'FULL';
 
     protected $fillable = [

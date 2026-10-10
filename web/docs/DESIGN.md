@@ -12,12 +12,12 @@ Read this guide alongside the project contracts:
 
 | Source | What it owns |
 | --- | --- |
-| [Project Guidelines](../docs/PROJECT-GUIDELINES.md), Step 8 | Required student/admin interfaces and mobile support |
-| [System Plan](../docs/System_Plan.md), §§3, 5.3, 5.6–5.7 | Frontend stack, deposit rules, page scope, and points |
-| [API Design](../docs/API_Design.md), §7 | Routes, form responses, dashboard data, and validation |
-| [Database Schema](../docs/Database_Schema.md) | Field names, units, and stored states |
-| [Blade views guide](resources/views/README.md) | Layout shells, view naming, time display, and tables |
-| [AGENTS.md](../AGENTS.md) and [Setup](../SETUP.md) | Implementation rules and build process |
+| [Project Guidelines](../../docs/PROJECT-GUIDELINES.md), Step 8 | Required student/admin interfaces and mobile support |
+| [System Plan](../../docs/System_Plan.md), §§3, 5.3, 5.6–5.7 | Frontend stack, deposit rules, page scope, and points |
+| [API Design](../../docs/API_Design.md), §7 | Routes, form responses, dashboard data, and validation |
+| [Database Schema](../../docs/Database_Schema.md) | Field names, units, and stored states |
+| [Blade views guide](../resources/views/README.md) | Layout shells, view naming, time display, and tables |
+| [AGENTS.md](../../AGENTS.md) and [Setup](../../SETUP.md) | Implementation rules and build process |
 
 Those documents govern behavior. This guide does not resolve `TODO(team)` items
 or approve the API document's `[P*]` proposals. Keep their proposal status when

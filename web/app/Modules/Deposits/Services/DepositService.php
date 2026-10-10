@@ -23,9 +23,7 @@ use App\Modules\Rewards\Services\PointsService;
  */
 class DepositService
 {
-    public function __construct(private PointsService $points)
-    {
-    }
+    public function __construct(private PointsService $points) {}
 
     /**
      * POST /device/sessions — open a session from a scanned QR token.

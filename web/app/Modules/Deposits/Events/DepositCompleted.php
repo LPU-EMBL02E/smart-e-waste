@@ -20,7 +20,5 @@ class DepositCompleted
 {
     use Dispatchable;
 
-    public function __construct(public readonly Transaction $transaction)
-    {
-    }
+    public function __construct(public readonly Transaction $transaction) {}
 }

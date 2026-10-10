@@ -29,21 +29,20 @@ submission; the authorized maintainer owns merging and deployment.
 
 Current readiness from the team audit:
 
-- `web/` has no Laravel framework skeleton or Composer/npm manifests yet. This
-  is intentional, and bootstrap is already specified in
-  [SETUP.md §1–3, lines 12–184](../SETUP.md). A member can prepare that foundation
-  while source-document alignment proceeds separately.
+- `web/` is a complete Laravel 13 app with its module wiring, auth model, UTC
+  connection and both lock files committed. Install it with
+  [SETUP.md §1, lines 10–27](../../SETUP.md); no bootstrap step remains.
 - The runtime target is PHP 8.4, Laravel 13, and MariaDB 11.8. The discovered
   XAMPP PHP is 8.2.12 and its MariaDB is 10.4.32; neither satisfies that target.
   MySQL 8.0.41 was detected, but no project test database readiness is established.
   Follow the existing version policy rather than silently changing the stack
-  ([SETUP.md, lines 29–58](../SETUP.md)).
+  ([SETUP.md, lines 26–27](../../SETUP.md)).
 - Signing vectors passed using bundled Python. Swappability passed with Git
   Bash's utility PATH set explicitly. Bare Bash previously returned exit 0 after
   a missing utility caused an erroneous skip; meaningful output matters as well
   as the exit code. These checks do not establish that the app runs.
 - Both tracked PHP test methods still mark themselves incomplete
-  ([DeviceSignatureTest.php, lines 46–69](tests/Feature/Device/DeviceSignatureTest.php)).
+  ([DeviceSignatureTest.php, lines 46–69](../tests/Feature/Device/DeviceSignatureTest.php)).
   No PHP application suite has been established as clean.
 - No tracked CI workflow or CODEOWNERS was found in this checkout. Remote rules,
   repository visibility, plan, and bypass permissions were not inspected.
@@ -51,7 +50,7 @@ Current readiness from the team audit:
   are settled, but new account policies need alignment with authoritative
   `docs/` through its owner's separate review. Existing specified work can proceed
   ([ACCOUNT-MANAGEMENT.md, lines 3–6](ACCOUNT-MANAGEMENT.md);
-  [AGENTS.md §1, lines 18–37](../AGENTS.md)).
+  [AGENTS.md §1, lines 18–42](../../AGENTS.md)).
 
 ## Contracts to align before feature work
 
@@ -76,10 +75,10 @@ Freeze these handoffs before separate members implement callers:
 | Backend and views | Record the existing route and view name, method, fields, view-data shape, pagination, old input, field/CSV-row errors, redirect, and success/delivery-warning flash outcome for each page. Use the shared view tree already described in the views README. |
 
 These contracts come from [ACCOUNT-MANAGEMENT.md](ACCOUNT-MANAGEMENT.md),
-[API_Design.md §7.2–7.6](../docs/API_Design.md),
-[System_Plan.md §4 and §8.1](../docs/System_Plan.md),
-the [password-token migration](database/migrations/0001_01_01_000002_create_password_reset_tokens_table.php),
-and the [view conventions](resources/views/README.md). Members propose the
+[API_Design.md §7.2–7.6](../../docs/API_Design.md),
+[System_Plan.md §4 and §8.1](../../docs/System_Plan.md),
+the [password-token migration](../database/migrations/0001_01_01_000002_create_password_reset_tokens_table.php),
+and the [view conventions](../resources/views/README.md). Members propose the
 smallest implementation within the existing schema. A new column, endpoint,
 dependency, or unsupported outcome follows the owner decision path in AGENTS;
 the lead records that decision before changing another task's contract.
@@ -96,7 +95,7 @@ middleware, module routes/provider registration, migrations, manifests/lock
 files, shared fixtures, and the shared Blade layout. Record file ownership in the
 task packet. Another member requests a handoff before editing those files. Add
 new migrations when needed; never rewrite a merged migration
-([AGENTS.md §4.3, lines 150–158](../AGENTS.md)).
+([AGENTS.md §4.3, lines 155–163](../../AGENTS.md)).
 
 Auth, password links, and admin account changes share revocation behavior. Agree
 that service boundary before separate members work on callers. User management
@@ -108,7 +107,7 @@ view data, validation errors, and flash outcomes are agreed.
 
 | Package | Owner role | Depends on / completion evidence |
 |---|---|---|
-| Foundation | Foundation/auth core | Follow SETUP; preserve project files; register provider, middleware, auth model, and UTC connection; lock the generated baseline; demonstrate route/migration/build readiness |
+| Foundation | Foundation/auth core | Install with SETUP §1–2 on a PHP 8.4 machine; demonstrate route/migration/build readiness |
 | Auth and account safeguards | Foundation/auth core | Foundation; source alignment for new policies; login/logout, setup/reset, first-admin activation, and shared revocation behavior with tests |
 | Users and organizations | Admin accounts | Shared account interfaces; transactional user/QR creation, invitations, password fallback, status/role safeguards, and organization rules |
 | CSV import | Admin accounts | User-creation rules and an explicit handoff of shared files; all-or-none validation and no invitation as a side effect |
@@ -116,12 +115,12 @@ view data, validation errors, and flash outcomes are agreed.
 | Integrated acceptance | UI/verification | Implemented packages; fresh install, browser checks, MariaDB races, full check report, and owner review |
 
 Preserve existing module placement: `/home` belongs to Rewards and `/admin` to
-Reporting ([API_Design.md §7.3–7.4](../docs/API_Design.md)). Those controllers need
+Reporting ([API_Design.md §7.3–7.4](../../docs/API_Design.md)). Those controllers need
 explicit task ownership even during this account milestone. The lead recommends
 deferring profile/QR rendering UI and its unresolved QR package; retain existing
 route contracts and generate account QR credentials as required. Do not quietly
 add a dependency or link an unfinished page as a working account tool
-([API_Design.md §7.6 and §10 q8](../docs/API_Design.md);
+([API_Design.md §7.6 and §10 q8](../../docs/API_Design.md);
 [ACCOUNT-MANAGEMENT.md, lines 72–101](ACCOUNT-MANAGEMENT.md)).
 
 ## Task packet and handoff
@@ -135,7 +134,7 @@ Completion returns changed files, commit/revision, behavior evidence, exact
 commands/results, and remaining blockers. Label every check `passed`, `failed`,
 `blocked`, or `incomplete`. Include test counts; zero tests or missing tools is
 not verification. Business logic needs tests in the same focused change
-([AGENTS.md §6, lines 234–244](../AGENTS.md)).
+([AGENTS.md §6, lines 239–249](../../AGENTS.md)).
 
 Use the stages Ready, Implementing, Review, and Integrated. Ready means the task
 has an owner, an approved contract, a reviewed base commit, and available
@@ -155,7 +154,7 @@ controlled clocks, fake mail or the local log mailer, and real session behavior.
 Do not copy production data or send acceptance emails to real recipients. Keep
 runtime credentials and generated reset links out of committed fixtures/logs;
 the existing public signing vectors remain unchanged
-([AGENTS.md, lines 66–67 and 241–242](../AGENTS.md)).
+([AGENTS.md, lines 71–72 and 246–247](../../AGENTS.md)).
 
 ## Acceptance and merge gates
 
@@ -169,9 +168,9 @@ responsive layout, and functional landing-page links.
 
 Run fast feature checks during work and the required repository checks before a
 web PR: swappability, signing vectors, Pint, and `php artisan test`
-([AGENTS.md §8, lines 263–277](../AGENTS.md)). Also inspect `route:list` after
+([AGENTS.md §8, lines 268–282](../../AGENTS.md)). Also inspect `route:list` after
 bootstrap/auth/route changes and build assets when frontend files change
-([SETUP.md, lines 233–241 and 274–280](../SETUP.md)). Format only changed files.
+([SETUP.md, lines 89–97 and 130–136](../../SETUP.md)). Format only changed files.
 Track baseline incomplete tests and resolve their missing assertions with the
 relevant owner; do not skip, delete, or weaken them or invent a full-suite
 exemption. A passing account subset is reported as a subset.
@@ -179,10 +178,10 @@ exemption. A passing account subset is reported as a subset.
 Use MariaDB 11.8/InnoDB with `utf8mb4_unicode_ci`, UTC, and the default database
 session driver for integrated checks. Verify unique keys, foreign keys, rollback,
 and persistent sessions against that engine, not just SQLite
-([Database_Schema.md, lines 5–13 and 24–51](../docs/Database_Schema.md);
-[.env.example, lines 35–57](.env.example)). Preserve the documented session-driver
+([Database_Schema.md, lines 5–13 and 24–51](../../docs/Database_Schema.md);
+[.env.example, lines 35–57](../.env.example)). Preserve the documented session-driver
 swappability in the account design
-([System_Plan.md §8.1, line 656](../docs/System_Plan.md)).
+([System_Plan.md §8.1, line 656](../../docs/System_Plan.md)).
 
 Prove last-admin races with committed setup data and separately connected
 workers synchronized at the competing operation. Assert that concurrent
@@ -191,13 +190,13 @@ and inspect final rows. Sequential requests, isolated per-worker databases, or
 one rollback-wrapped test do not prove this race safe. Use a concurrent-capable
 server for HTTP races. Add a MySQL compatibility acceptance pass before handover.
 Later ledger and stock races follow the existing locking rules
-([System_Plan.md §6–6.1, lines 439–480](../docs/System_Plan.md)).
+([System_Plan.md §6–6.1, lines 439–480](../../docs/System_Plan.md)).
 
 The lead recommends merging dependency PRs serially. Members rerun relevant
 gates and the final required checks on the latest integrated revision after
 base changes. Require an area-owner approval and the AI-assistance/performance
 section; the team must name the human owner/reviewer currently marked `TODO(team)`
-([AGENTS.md §9–10, lines 283–319](../AGENTS.md)). Codex technical review does not
+([AGENTS.md §9–10, lines 288–324](../../AGENTS.md)). Codex technical review does not
 automatically supply a GitHub approval identity or area-owner approval. The lead
 reviews and recommends; the authorized repository maintainer merges.
 
@@ -229,13 +228,13 @@ Keep firmware implementation outside the web team's scope. Before later device
 packages, coordinate the existing signing inputs/vectors, JSON errors and
 retryability, units/null fields, device scoping, retries/duplicates, expiry, and
 delayed completion with the docs and firmware owners
-([API_Design.md §3–5 and §8](../docs/API_Design.md)). Use the existing simulator
+([API_Design.md §3–5 and §8](../../docs/API_Design.md)). Use the existing simulator
 before hardware. Its response comparisons need server-side database assertions
 to establish a single transaction/credit
-([simulate.py, lines 223–244](../tools/simulator/simulate.py)).
+([simulate.py, lines 223–244](../../tools/simulator/simulate.py)).
 
 Timing, physical recovery, reviewed-session actions, new schema/API behavior,
 points, and signing changes require the existing owner decision path. Do not
 resolve those as side effects of account work
-([API_Design.md §10](../docs/API_Design.md);
-[AGENTS.md §11, lines 323–334](../AGENTS.md)).
+([API_Design.md §10](../../docs/API_Design.md);
+[AGENTS.md §11, lines 328–339](../../AGENTS.md)).

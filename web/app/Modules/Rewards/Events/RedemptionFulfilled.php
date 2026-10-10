@@ -16,7 +16,5 @@ class RedemptionFulfilled
 {
     use Dispatchable;
 
-    public function __construct(public readonly Redemption $redemption)
-    {
-    }
+    public function __construct(public readonly Redemption $redemption) {}
 }

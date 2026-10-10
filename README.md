@@ -37,6 +37,8 @@ docs/                 the design. The source of truth — read this first
   Database_ERD.mmd        the same, as a diagram
 
 web/                  the Laravel app (modular monolith, 5 modules + 1)
+  docs/                 web-only notes: UI design guide, account management,
+                        team workflow, wireframes. docs/ above still wins
   app/Modules/          Identity, Devices, Deposits, Rewards, Reporting,
                         Notifications
   app/Support/Device/   the device API error contract
@@ -53,10 +55,6 @@ tools/simulator/      signs requests and drives the full deposit flow in Python
 scripts/              the two portability checks from System_Plan.md §8.1
 SETUP.md              how to build and run all of it
 ```
-
-`web/` holds this project's own files only. The Laravel framework skeleton comes
-from `composer create-project` — see [SETUP.md](SETUP.md) §1 for why, and §2 for
-the commands.
 
 ---
 

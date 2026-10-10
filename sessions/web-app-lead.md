@@ -34,10 +34,10 @@ implement and fix application code. Start with login and account management.
 
 ## Files Touched
 
-- [web/ACCOUNT-MANAGEMENT.md](../web/ACCOUNT-MANAGEMENT.md): confirmed milestone
+- [web/docs/ACCOUNT-MANAGEMENT.md](../web/docs/ACCOUNT-MANAGEMENT.md): confirmed milestone
   decisions, scope and acceptance targets.
-- [web/CONTEXT.md](../web/CONTEXT.md): account terminology.
-- [web/TEAM-WORKFLOW.md](../web/TEAM-WORKFLOW.md): proposed human-team workflow.
+- [web/docs/CONTEXT.md](../web/docs/CONTEXT.md): account terminology.
+- [web/docs/TEAM-WORKFLOW.md](../web/docs/TEAM-WORKFLOW.md): proposed human-team workflow.
 - `sessions/web-app-lead.md`: this handoff.
 
 ## Decisions & Rationale
@@ -62,9 +62,9 @@ implement and fix application code. Start with login and account management.
 
 ## Open Issues / Blockers
 
-- Laravel skeleton/manifests are still absent. The 4 October runtime audit found
-  PHP 8.2.12 below required 8.4; compatible Composer/database readiness was not
-  established. Runtime installations were not rechecked today.
+- The Laravel 13 app and its lock files are committed in `web/`. The 4 October
+  runtime audit found PHP 8.2.12 below required 8.4 on the audited machine;
+  compatible Composer/database readiness there was not rechecked.
 - Human role holders and area approvers remain unnamed. Confirmed account choices
   still need source-document alignment; do not reopen the settled interview.
 - Existing device PHP tests are incomplete. No tracked CI/CODEOWNERS was found;
@@ -78,8 +78,8 @@ implement and fix application code. Start with login and account management.
    former-path deletion and `sessions/web-app-lead.md`.
 2. Assign human implementation roles, the area reviewer and merge maintainer.
 3. Hand confirmed account notes to the docs owner for reconciliation; have the
-   foundation member refresh tooling readiness and bootstrap Laravel 13/PHP 8.4
-   using SETUP alongside that source alignment.
+   foundation member refresh tooling readiness and install the app on PHP 8.4
+   with SETUP §1–2 alongside that source alignment.
 4. Freeze account-policy and view contracts, then issue bounded human task packets
    with file ownership, base revision, dependencies and acceptance evidence.
 5. Review human-authored PRs and integrate in dependency order with the required

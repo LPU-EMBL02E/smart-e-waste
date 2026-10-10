@@ -28,6 +28,7 @@ use Tests\TestCase;
 class DeviceSignatureTest extends TestCase
 {
     private const SECRET = 'test-secret-do-not-use-0123456789abcdef';
+
     private const TIMESTAMP = 1790956800;
 
     /** Vector 1: GET with no body. The signed string ends with "\n". */

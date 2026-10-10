@@ -21,6 +21,5 @@ class BinFull
     public function __construct(
         public readonly Device $device,
         public readonly BinTelemetry $reading,
-    ) {
-    }
+    ) {}
 }

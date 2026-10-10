@@ -23,7 +23,9 @@ class Redemption extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'PENDING';
+
     public const STATUS_FULFILLED = 'FULFILLED';
+
     public const STATUS_CANCELLED = 'CANCELLED';
 
     protected $fillable = [

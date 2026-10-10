@@ -19,9 +19,7 @@ use Illuminate\View\View;
  */
 class OrganizationLeaderboardController
 {
-    public function __construct(private ReportingQueries $reporting)
-    {
-    }
+    public function __construct(private ReportingQueries $reporting) {}
 
     public function __invoke(): View
     {

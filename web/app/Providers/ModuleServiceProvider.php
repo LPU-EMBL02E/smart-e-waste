@@ -25,7 +25,7 @@ use Illuminate\Support\ServiceProvider;
  *   2. wires the three events to their listeners, which is the whole of the
  *      Notifications module's coupling to the rest of the app.
  *
- * Register it in bootstrap/providers.php (see SETUP.md).
+ * Registered in bootstrap/providers.php.
  */
 class ModuleServiceProvider extends ServiceProvider
 {

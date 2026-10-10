@@ -26,7 +26,12 @@ around.
 | An endpoint, route, field rule or error code | `docs/API_Design.md` |
 | A table, column, key or constraint | `docs/Database_Schema.md` |
 | How to build and run | `SETUP.md` |
+| Notes for one app only (UI design guide, team workflow, drafts) | `<app>/docs/`, e.g. `web/docs/` |
 
+- `<app>/docs/` holds working notes for one area and is reviewed by that area's
+  owner. It may add detail but never overrides `docs/`: if the two disagree,
+  `docs/` wins and the app note is corrected. Anything shared between web and
+  firmware — API, schema, signing, business rules — belongs in `docs/`.
 - Before you implement something, find the doc section that describes it. Most
   stub files already name the section in their docblock — start there.
 - **If the code and the docs disagree, stop and ask.** Do not "fix" either side
@@ -82,8 +87,8 @@ every change small and on-task.
   defect.
 - **No speculative abstraction.** No interfaces, base classes, factories, or
   "manager" classes for one implementation. No config options nobody asked for.
-- **Don't touch framework-generated files** unless `SETUP.md` §3 says to edit
-  them.
+- **Don't touch Laravel's stock files** (`bootstrap/`, stock `config/*.php`, `public/`)
+  without the web owner, and never hand-edit `composer.lock` or `package-lock.json`.
 - **Don't delete comments, doc references, or `TODO`s** you don't understand.
 - **Don't invent behaviour.** If the docs don't say what should happen, ask. Do
   not guess a status code, error code, point value, or state transition.

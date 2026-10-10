@@ -24,7 +24,9 @@ class Device extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_INACTIVE = 'inactive';
+
     public const STATUS_RETIRED = 'retired';
 
     protected $fillable = [
