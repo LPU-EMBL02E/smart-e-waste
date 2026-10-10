@@ -1,0 +1,4 @@
+---
+# AGENTS.md §4.1: Google style, 2-space indent. Applies to all three firmware programs.
+Language: Cpp
+BasedOnStyle: Google
