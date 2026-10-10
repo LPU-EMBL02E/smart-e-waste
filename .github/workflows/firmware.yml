@@ -1,17 +1,11 @@
-# Builds each firmware program with PlatformIO (AGENTS.md §8). Runs only when
-# firmware/ or this file changes.
+# Builds each firmware program with PlatformIO (AGENTS.md §8). Runs on every PR
+# so it can be a required check on main.
 name: Firmware
 
 on:
   pull_request:
-    paths:
-      - "firmware/**"
-      - ".github/workflows/firmware.yml"
   push:
     branches: [main]
-    paths:
-      - "firmware/**"
-      - ".github/workflows/firmware.yml"
 
 permissions:
   contents: read

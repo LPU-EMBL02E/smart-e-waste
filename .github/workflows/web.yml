@@ -1,17 +1,11 @@
-# Pint and the test suite for the Laravel app (AGENTS.md §8). Runs only when
-# web/ or this file changes.
+# Pint and the test suite for the Laravel app (AGENTS.md §8). Runs on every PR
+# so it can be a required check on main.
 name: Web
 
 on:
   pull_request:
-    paths:
-      - "web/**"
-      - ".github/workflows/web.yml"
   push:
     branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/web.yml"
 
 permissions:
   contents: read
