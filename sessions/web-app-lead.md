@@ -34,10 +34,10 @@ implement and fix application code. Start with login and account management.
 
 ## Files Touched
 
-- [web/ACCOUNT-MANAGEMENT.md](../web/ACCOUNT-MANAGEMENT.md): confirmed milestone
+- [web/docs/ACCOUNT-MANAGEMENT.md](../web/docs/ACCOUNT-MANAGEMENT.md): confirmed milestone
   decisions, scope and acceptance targets.
-- [web/CONTEXT.md](../web/CONTEXT.md): account terminology.
-- [web/TEAM-WORKFLOW.md](../web/TEAM-WORKFLOW.md): proposed human-team workflow.
+- [web/docs/CONTEXT.md](../web/docs/CONTEXT.md): account terminology.
+- [web/docs/TEAM-WORKFLOW.md](../web/docs/TEAM-WORKFLOW.md): proposed human-team workflow.
 - `sessions/web-app-lead.md`: this handoff.
 
 ## Decisions & Rationale

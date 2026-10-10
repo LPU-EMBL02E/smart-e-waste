@@ -10,8 +10,8 @@ source of truth.
 Deliver login and account management: student and admin access, account creation,
 and password setup. Implementation and tests belong in `web/`.
 
-Existing contracts are in [System_Plan.md](../docs/System_Plan.md), sections 4 and
-5.6, and [API_Design.md](../docs/API_Design.md), sections 7.2, 7.4 and 7.6. Account
+Existing contracts are in [System_Plan.md](../../docs/System_Plan.md), sections 4 and
+5.6, and [API_Design.md](../../docs/API_Design.md), sections 7.2, 7.4 and 7.6. Account
 terms are defined in [CONTEXT.md](CONTEXT.md).
 
 ## Confirmed decisions
