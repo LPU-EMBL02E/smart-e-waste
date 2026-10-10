@@ -53,6 +53,8 @@ firmware/
 
 tools/simulator/      signs requests and drives the full deposit flow in Python
 scripts/              the two portability checks from System_Plan.md §8.1
+.github/workflows/    CI: the AGENTS.md §8 checks, required to merge into main
+sessions/             AI agent session recaps (working notes, not design docs)
 SETUP.md              how to build and run all of it
 ```
 
@@ -129,9 +131,10 @@ This is boilerplate and structure, not a working system.
 
 **Real and usable now**
 
-- All 14 migrations — the 12 application tables plus Laravel's
-  `password_reset_tokens` and `sessions` — with every key, unique constraint and
-  index from `Database_Schema.md`.
+- Migrations for the 12 application tables plus Laravel's
+  `password_reset_tokens` and `sessions`, with every key, unique constraint and
+  index from `Database_Schema.md`. Laravel's stock `cache` and `jobs` migrations
+  sit beside them.
 - Eloquent models with their casts, relations and the helpers the rules need
   (`RewardRule::pointsFor()`, `SessionStatus`, `LedgerEntryType`).
 - Every route from `API_Design.md` §5 and §7: 7 device endpoints and the full
@@ -139,9 +142,10 @@ This is boilerplate and structure, not a working system.
 - The device error contract: `DeviceErrorCode` (status and `retryable` per code),
   `DeviceApiException`, and `DeviceExceptions` so no device route can ever
   answer with HTML.
-- The HMAC signature middleware, written from the spec — **not yet executed**,
-  because the authoring environment had no PHP. Its canonical string was
-  verified against both test vectors by independent implementations in Python.
+- The HMAC signature middleware, written from the spec — **not yet exercised
+  by a test**: both tests in `DeviceSignatureTest` are still marked incomplete.
+  Its canonical string was verified against both test vectors by independent
+  implementations in Python.
 - FormRequest validation rules wherever `API_Design.md` tabulates them,
   including the three constraints between the reward rule variables.
 - `config/ewaste.php` and `.env.example`, fully annotated.
