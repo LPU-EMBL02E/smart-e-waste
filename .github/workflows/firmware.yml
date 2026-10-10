@@ -1,0 +1,49 @@
+# Builds each firmware program with PlatformIO (AGENTS.md §8). Runs only when
+# firmware/ or this file changes.
+name: Firmware
+
+on:
+  pull_request:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware.yml"
+  push:
+    branches: [main]
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        program: [controller, camera, display]
+    # TODO(team): the display program cannot build until include/lv_conf.h
+    # exists, which waits on the panel model (System_Plan.md §10 and
+    # firmware/display/platformio.ini). Its failure is shown but does not block
+    # a PR; remove this line once it builds.
+    continue-on-error: ${{ matrix.program == 'display' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # Toolchains and libraries are large; reuse them between runs.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.platformio
+          key: platformio-${{ matrix.program }}-${{ hashFiles(format('firmware/{0}/platformio.ini', matrix.program)) }}
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Build
+        working-directory: firmware/${{ matrix.program }}
+        run: pio run
