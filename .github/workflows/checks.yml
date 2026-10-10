@@ -1,0 +1,24 @@
+# The two checks AGENTS.md §8 runs on every change, whatever area it touches.
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # No vendor SDK in web/app/, env() only in web/config/ (System_Plan.md §8.1).
+      - name: Swappability
+        run: ./scripts/check-swappability.sh
+
+      # The signing vectors shared by PHP, Python and firmware (API_Design.md §3.4).
+      - name: Signing vectors
+        run: python3 tools/simulator/test_vectors.py
