@@ -13,7 +13,7 @@ This file covers the two kinds of route the system has:
   admin dashboard's live summary, which is the one JSON web route.
 
 It is written from `System_Plan.md`, `Database_Schema.md`
-and `EMBL02E_Smart_EWaste_ERD_v4.mmd`. Those files stay the source of truth for
+and `Database_ERD.mmd`. Those files stay the source of truth for
 business rules and tables. This file adds the wire-level detail needed to build.
 
 **How to read it:**

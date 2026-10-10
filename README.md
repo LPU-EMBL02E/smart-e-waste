@@ -187,10 +187,6 @@ code:
   `firmware/README.md`, not specified in the docs. Confirm them before building
   both sides.
 
-**One inconsistency in the docs**, left as-is rather than edited: both
-`System_Plan.md` §6 and `API_Design.md` §1 refer to
-`EMBL02E_Smart_EWaste_ERD_v4.mmd`; the file is `docs/Database_ERD.mmd`.
-
 ---
 
 ## License
