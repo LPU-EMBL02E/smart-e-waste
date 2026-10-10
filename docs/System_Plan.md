@@ -463,7 +463,7 @@ the dump is restored on a server set to UTC.
 tables (`migrations`, `sessions`, `cache`, `jobs`, and `password_reset_tokens`
 for the reset links). The full definition is in
 `Database_Schema.md`, with the diagram in
-`EMBL02E_Smart_EWaste_ERD_v4.mmd`. This section is the rationale; the schema file
+`Database_ERD.mmd`. This section is the rationale; the schema file
 is the source of truth.
 
 ### 6.1 Ledger and concurrency rules
