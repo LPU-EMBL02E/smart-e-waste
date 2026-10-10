@@ -29,15 +29,14 @@ submission; the authorized maintainer owns merging and deployment.
 
 Current readiness from the team audit:
 
-- `web/` has no Laravel framework skeleton or Composer/npm manifests yet. This
-  is intentional, and bootstrap is already specified in
-  [SETUP.md §1–3, lines 12–184](../../SETUP.md). A member can prepare that foundation
-  while source-document alignment proceeds separately.
+- `web/` is a complete Laravel 13 app with its module wiring, auth model, UTC
+  connection and both lock files committed. Install it with
+  [SETUP.md §1, lines 10–27](../../SETUP.md); no bootstrap step remains.
 - The runtime target is PHP 8.4, Laravel 13, and MariaDB 11.8. The discovered
   XAMPP PHP is 8.2.12 and its MariaDB is 10.4.32; neither satisfies that target.
   MySQL 8.0.41 was detected, but no project test database readiness is established.
   Follow the existing version policy rather than silently changing the stack
-  ([SETUP.md, lines 29–58](../../SETUP.md)).
+  ([SETUP.md, lines 26–27](../../SETUP.md)).
 - Signing vectors passed using bundled Python. Swappability passed with Git
   Bash's utility PATH set explicitly. Bare Bash previously returned exit 0 after
   a missing utility caused an erroneous skip; meaningful output matters as well
@@ -108,7 +107,7 @@ view data, validation errors, and flash outcomes are agreed.
 
 | Package | Owner role | Depends on / completion evidence |
 |---|---|---|
-| Foundation | Foundation/auth core | Follow SETUP; preserve project files; register provider, middleware, auth model, and UTC connection; lock the generated baseline; demonstrate route/migration/build readiness |
+| Foundation | Foundation/auth core | Install with SETUP §1–2 on a PHP 8.4 machine; demonstrate route/migration/build readiness |
 | Auth and account safeguards | Foundation/auth core | Foundation; source alignment for new policies; login/logout, setup/reset, first-admin activation, and shared revocation behavior with tests |
 | Users and organizations | Admin accounts | Shared account interfaces; transactional user/QR creation, invitations, password fallback, status/role safeguards, and organization rules |
 | CSV import | Admin accounts | User-creation rules and an explicit handoff of shared files; all-or-none validation and no invitation as a side effect |
@@ -171,7 +170,7 @@ Run fast feature checks during work and the required repository checks before a
 web PR: swappability, signing vectors, Pint, and `php artisan test`
 ([AGENTS.md §8, lines 268–282](../../AGENTS.md)). Also inspect `route:list` after
 bootstrap/auth/route changes and build assets when frontend files change
-([SETUP.md, lines 233–241 and 274–280](../../SETUP.md)). Format only changed files.
+([SETUP.md, lines 89–97 and 130–136](../../SETUP.md)). Format only changed files.
 Track baseline incomplete tests and resolve their missing assertions with the
 relevant owner; do not skip, delete, or weaken them or invent a full-suite
 exemption. A passing account subset is reported as a subset.

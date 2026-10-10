@@ -21,7 +21,7 @@ use Throwable;
  *
  * DeviceApiException renders itself, so it is not listed here.
  *
- * Wire it up in bootstrap/app.php (see SETUP.md):
+ * Wired up in bootstrap/app.php:
  *
  *     ->withExceptions(function (Exceptions $exceptions) {
  *         DeviceExceptions::register($exceptions);

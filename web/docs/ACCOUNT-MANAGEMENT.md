@@ -91,8 +91,8 @@ only the latest issued link remains usable.
 
 ## Implementation scope
 
-- Bootstrap Laravel 13 with PHP 8.4 and Composer using `SETUP.md`, sections 2 and
-  3, preserving the repository's existing project files.
+- Install the committed Laravel 13 app with PHP 8.4 and Composer using
+  `SETUP.md` §1–2.
 - Implement login, logout, password setup/reset, and first-admin activation.
 - Implement admin user and organization management, CSV import, individual
   invitations, and the manual password fallback.
@@ -132,6 +132,6 @@ contracts, task boundaries, reviews and integration. The delivery workflow is
 recorded in [TEAM-WORKFLOW.md](TEAM-WORKFLOW.md).
 
 The docs owner still needs to reconcile these decisions with the authoritative
-source documents through a separate reviewed change. Bootstrap preparation can
-follow the existing `SETUP.md` while that alignment is completed. Owner review
+source documents through a separate reviewed change. Installing the app with
+`SETUP.md` can proceed while that alignment is completed. Owner review
 remains part of the repository's PR process.
