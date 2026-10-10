@@ -27,9 +27,7 @@ use Illuminate\View\View;
  */
 class DashboardController
 {
-    public function __construct(private ReportingQueries $reporting)
-    {
-    }
+    public function __construct(private ReportingQueries $reporting) {}
 
     public function index(): View
     {

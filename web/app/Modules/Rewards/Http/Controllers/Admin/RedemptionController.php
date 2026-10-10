@@ -24,9 +24,7 @@ use Illuminate\View\View;
  */
 class RedemptionController
 {
-    public function __construct(private RedemptionService $redemptions)
-    {
-    }
+    public function __construct(private RedemptionService $redemptions) {}
 
     public function index(): View
     {

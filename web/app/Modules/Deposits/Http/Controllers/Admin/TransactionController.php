@@ -30,9 +30,7 @@ use Illuminate\View\View;
  */
 class TransactionController
 {
-    public function __construct(private DepositService $deposits)
-    {
-    }
+    public function __construct(private DepositService $deposits) {}
 
     public function index(): View
     {

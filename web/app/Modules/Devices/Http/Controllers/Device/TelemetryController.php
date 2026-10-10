@@ -25,9 +25,7 @@ use Illuminate\Http\JsonResponse;
  */
 class TelemetryController
 {
-    public function __construct(private BinService $bins)
-    {
-    }
+    public function __construct(private BinService $bins) {}
 
     public function __invoke(TelemetryRequest $request): JsonResponse
     {

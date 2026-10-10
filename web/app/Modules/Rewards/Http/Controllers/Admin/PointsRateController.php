@@ -23,9 +23,7 @@ use Illuminate\View\View;
  */
 class PointsRateController
 {
-    public function __construct(private RewardRuleService $rules)
-    {
-    }
+    public function __construct(private RewardRuleService $rules) {}
 
     public function show(): View
     {
