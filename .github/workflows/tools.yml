@@ -1,17 +1,11 @@
-# ruff format and lint for the Python tools (AGENTS.md §4.1 and §8). Runs only
-# when tools/ or this file changes.
+# ruff format and lint for the Python tools (AGENTS.md §4.1 and §8). Runs on
+# every PR so it can be a required check on main.
 name: Tools
 
 on:
   pull_request:
-    paths:
-      - "tools/**"
-      - ".github/workflows/tools.yml"
   push:
     branches: [main]
-    paths:
-      - "tools/**"
-      - ".github/workflows/tools.yml"
 
 permissions:
   contents: read
