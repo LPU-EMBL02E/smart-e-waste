@@ -4,9 +4,9 @@
  * Database_Schema.md §2 — users.
  *
  * This file, together with the password_reset_tokens and sessions migrations
- * beside it, REPLACES Laravel's shipped 0001_01_01_000000_create_users_table.php.
- * Delete that file during setup (see SETUP.md); keep Laravel's cache and jobs
- * migrations as they are.
+ * beside it, REPLACES Laravel's shipped 0001_01_01_000000_create_users_table.php,
+ * which is not in this repository. Laravel's cache and jobs migrations are kept
+ * as they are.
  *
  * Differences from Laravel's default users table, all from the schema:
  *   - first_name / last_name instead of a single name column
