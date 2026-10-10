@@ -2,7 +2,6 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

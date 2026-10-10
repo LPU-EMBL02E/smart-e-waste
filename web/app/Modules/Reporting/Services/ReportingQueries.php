@@ -2,6 +2,8 @@
 
 namespace App\Modules\Reporting\Services;
 
+use Illuminate\Support\Collection;
+
 /**
  * Read-only queries behind the admin dashboard, the leaderboards and the
  * reports. System_Plan.md §4: Reporting owns no tables and writes nothing; it
@@ -46,7 +48,7 @@ class ReportingQueries
      * Includes every user, admins included: those are the only two roles and
      * every user has a QR token.
      */
-    public function userLeaderboard(int $limit = 50): \Illuminate\Support\Collection
+    public function userLeaderboard(int $limit = 50): Collection
     {
         // TODO
         throw new \LogicException('Not implemented.');
@@ -60,7 +62,7 @@ class ReportingQueries
      * An organization's score is the total points earned by the students
      * CURRENTLY in it.
      */
-    public function organizationLeaderboard(): \Illuminate\Support\Collection
+    public function organizationLeaderboard(): Collection
     {
         // TODO
         throw new \LogicException('Not implemented.');
@@ -84,7 +86,7 @@ class ReportingQueries
      * These are never expired silently, because the item may already be in the
      * bin (System_Plan.md §5.3 rule 6).
      */
-    public function sessionsAwaitingReview(): \Illuminate\Support\Collection
+    public function sessionsAwaitingReview(): Collection
     {
         // TODO
         throw new \LogicException('Not implemented.');

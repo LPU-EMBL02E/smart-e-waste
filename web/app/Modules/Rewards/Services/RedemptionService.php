@@ -20,9 +20,7 @@ use App\Modules\Rewards\Models\Reward;
  */
 class RedemptionService
 {
-    public function __construct(private PointsService $points)
-    {
-    }
+    public function __construct(private PointsService $points) {}
 
     /**
      * Redeem a reward for a user. One database transaction:

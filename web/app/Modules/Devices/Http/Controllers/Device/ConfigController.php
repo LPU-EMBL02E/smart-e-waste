@@ -27,9 +27,7 @@ use Illuminate\Http\Request;
  */
 class ConfigController
 {
-    public function __construct(private BinService $bins)
-    {
-    }
+    public function __construct(private BinService $bins) {}
 
     public function __invoke(Request $request): JsonResponse
     {

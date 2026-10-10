@@ -18,9 +18,7 @@ use Illuminate\View\View;
  */
 class HomeController
 {
-    public function __construct(private PointsService $points)
-    {
-    }
+    public function __construct(private PointsService $points) {}
 
     public function __invoke(Request $request): View
     {

@@ -36,9 +36,11 @@ class User extends Authenticatable
     use Notifiable;
 
     public const ROLE_STUDENT = 'student';
+
     public const ROLE_ADMIN = 'admin';
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
