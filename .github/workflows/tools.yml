@@ -1,0 +1,37 @@
+# ruff format and lint for the Python tools (AGENTS.md §4.1 and §8). Runs only
+# when tools/ or this file changes.
+name: Tools
+
+on:
+  pull_request:
+    paths:
+      - "tools/**"
+      - ".github/workflows/tools.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - ".github/workflows/tools.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # Pinned so a new ruff release cannot fail a PR that changed nothing.
+      - name: Install ruff
+        run: pip install ruff==0.17.0
+
+      - name: Format
+        run: ruff format --check tools/
+
+      - name: Lint
+        run: ruff check tools/
