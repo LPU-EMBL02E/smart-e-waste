@@ -29,7 +29,7 @@ developers, using minimalist neobrutalism with lavender purple and white.
 
 ## Files Touched
 
-- [web/DESIGN.md](../web/DESIGN.md): UI design guide.
+- [web/docs/DESIGN.md](../web/docs/DESIGN.md): UI design guide.
 - `sessions/lavender-design-guide.md`: this handoff note.
 
 ## Decisions & Rationale
