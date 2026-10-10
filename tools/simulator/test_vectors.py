@@ -51,9 +51,13 @@ def main() -> int:
         failures += 1
 
     for vector in (VECTOR_1, VECTOR_2):
-        actual = sign(SECRET, TIMESTAMP, vector["method"], vector["path"], vector["body"])
+        actual = sign(
+            SECRET, TIMESTAMP, vector["method"], vector["path"], vector["body"]
+        )
         ok = actual == vector["expected"]
-        print(f"{'PASS' if ok else 'FAIL'}  {vector['method']:4} {vector['path']}  ({vector['name']})")
+        print(
+            f"{'PASS' if ok else 'FAIL'}  {vector['method']:4} {vector['path']}  ({vector['name']})"
+        )
         if not ok:
             print(f"      expected {vector['expected']}")
             print(f"      actual   {actual}")

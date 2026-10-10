@@ -46,7 +46,9 @@ TIMEOUT_SECONDS = 10
 class Client:
     """One bin's view of the server."""
 
-    def __init__(self, base_url: str, device_code: str, secret: str, verbose: bool = True):
+    def __init__(
+        self, base_url: str, device_code: str, secret: str, verbose: bool = True
+    ):
         self.base_url = base_url.rstrip("/")
         self.device_code = device_code
         self.secret = secret
@@ -73,7 +75,11 @@ class Client:
 
         # Serialize once and sign THESE bytes. Never re-encode: key order and
         # whitespace are part of what was signed (API_Design.md §3.2).
-        body = json.dumps(payload, separators=(",", ":")).encode() if payload is not None else b""
+        body = (
+            json.dumps(payload, separators=(",", ":")).encode()
+            if payload is not None
+            else b""
+        )
 
         sent: dict[str, str] = {}
         if signed:
@@ -137,8 +143,12 @@ class Client:
     def telemetry(self, distance_mm: float) -> tuple[int, dict]:
         return self.request("POST", "/telemetry", {"distance_mm": distance_mm})
 
-    def open_session(self, qr_token: str, firmware: str = "sim-1.0.0", **kwargs) -> tuple[int, dict]:
-        return self.request("POST", "/sessions", {"qr_token": qr_token, "fw": firmware}, **kwargs)
+    def open_session(
+        self, qr_token: str, firmware: str = "sim-1.0.0", **kwargs
+    ) -> tuple[int, dict]:
+        return self.request(
+            "POST", "/sessions", {"qr_token": qr_token, "fw": firmware}, **kwargs
+        )
 
     def deposit(
         self,
@@ -158,12 +168,23 @@ class Client:
                 "weight_g": weight_g,
                 "weight_stable": stable,
                 "samples": samples,
-                "verification": {"method": "cam_diff", "passed": passed, "score": score},
+                "verification": {
+                    "method": "cam_diff",
+                    "passed": passed,
+                    "score": score,
+                },
             },
             **kwargs,
         )
 
-    def complete(self, session_id: str, *, actuator_ok: bool = True, cycle_ms: int = 3200, **kwargs):
+    def complete(
+        self,
+        session_id: str,
+        *,
+        actuator_ok: bool = True,
+        cycle_ms: int = 3200,
+        **kwargs,
+    ):
         return self.request(
             "POST",
             f"/sessions/{session_id}/complete",
@@ -183,7 +204,9 @@ def error_code(body: dict) -> str | None:
     return (body.get("error") or {}).get("code")
 
 
-def run_deposit(client: Client, qr: str, weight: float, actuator_ok: bool = True) -> bool:
+def run_deposit(
+    client: Client, qr: str, weight: float, actuator_ok: bool = True
+) -> bool:
     """The full sequence, in the order the bin performs it."""
     print("\n== deposit ==")
     client.sync_clock()
@@ -211,12 +234,16 @@ def run_deposit(client: Client, qr: str, weight: float, actuator_ok: bool = True
         return False
 
     if actuator_ok:
-        print(f"PASS  transaction {done.get('transaction_id')}, "
-              f"{done.get('points_awarded')} points, balance {done.get('balance')}")
+        print(
+            f"PASS  transaction {done.get('transaction_id')}, "
+            f"{done.get('points_awarded')} points, balance {done.get('balance')}"
+        )
         return done.get("transaction_id") is not None
     # An actuator failure is a 200 with no transaction and no points (P26).
-    print(f"PASS  actuator failure handled: transaction {done.get('transaction_id')}, "
-          f"{done.get('points_awarded')} points")
+    print(
+        f"PASS  actuator failure handled: transaction {done.get('transaction_id')}, "
+        f"{done.get('points_awarded')} points"
+    )
     return done.get("transaction_id") is None and done.get("points_awarded") == 0
 
 
@@ -236,11 +263,18 @@ def scenario_replay_complete(client: Client, qr: str, weight: float) -> bool:
 
     same_transaction = first.get("transaction_id") == second.get("transaction_id")
     same_points = first.get("points_awarded") == second.get("points_awarded")
-    ok = first_status == 200 and second_status == 200 and same_transaction and same_points
+    ok = (
+        first_status == 200
+        and second_status == 200
+        and same_transaction
+        and same_points
+    )
 
-    print(f"{'PASS' if ok else 'FAIL'}  transaction {first.get('transaction_id')} "
-          f"vs {second.get('transaction_id')}, points {first.get('points_awarded')} "
-          f"vs {second.get('points_awarded')}")
+    print(
+        f"{'PASS' if ok else 'FAIL'}  transaction {first.get('transaction_id')} "
+        f"vs {second.get('transaction_id')}, points {first.get('points_awarded')} "
+        f"vs {second.get('points_awarded')}"
+    )
     print("      (balance may differ between the two replies; that is expected — P10)")
     return ok
 
@@ -257,8 +291,11 @@ def scenario_duplicate_session(client: Client, qr: str) -> bool:
         return False
 
     # The first session is now CANCELLED, so acting on it must be refused.
-    status, body = client.deposit(first["session_id"], 100.0)
-    ok = first["session_id"] != second["session_id"] and error_code(body) == "INVALID_SESSION_STATE"
+    _status, body = client.deposit(first["session_id"], 100.0)
+    ok = (
+        first["session_id"] != second["session_id"]
+        and error_code(body) == "INVALID_SESSION_STATE"
+    )
     print(f"{'PASS' if ok else 'FAIL'}  first session now {error_code(body)}")
     return ok
 
@@ -308,7 +345,7 @@ def scenario_unsigned_time(client: Client) -> bool:
     status, body = client.request("GET", "/time", signed=False)
     time_ok = status == 200 and isinstance(body.get("time"), int)
 
-    status2, body2 = client.request("GET", "/config", signed=False)
+    status2, _body2 = client.request("GET", "/config", signed=False)
     config_refused = status2 == 401
 
     ok = time_ok and config_refused
@@ -328,10 +365,18 @@ SCENARIOS = {
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--url", required=True, help="scheme://host[:port] of the server")
-    parser.add_argument("--device", required=True, help="device_code, sent as X-Device-Code")
-    parser.add_argument("--secret", required=True, help="the bin's 64-hex signing secret")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--url", required=True, help="scheme://host[:port] of the server"
+    )
+    parser.add_argument(
+        "--device", required=True, help="device_code, sent as X-Device-Code"
+    )
+    parser.add_argument(
+        "--secret", required=True, help="the bin's 64-hex signing secret"
+    )
     parser.add_argument("--quiet", action="store_true", help="hide the request log")
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -347,9 +392,13 @@ def main() -> int:
 
     scenario = sub.add_parser("scenario", help="run one of the awkward cases")
     scenario.add_argument("name", choices=sorted(SCENARIOS))
-    scenario.add_argument("--qr", help="a student's QR token (needed by most scenarios)")
+    scenario.add_argument(
+        "--qr", help="a student's QR token (needed by most scenarios)"
+    )
     scenario.add_argument("--weight", type=float, default=184.6)
-    scenario.add_argument("--timeout-wait", type=int, default=0, help="seconds to wait for expiry")
+    scenario.add_argument(
+        "--timeout-wait", type=int, default=0, help="seconds to wait for expiry"
+    )
     scenario.add_argument("--skew", type=int, default=600, help="clock skew in seconds")
 
     args = parser.parse_args()
@@ -368,7 +417,12 @@ def main() -> int:
         status, _ = client.config()
         return 0 if status == 200 else 1
 
-    needs_qr = {"replay-complete", "duplicate-session", "expired-session", "actuator-failure"}
+    needs_qr = {
+        "replay-complete",
+        "duplicate-session",
+        "expired-session",
+        "actuator-failure",
+    }
     if args.name in needs_qr and not args.qr:
         parser.error(f"scenario {args.name} needs --qr")
 

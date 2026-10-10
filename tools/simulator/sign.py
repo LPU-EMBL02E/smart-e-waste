@@ -27,13 +27,17 @@ import time
 API_PREFIX = "/api/v1/device"
 
 
-def canonical_string(timestamp: int | str, method: str, path: str, body: bytes = b"") -> bytes:
+def canonical_string(
+    timestamp: int | str, method: str, path: str, body: bytes = b""
+) -> bytes:
     """The exact bytes that get signed."""
     head = f"{timestamp}\n{method.upper()}\n{path}\n".encode()
     return head + body
 
 
-def sign(secret: str, timestamp: int | str, method: str, path: str, body: bytes = b"") -> str:
+def sign(
+    secret: str, timestamp: int | str, method: str, path: str, body: bytes = b""
+) -> str:
     """Lower-case hex HMAC-SHA256 of the canonical string."""
     return hmac.new(
         secret.encode(),
