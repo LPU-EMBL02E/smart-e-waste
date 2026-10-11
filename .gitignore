@@ -39,6 +39,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+.ruff_cache/
 
 # ---------------------------------------------------------------------------
 # Database dumps and backups — may contain personal data
@@ -53,5 +54,7 @@ __pycache__/
 .idea/
 .vscode/
 *.swp
+# Claude Code's personal permission list; .claude/settings.json may be shared
+.claude/settings.local.json
 .DS_Store
 Thumbs.db
