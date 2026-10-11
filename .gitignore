@@ -54,7 +54,7 @@ __pycache__/
 .idea/
 .vscode/
 *.swp
-# Claude Code's personal permission list; .claude/settings.json may be shared
-.claude/settings.local.json
+# Claude Code's local settings and agent files
+.claude/
 .DS_Store
 Thumbs.db
