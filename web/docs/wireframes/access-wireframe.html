@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light" />
+        <link rel="icon" href="data:," />
+        <title>Sign in · Smart E-Waste wireframe</title>
+        <link rel="stylesheet" href="wireframe.css" />
+    </head>
+    <body class="access-page">
+        <a class="skip" href="#access">Skip to account access</a>
+        <div class="demo-banner">
+            <strong>Interactive wireframe.</strong> No real accounts or emails.
+            Use demo details only.
+        </div>
+        <div class="wrap">
+            <header class="site-header">
+                <a class="brand" href="#login"
+                    ><span class="brand-mark" aria-hidden="true">EW</span>Smart
+                    E-Waste</a
+                >
+                <span class="small muted">Campus web portal</span>
+            </header>
+            <main class="layout" id="access" tabindex="-1">
+                <div class="intro">
+                    <p class="intro-title">Your campus.<br />Less e-waste.</p>
+                    <p class="muted">
+                        Keep track of your deposits, points and rewards. One
+                        place for your campus collection program.
+                    </p>
+                    <div class="portal-notes">
+                        <div>
+                            <strong>For students</strong>
+                            <p>Your profile, disposal records and rewards.</p>
+                        </div>
+                        <div>
+                            <strong>For administrators</strong>
+                            <p>Campus collection, records and accounts.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <noscript
+                        ><p>
+                            This interactive wireframe needs JavaScript. No
+                            sign-in requests are sent.
+                        </p></noscript
+                    >
+                    <section data-view="login" hidden>
+                        <h1 tabindex="-1">Sign in</h1>
+                        <p>Use the email linked to your campus account.</p>
+                        <form
+                            id="login-form"
+                            method="post"
+                            action="#login"
+                            novalidate
+                        >
+                            <div
+                                class="feedback"
+                                role="alert"
+                                tabindex="-1"
+                                hidden
+                            ></div>
+                            <div class="field">
+                                <label for="login-email"
+                                    >Email <span>(required)</span></label
+                                >
+                                <input
+                                    id="login-email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="username"
+                                    maxlength="255"
+                                    required
+                                    aria-describedby="login-email-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="login-email-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="login-password"
+                                    >Password <span>(required)</span></label
+                                >
+                                <input
+                                    id="login-password"
+                                    name="password"
+                                    type="password"
+                                    autocomplete="current-password"
+                                    required
+                                    aria-describedby="login-password-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="login-password-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <button class="button primary" type="submit">
+                                Sign in
+                            </button>
+                        </form>
+                        <a class="text-link" href="#forgot">Forgot password?</a>
+                        <div class="account-help">
+                            <strong>Need an account?</strong>
+                            <p>
+                                Create a student account. An administrator will
+                                verify your details before you can use the
+                                portal.
+                            </p>
+                            <a class="text-link" href="#register"
+                                >Create account</a
+                            >
+                        </div>
+                    </section>
+                    <section data-view="register" hidden>
+                        <h1 tabindex="-1">Create your account</h1>
+                        <p>
+                            Enter your details as they appear in your school
+                            records. Student registrations need admin approval.
+                        </p>
+                        <form
+                            id="register-form"
+                            method="post"
+                            action="#registration-status"
+                            novalidate
+                        >
+                            <div
+                                class="feedback"
+                                role="alert"
+                                tabindex="-1"
+                                hidden
+                            ></div>
+                            <div class="field">
+                                <label for="register-first-name"
+                                    >First name <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-first-name"
+                                    name="first_name"
+                                    autocomplete="given-name"
+                                    maxlength="100"
+                                    required
+                                    aria-describedby="register-first-name-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="register-first-name-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-last-name"
+                                    >Last name <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-last-name"
+                                    name="last_name"
+                                    autocomplete="family-name"
+                                    maxlength="100"
+                                    required
+                                    aria-describedby="register-last-name-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="register-last-name-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-student-number"
+                                    >Student number
+                                    <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-student-number"
+                                    name="student_number"
+                                    maxlength="50"
+                                    required
+                                    aria-describedby="register-student-number-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="register-student-number-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-email"
+                                    >Email <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="username"
+                                    maxlength="255"
+                                    required
+                                    aria-describedby="register-email-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="register-email-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-organization"
+                                    >Organization <span>(required)</span></label
+                                >
+                                <select
+                                    id="register-organization"
+                                    name="organization_id"
+                                    required
+                                    aria-describedby="organization-hint register-organization-error"
+                                >
+                                    <option value="">
+                                        Choose an organization
+                                    </option>
+                                    <option value="CCS">
+                                        College of Computer Studies (CCS)
+                                    </option>
+                                    <option value="COE">
+                                        College of Engineering (COE)
+                                    </option>
+                                </select>
+                                <p class="hint" id="organization-hint">
+                                    Illustrative organizations for this
+                                    prototype.
+                                </p>
+                                <p
+                                    class="field-error"
+                                    id="register-organization-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-password"
+                                    >Password <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-password"
+                                    name="password"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    minlength="8"
+                                    required
+                                    aria-describedby="register-password-hint register-password-error"
+                                />
+                                <p class="hint" id="register-password-hint">
+                                    Use at least 8 characters.
+                                </p>
+                                <p
+                                    class="field-error"
+                                    id="register-password-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="register-confirmation"
+                                    >Confirm password
+                                    <span>(required)</span></label
+                                >
+                                <input
+                                    id="register-confirmation"
+                                    name="password_confirmation"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    required
+                                    aria-describedby="register-confirmation-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="register-confirmation-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <button class="button primary" type="submit">
+                                Submit for review
+                            </button>
+                            <p class="hint">
+                                Demo only: your password is discarded. After
+                                approval, the sign-in demo uses
+                                <code>wireframe-demo</code>.
+                            </p>
+                        </form>
+                        <a class="text-link" href="#login"
+                            >Already have an account? Sign in</a
+                        >
+                    </section>
+                    <section data-view="registration-status" hidden>
+                        <h1 id="registration-heading" tabindex="-1">
+                            Pending admin review
+                        </h1>
+                        <p id="registration-description"></p>
+                        <div class="result" id="registration-result"></div>
+                        <p
+                            class="hint"
+                            id="registration-review-note"
+                            hidden
+                        ></p>
+                        <div class="actions">
+                            <a
+                                class="button primary"
+                                href="#login"
+                                id="registration-sign-in"
+                                >Back to sign in</a
+                            >
+                        </div>
+                        <p class="hint">
+                            Prototype only: this status belongs to the single
+                            demo request stored in this browser tab. No real
+                            registration was sent.
+                        </p>
+                    </section>
+                    <section data-view="forgot" hidden>
+                        <h1 tabindex="-1">Forgot password?</h1>
+                        <p>
+                            Enter your account email to request a password reset
+                            link.
+                        </p>
+                        <form
+                            id="forgot-form"
+                            method="post"
+                            action="#sent"
+                            novalidate
+                        >
+                            <div
+                                class="feedback"
+                                role="alert"
+                                tabindex="-1"
+                                hidden
+                            ></div>
+                            <div class="field">
+                                <label for="forgot-email"
+                                    >Email <span>(required)</span></label
+                                >
+                                <input
+                                    id="forgot-email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="username"
+                                    maxlength="255"
+                                    required
+                                    aria-describedby="forgot-email-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="forgot-email-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <button class="button primary" type="submit">
+                                Request reset link
+                            </button>
+                        </form>
+                        <a class="text-link" href="#login">Back to sign in</a>
+                    </section>
+                    <section data-view="sent" hidden>
+                        <h1 tabindex="-1">Check your email</h1>
+                        <div class="result">
+                            If this email belongs to an eligible account, you’ll
+                            receive a password reset link.
+                        </div>
+                        <p class="hint">
+                            Use the most recent link within 60 minutes. If you
+                            still need help, contact your institution’s
+                            administrator.
+                        </p>
+                        <div class="actions">
+                            <a class="button primary" href="#login"
+                                >Back to sign in</a
+                            ><a class="button" href="#forgot"
+                                >Request another link</a
+                            >
+                        </div>
+                        <p class="hint">
+                            Demo only: no email was sent. Preview a reset link
+                            in Prototype controls below.
+                        </p>
+                    </section>
+                    <section data-view="password" hidden>
+                        <h1 id="password-heading" tabindex="-1">
+                            Set your password
+                        </h1>
+                        <p id="password-description">
+                            Complete your account setup with a password.
+                        </p>
+                        <form
+                            id="password-form"
+                            method="post"
+                            action="#success"
+                            novalidate
+                        >
+                            <div
+                                class="feedback"
+                                role="alert"
+                                tabindex="-1"
+                                hidden
+                            ></div>
+                            <div class="field">
+                                <label for="password-email"
+                                    >Account email</label
+                                >
+                                <input
+                                    id="password-email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="username"
+                                    value="student@example.test"
+                                    readonly
+                                />
+                            </div>
+                            <div class="field">
+                                <label for="new-password"
+                                    >New password <span>(required)</span></label
+                                >
+                                <input
+                                    id="new-password"
+                                    name="password"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    minlength="8"
+                                    required
+                                    aria-describedby="password-hint new-password-error"
+                                />
+                                <p class="hint" id="password-hint">
+                                    Use at least 8 characters.
+                                </p>
+                                <p
+                                    class="field-error"
+                                    id="new-password-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <div class="field">
+                                <label for="password-confirmation"
+                                    >Confirm password
+                                    <span>(required)</span></label
+                                >
+                                <input
+                                    id="password-confirmation"
+                                    name="password_confirmation"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    required
+                                    aria-describedby="password-confirmation-error"
+                                />
+                                <p
+                                    class="field-error"
+                                    id="password-confirmation-error"
+                                    hidden
+                                ></p>
+                            </div>
+                            <button
+                                class="button primary"
+                                id="password-submit"
+                                type="submit"
+                            >
+                                Set password
+                            </button>
+                        </form>
+                        <a class="text-link" href="#login">Back to sign in</a>
+                    </section>
+                    <section data-view="success" hidden>
+                        <h1 tabindex="-1">Password form accepted</h1>
+                        <div class="result">
+                            The password setup or reset journey is complete in
+                            this demo.
+                        </div>
+                        <p class="hint">
+                            No password was saved. Sign in with a fixture from
+                            Prototype controls to continue reviewing.
+                        </p>
+                        <div class="actions">
+                            <a class="button primary" href="#login"
+                                >Back to sign in</a
+                            >
+                        </div>
+                    </section>
+                    <section data-view="unusable" hidden>
+                        <h1 tabindex="-1">This link can’t be used</h1>
+                        <p>
+                            It may have expired or been replaced. Request a new
+                            link and use the most recent email.
+                        </p>
+                        <div class="actions">
+                            <a class="button primary" href="#forgot"
+                                >Request another link</a
+                            ><a class="button" href="#login">Back to sign in</a>
+                        </div>
+                    </section>
+                    <section data-view="denied" hidden>
+                        <h1 tabindex="-1">Access denied</h1>
+                        <p>
+                            Your demo account can’t open that page. Return to
+                            your dashboard, or sign in with another demo
+                            account.
+                        </p>
+                        <div class="actions">
+                            <a
+                                class="button primary"
+                                id="return-dashboard"
+                                hidden
+                                >Return to dashboard</a
+                            ><a class="button" href="#login">Back to sign in</a>
+                        </div>
+                    </section>
+                    <section data-view="unavailable" hidden>
+                        <h1 tabindex="-1">Could not connect</h1>
+                        <p>
+                            We couldn’t complete the request. Try signing in
+                            again.
+                        </p>
+                        <div class="actions">
+                            <a class="button primary" href="#login"
+                                >Try again</a
+                            >
+                        </div>
+                    </section>
+                </div>
+            </main>
+            <aside class="review" aria-label="Prototype review tools">
+                <details id="prototype-controls">
+                    <summary>
+                        Prototype controls · demo accounts &amp; states
+                    </summary>
+                    <div class="review-content">
+                        <p class="small muted">
+                            Reviewer tools only. These fill the sign-in form;
+                            the account determines its destination. This
+                            wireframe does not authenticate against a server.
+                        </p>
+                        <div class="fixture-buttons">
+                            <button
+                                class="button"
+                                type="button"
+                                data-fixture="student"
+                            >
+                                Fill student demo
+                            </button>
+                            <button
+                                class="button"
+                                type="button"
+                                data-fixture="admin"
+                            >
+                                Fill admin demo
+                            </button>
+                        </div>
+                        <p class="small">
+                            Emails: <code>student@example.test</code> /
+                            <code>admin@example.test</code><br />Demo password:
+                            <code>wireframe-demo</code>. For a submitted
+                            registration, use Fill applicant demo sign-in below.
+                        </p>
+                        <nav
+                            class="preview-links"
+                            aria-label="Preview access states"
+                        >
+                            <a href="#login">Sign in</a
+                            ><a href="#register">Registration</a
+                            ><a href="#registration-status"
+                                >Registration status</a
+                            ><a href="#forgot">Recovery</a
+                            ><a href="#setup">Setup link</a
+                            ><a href="#reset">Reset link</a
+                            ><a href="#unusable">Unusable link</a
+                            ><a href="#denied">Access denied</a
+                            ><a href="#unavailable">Connection failure</a>
+                        </nav>
+                        <p class="small muted">
+                            Setup/reset links are illustrative. Passwords are
+                            never saved. Demo identity and one registration with
+                            its review result are kept in this tab’s session
+                            storage. No school system is contacted. Failed
+                            sign-in attempts are counted in this page only.
+                        </p>
+                        <div class="fixture-buttons">
+                            <button
+                                class="button"
+                                type="button"
+                                id="fill-applicant"
+                                aria-describedby="applicant-demo-hint"
+                            >
+                                Fill applicant demo sign-in
+                            </button>
+                            <button
+                                class="button"
+                                type="button"
+                                id="clear-registration"
+                            >
+                                Clear registration demo
+                            </button>
+                        </div>
+                        <p class="small muted" id="applicant-demo-hint">
+                            Submit a demo registration to enable applicant
+                            sign-in. Only one request is stored per tab; clear
+                            the demo to try another.
+                        </p>
+                        <p
+                            class="field-error"
+                            id="prototype-feedback"
+                            role="alert"
+                            tabindex="-1"
+                            hidden
+                        ></p>
+                        <p class="small">
+                            <a href="../ACCESS-FLOW-PLAN.md"
+                                >Access flow plan</a
+                            >
+                            · <a href="../DESIGN.md">Design guide</a>
+                        </p>
+                    </div>
+                </details>
+            </aside>
+        </div>
+        <script>
+            // ACCESS-FLOW-PLAN.md registration revision; guest auth references API_Design.md §7.2. Prototype only.
+            const sessionKey = "ewaste-wireframe-session";
+            const registrationKey = "ewaste-wireframe-registration";
+            const destinations = {
+                student: "student-dashboard-prototype-notification-bell.html",
+                admin: "admin-wireframe.html",
+            };
+            const attempts = new Map();
+            let fixtureEmail = "student@example.test";
+            const loginForm = document.getElementById("login-form");
+            const passwordForm = document.getElementById("password-form");
+            const registerForm = document.getElementById("register-form");
+
+            function registration() {
+                try {
+                    const request = JSON.parse(
+                        sessionStorage.getItem(registrationKey),
+                    );
+                    if (
+                        !request ||
+                        ![
+                            "firstName",
+                            "lastName",
+                            "studentNumber",
+                            "email",
+                            "organization",
+                        ].every(
+                            (key) =>
+                                typeof request[key] === "string" &&
+                                request[key].trim(),
+                        ) ||
+                        !["pending", "approved", "denied"].includes(
+                            request.status,
+                        )
+                    )
+                        return null;
+                    if (
+                        request.status !== "pending" &&
+                        !Number.isFinite(Date.parse(request.reviewedAt))
+                    )
+                        return null;
+                    return request;
+                } catch {
+                    return null;
+                }
+            }
+
+            function role() {
+                try {
+                    const session = JSON.parse(
+                        sessionStorage.getItem(sessionKey),
+                    );
+                    if (
+                        session?.role === "student" &&
+                        session.email !== "student@example.test"
+                    ) {
+                        const request = registration();
+                        if (
+                            request?.email !== session.email ||
+                            request.status !== "approved"
+                        )
+                            return null;
+                    }
+                    return ["student", "admin"].includes(session?.role)
+                        ? session.role
+                        : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            function clearErrors(form) {
+                form.querySelector(".feedback").hidden = true;
+                form.querySelectorAll("input, select").forEach((input) =>
+                    input.removeAttribute("aria-invalid"),
+                );
+                form.querySelectorAll(".field-error").forEach((error) => {
+                    error.textContent = "";
+                    error.hidden = true;
+                });
+            }
+
+            function feedback(form, message, issues = []) {
+                const box = form.querySelector(".feedback");
+                box.textContent = message;
+                if (issues.length) {
+                    const list = document.createElement("ul");
+                    issues.forEach(([input, message]) => {
+                        input.setAttribute("aria-invalid", "true");
+                        const error = document.getElementById(
+                            input.id + "-error",
+                        );
+                        error.textContent = message;
+                        error.hidden = false;
+                        const item = document.createElement("li");
+                        const link = document.createElement("a");
+                        link.href = "#" + input.id;
+                        link.textContent =
+                            input.labels[0].childNodes[0].textContent.trim();
+                        link.addEventListener("click", (event) => {
+                            event.preventDefault();
+                            input.focus();
+                        });
+                        item.append(link);
+                        list.append(item);
+                    });
+                    box.append(list);
+                }
+                box.hidden = false;
+                box.focus();
+            }
+
+            function valid(form) {
+                clearErrors(form);
+                const issues = [];
+                form.querySelectorAll("input, select").forEach((input) => {
+                    if (input.required && !input.value.trim())
+                        issues.push([input, "This field is required."]);
+                    else if (!input.validity.valid)
+                        issues.push([input, input.validationMessage]);
+                });
+                if (
+                    (form === passwordForm || form === registerForm) &&
+                    !issues.length &&
+                    form.elements.password.value !==
+                        form.elements.password_confirmation.value
+                ) {
+                    issues.push([
+                        form.elements.password_confirmation,
+                        "Passwords must match.",
+                    ]);
+                }
+                if (!issues.length) return true;
+                feedback(form, "Check the highlighted fields.", issues);
+                form.querySelectorAll('input[type="password"]').forEach(
+                    (input) => {
+                        input.value = "";
+                    },
+                );
+                return false;
+            }
+
+            function render() {
+                const state = location.hash.slice(1) || "login";
+                const view =
+                    state === "setup" || state === "reset" ? "password" : state;
+                const section = Array.from(
+                    document.querySelectorAll("[data-view]"),
+                ).find((item) => item.dataset.view === view);
+                if (!section) {
+                    location.replace("#login");
+                    return;
+                }
+                document.querySelectorAll("[data-view]").forEach((item) => {
+                    item.hidden = item !== section;
+                });
+                document.querySelectorAll("form").forEach(clearErrors);
+                document
+                    .querySelectorAll('input[type="password"]')
+                    .forEach((input) => {
+                        input.value = "";
+                    });
+                document.getElementById("password-heading").textContent =
+                    state === "reset"
+                        ? "Reset your password"
+                        : "Set your password";
+                document.getElementById("password-description").textContent =
+                    state === "reset"
+                        ? "Choose a new password for your account."
+                        : "Complete your account setup with a password.";
+                document.getElementById("password-submit").textContent =
+                    state === "reset" ? "Reset password" : "Set password";
+                document.getElementById("password-email").value = fixtureEmail;
+                const request = registration();
+                const status = request?.status;
+                document.getElementById("registration-heading").textContent =
+                    status === "approved"
+                        ? "Account approved"
+                        : status === "denied"
+                          ? "Registration denied"
+                          : status === "pending"
+                            ? "Pending admin review"
+                            : "No registration submitted";
+                document.getElementById(
+                    "registration-description",
+                ).textContent = request
+                    ? "Registration for " + request.email
+                    : "Create a student account to submit your details for review.";
+                document.getElementById("registration-result").textContent =
+                    status === "approved"
+                        ? "Your details have been approved. You can now sign in to the student portal."
+                        : status === "denied"
+                          ? "Your registration was denied. Portal access is blocked. Contact your institution’s administrator for help."
+                          : status === "pending"
+                            ? "An administrator will compare your name, student number, email and organization with school records. Portal access is blocked until approval."
+                            : "No request is saved in this demo tab.";
+                const reviewNote = document.getElementById(
+                    "registration-review-note",
+                );
+                reviewNote.hidden = !request?.reviewedAt;
+                reviewNote.textContent = request?.reviewedAt
+                    ? "Reviewed by " +
+                      request.reviewedBy +
+                      " · " +
+                      new Intl.DateTimeFormat("en-PH", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                          timeZone: "Asia/Manila",
+                      }).format(new Date(request.reviewedAt)) +
+                      " (Asia/Manila). " +
+                      (request.note || "No review note provided.")
+                    : "";
+                document.getElementById("registration-sign-in").textContent =
+                    status === "approved"
+                        ? "Continue to sign in"
+                        : "Back to sign in";
+                document.getElementById("fill-applicant").disabled = !request;
+                const dashboard = document.getElementById("return-dashboard");
+                const destination = destinations[role()];
+                dashboard.hidden = !destination;
+                if (destination) dashboard.href = destination;
+                const heading = section.querySelector("h1");
+                document.title =
+                    heading.textContent + " · Smart E-Waste wireframe";
+                heading.focus();
+            }
+
+            loginForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                if (!valid(loginForm)) return;
+                const email = document
+                    .getElementById("login-email")
+                    .value.trim()
+                    .toLowerCase();
+                const password = document.getElementById("login-password");
+                const previous = attempts.get(email);
+                const attempt =
+                    previous && Date.now() - previous.started < 60000
+                        ? previous
+                        : { count: 0, started: Date.now() };
+                // shortcut: fixtures and attempt counts are page-local; use server authentication and email/IP throttling in the application.
+                if (attempt.count >= 5) {
+                    password.value = "";
+                    feedback(
+                        loginForm,
+                        "Too many attempts. Wait one minute, then try again.",
+                    );
+                    return;
+                }
+                const account =
+                    email === "student@example.test"
+                        ? "student"
+                        : email === "admin@example.test"
+                          ? "admin"
+                          : registration()?.email === email
+                            ? "student"
+                            : null;
+                if (!account || password.value !== "wireframe-demo") {
+                    attempt.count += 1;
+                    attempts.set(email, attempt);
+                    password.value = "";
+                    feedback(
+                        loginForm,
+                        "We couldn’t sign you in. Check your email and password, then try again.",
+                    );
+                    return;
+                }
+                password.value = "";
+                const request = registration();
+                try {
+                    if (
+                        request?.email === email &&
+                        request.status !== "approved"
+                    ) {
+                        sessionStorage.removeItem(sessionKey);
+                        location.hash = "registration-status";
+                        return;
+                    }
+                    sessionStorage.setItem(
+                        sessionKey,
+                        JSON.stringify({ role: account, email }),
+                    );
+                } catch {
+                    feedback(
+                        loginForm,
+                        "This demo needs session storage. Open it through a local server with session storage enabled, then try again.",
+                    );
+                    return;
+                }
+                location.assign(destinations[account]);
+            });
+
+            registerForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                if (!valid(registerForm)) return;
+                const fields = registerForm.elements;
+                const email = fields.email.value.trim().toLowerCase();
+                if (registration()) {
+                    feedback(
+                        registerForm,
+                        "This demo tab already has a registration. View Registration status, or clear the registration in Prototype controls to try another.",
+                    );
+                    registerForm
+                        .querySelectorAll('[type="password"]')
+                        .forEach((input) => {
+                            input.value = "";
+                        });
+                    return;
+                }
+                if (
+                    ["student@example.test", "admin@example.test"].includes(
+                        email,
+                    )
+                ) {
+                    feedback(
+                        registerForm,
+                        "This demo email is already in use. Use a different example.test address.",
+                        [[fields.email, "Use a different demo email."]],
+                    );
+                    registerForm
+                        .querySelectorAll('[type="password"]')
+                        .forEach((input) => {
+                            input.value = "";
+                        });
+                    return;
+                }
+                const request = {
+                    firstName: fields.first_name.value.trim(),
+                    lastName: fields.last_name.value.trim(),
+                    studentNumber: fields.student_number.value.trim(),
+                    email,
+                    organization: fields.organization_id.value,
+                    status: "pending",
+                    submittedAt: new Date().toISOString(),
+                    reviewedBy: null,
+                    reviewedAt: null,
+                    note: "",
+                };
+                // shortcut: one synthetic request per tab, with no saved password; replace with server-side registration and review before production.
+                registerForm
+                    .querySelectorAll('[type="password"]')
+                    .forEach((input) => {
+                        input.value = "";
+                    });
+                try {
+                    sessionStorage.setItem(
+                        registrationKey,
+                        JSON.stringify(request),
+                    );
+                    sessionStorage.removeItem(sessionKey);
+                } catch {
+                    feedback(
+                        registerForm,
+                        "The demo could not save this request. Enable session storage and try again.",
+                    );
+                    return;
+                }
+                registerForm.reset();
+                location.hash = "registration-status";
+            });
+
+            document
+                .getElementById("registration-sign-in")
+                .addEventListener("click", () => {
+                    document.getElementById("login-email").value =
+                        registration()?.email || "";
+                });
+            document
+                .getElementById("fill-applicant")
+                .addEventListener("click", () => {
+                    const request = registration();
+                    if (!request) return;
+                    fixtureEmail = request.email;
+                    history.replaceState(null, "", "#login");
+                    render();
+                    document.getElementById("login-email").value =
+                        request.email;
+                    document.getElementById("login-password").value =
+                        "wireframe-demo";
+                    document.getElementById("prototype-controls").open = false;
+                    loginForm.querySelector('[type="submit"]').focus();
+                });
+            document
+                .getElementById("clear-registration")
+                .addEventListener("click", () => {
+                    try {
+                        const session = JSON.parse(
+                            sessionStorage.getItem(sessionKey),
+                        );
+                        if (
+                            session?.role === "student" &&
+                            session.email !== "student@example.test"
+                        )
+                            sessionStorage.removeItem(sessionKey);
+                        sessionStorage.removeItem(registrationKey);
+                    } catch {
+                        const error =
+                            document.getElementById("prototype-feedback");
+                        error.textContent =
+                            "The demo could not clear session storage. Reload with session storage enabled.";
+                        error.hidden = false;
+                        error.focus();
+                        return;
+                    }
+                    document.getElementById("prototype-feedback").hidden = true;
+                    registerForm.reset();
+                    history.replaceState(null, "", "#register");
+                    render();
+                });
+
+            document
+                .getElementById("forgot-form")
+                .addEventListener("submit", (event) => {
+                    event.preventDefault();
+                    if (valid(event.currentTarget)) location.hash = "sent";
+                });
+            passwordForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                if (valid(passwordForm)) location.hash = "success";
+            });
+            document.querySelectorAll("[data-fixture]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    fixtureEmail = button.dataset.fixture + "@example.test";
+                    history.replaceState(null, "", "#login");
+                    render();
+                    document.getElementById("login-email").value = fixtureEmail;
+                    document.getElementById("login-password").value =
+                        "wireframe-demo";
+                    document.getElementById("prototype-controls").open = false;
+                    loginForm.querySelector('[type="submit"]').focus();
+                });
+            });
+            document
+                .querySelector(".skip")
+                .addEventListener("click", (event) => {
+                    event.preventDefault();
+                    document.getElementById("access").focus();
+                });
+            addEventListener("hashchange", render);
+            addEventListener("pageshow", render);
+            render();
+        </script>
+    </body>
+</html>
