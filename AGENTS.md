@@ -130,7 +130,7 @@ change.
   `Database_Schema.md` (`weight_g`, `points_delta`, `SESSION_NOT_FOUND`). Units go
   in the name (`_g`, `_mm`, `_ms`, `_s`).
 - **No magic numbers.** PHP settings go in `config/ewaste.php`; firmware
-  constants go in `include/config.h`; pins only in `include/pins.h`.
+  constants go in `include/config.hpp`; pins only in `include/pins.hpp`.
 - **English, plain wording**, in code, comments, commits, and UI text.
 
 ### 4.3 PHP / Laravel (`web/`)
@@ -213,7 +213,7 @@ hardware we actually have.
 ### 5.2 Firmware on the ESP32
 
 - **Every wait has a timeout.** Sensors, serial links, HTTP, the actuator — use
-  the constants in `config.h`. A loop that can wait forever is a bug.
+  the constants in `config.hpp`. A loop that can wait forever is a bug.
 - **Don't block the loop.** Prefer `millis()`-based timing over long `delay()`.
   Short settle delays inside a module are fine; delays in `main.cpp` are not.
 - **Avoid heap churn.** No `new`/`malloc` and no Arduino `String` concatenation

@@ -1,7 +1,7 @@
-#include "feedback.h"
+#include "feedback.hpp"
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement over UART 2 (PIN_PANEL_RX / PIN_PANEL_TX) using the line

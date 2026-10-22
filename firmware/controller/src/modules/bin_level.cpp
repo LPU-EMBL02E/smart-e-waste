@@ -1,7 +1,7 @@
-#include "bin_level.h"
+#include "bin_level.hpp"
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement with pulseIn on PIN_ULTRASONIC_TRIGGER / PIN_ULTRASONIC_ECHO.

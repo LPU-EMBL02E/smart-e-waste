@@ -1,7 +1,7 @@
-#include "api.h"
+#include "api.hpp"
 
-#include "../../include/config.h"
-#include "settings.h"
+#include "../../include/config.hpp"
+#include "settings.hpp"
 
 /**
  * TODO: implement with WiFi, HTTPClient and mbedtls' HMAC-SHA256
