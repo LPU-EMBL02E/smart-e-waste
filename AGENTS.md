@@ -27,6 +27,7 @@ around.
 | A table, column, key or constraint | `docs/Database_Schema.md` |
 | How to build and run | `SETUP.md` |
 | Notes for one app only (UI design guide, team workflow, drafts) | `<app>/docs/`, e.g. `web/docs/` |
+| Coding rules for firmware C++ | [`firmware/AGENTS.md`](firmware/AGENTS.md) |
 
 - `<app>/docs/` holds working notes for one area and is reviewed by that area's
   owner. It may add detail but never overrides `docs/`: if the two disagree,
@@ -110,10 +111,11 @@ fails review.
 | Code | Tool | Command |
 |---|---|---|
 | PHP (`web/`) | Laravel Pint, `laravel` preset | `cd web && ./vendor/bin/pint` |
-| C++ (`firmware/`) | clang-format, repo `.clang-format` (Google style, 2-space) | `clang-format -i <files>` |
 | Python (`tools/`) | ruff | `ruff format tools/ && ruff check tools/` |
 | JS / CSS | Prettier | `npx prettier --write <files>` |
 | Everything | `.editorconfig` | UTF-8, LF, final newline, 4 spaces (2 for C++/JS/CSS/YAML/JSON) |
+
+C++ formatting is in [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 Never hand-format against a tool, and never reformat files you didn't otherwise
 change.
@@ -160,14 +162,7 @@ change.
 
 ### 4.4 Firmware C++ (`firmware/`)
 
-- Each hardware part sits behind one module in `src/modules/`, in its own
-  `namespace`, with a small fixed interface in its `.h` (`System_Plan.md` §8.2).
-  `main.cpp` is the sequence only — no hardware calls, no HTTP.
-- Only `api` knows about HTTP; only `settings` knows where the server is.
-- Use `constexpr` constants in `UPPER_SNAKE_CASE`; functions and variables in
-  `camelCase`; types in `PascalCase`.
-- Return result values (e.g. `api::Result`) rather than silently failing; log
-  failures to `Serial` with the module name as prefix.
+See [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 ### 4.5 Python (`tools/`)
 
@@ -212,18 +207,7 @@ hardware we actually have.
 
 ### 5.2 Firmware on the ESP32
 
-- **Every wait has a timeout.** Sensors, serial links, HTTP, the actuator — use
-  the constants in `config.hpp`. A loop that can wait forever is a bug.
-- **Don't block the loop.** Prefer `millis()`-based timing over long `delay()`.
-  Short settle delays inside a module are fine; delays in `main.cpp` are not.
-- **Avoid heap churn.** No `new`/`malloc` and no Arduino `String` concatenation
-  in code that runs repeatedly. Use fixed-size buffers and `snprintf`. Heap
-  fragmentation causes crashes days later, not during testing.
-- **Keep RAM and flash small.** Constant strings as `const char*` / `F()`; no
-  large libraries for one function.
-- **Never write NVS in a loop.** Flash wears out; write only when a value
-  changes.
-- Logging stays at `CORE_DEBUG_LEVEL=2` in committed code.
+See [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 ### 5.3 Efficient code in general
 
@@ -259,7 +243,7 @@ justification in the PR**, and the reviewer decides. Before adding one:
   it.
 - It must work on the Pi (PHP 8.4, no Docker, no Redis, no queues) and must not
   bind the app to a vendor (§2 rule 7).
-- Firmware libraries must be pinned to a version in `platformio.ini`.
+- Firmware libraries: see [`firmware/AGENTS.md`](firmware/AGENTS.md).
 - Commit the updated lock files (`composer.lock`, `package-lock.json`).
 - Python tools stay standard-library only.
 
@@ -274,9 +258,10 @@ Run what applies to your change. All must pass.
 python3 tools/simulator/test_vectors.py      # always
 cd web && ./vendor/bin/pint --test           # web/
 cd web && php artisan test                   # web/
-cd firmware/<program> && pio run             # firmware/ (each program you touched)
 ruff format --check tools/ && ruff check tools/   # tools/
 ```
+
+Firmware checks are in [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 If a command can't run on your machine, say so in the PR rather than skipping it
 silently.
