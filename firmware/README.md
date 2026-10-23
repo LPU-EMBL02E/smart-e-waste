@@ -40,7 +40,7 @@ is what lets a bin be re-pointed at another server without reflashing
 
 ## Pin map
 
-Every pin number for the controller is in `controller/include/pins.h` and
+Every pin number for the controller is in `controller/include/pins.hpp` and
 nowhere else. Two to keep in mind: GPIO 34 and 35 are **input-only**, so the
 load cell data line must stay at 3.3 V and the ultrasonic echo line needs a
 divider if the sensor runs on 5 V.
@@ -60,7 +60,7 @@ monitor, which makes each board testable on its own before integration.
 > change" and a pass/fail-plus-score answer from the camera, but not the exact
 > wording. The lines below are a proposal in the style of `API_Design.md`'s
 > `[P]` items — confirm them, then keep both sides in step. The names are also
-> mirrored in the controller's `feedback` module and `display/include/screens.h`.
+> mirrored in the controller's `feedback` module and `display/include/screens.hpp`.
 
 ### Controller ⇄ camera (UART 1, 115200)
 
@@ -130,7 +130,7 @@ idempotent, so resending is always safe (`API_Design.md` §5.6).
 
 ## Signing
 
-The canonical string, the key and the output format are in `api.h` and `api.cpp`.
+The canonical string, the key and the output format are in `api.hpp` and `api.cpp`.
 Check the firmware against the two vectors in `API_Design.md` §3.4 before
 testing against a real server: `tools/simulator/test_vectors.py` asserts the
 same two, so a mismatch is immediately local to the firmware rather than a

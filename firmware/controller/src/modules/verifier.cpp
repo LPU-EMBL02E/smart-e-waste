@@ -1,7 +1,7 @@
-#include "verifier.h"
+#include "verifier.hpp"
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement over UART 1 (PIN_CAMERA_RX / PIN_CAMERA_TX) using the line

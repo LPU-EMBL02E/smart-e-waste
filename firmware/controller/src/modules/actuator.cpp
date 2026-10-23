@@ -1,7 +1,7 @@
-#include "actuator.h"
+#include "actuator.hpp"
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement with ledcWrite on PIN_MOTOR_PWM and the two direction pins,

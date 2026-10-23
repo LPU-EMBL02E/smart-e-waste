@@ -1,9 +1,9 @@
-#include "scale.h"
+#include "scale.hpp"
 
 #include <HX711.h>
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement with the HX711 library on PIN_SCALE_DATA / PIN_SCALE_CLOCK.

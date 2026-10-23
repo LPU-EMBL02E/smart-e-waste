@@ -25,16 +25,16 @@
 
 #include <Arduino.h>
 
-#include "../include/config.h"
-#include "../include/pins.h"
-#include "modules/actuator.h"
-#include "modules/api.h"
-#include "modules/bin_level.h"
-#include "modules/feedback.h"
-#include "modules/scale.h"
-#include "modules/scanner.h"
-#include "modules/settings.h"
-#include "modules/verifier.h"
+#include "../include/config.hpp"
+#include "../include/pins.hpp"
+#include "modules/actuator.hpp"
+#include "modules/api.hpp"
+#include "modules/bin_level.hpp"
+#include "modules/feedback.hpp"
+#include "modules/scale.hpp"
+#include "modules/scanner.hpp"
+#include "modules/settings.hpp"
+#include "modules/verifier.hpp"
 
 namespace {
 

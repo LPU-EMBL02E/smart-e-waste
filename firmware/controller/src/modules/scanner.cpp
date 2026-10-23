@@ -1,9 +1,9 @@
-#include "scanner.h"
+#include "scanner.hpp"
 
 #include <SoftwareSerial.h>
 
-#include "../../include/config.h"
-#include "../../include/pins.h"
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
 
 /**
  * TODO: implement with EspSoftwareSerial on PIN_QR_RX, receive only, 9600 baud.
