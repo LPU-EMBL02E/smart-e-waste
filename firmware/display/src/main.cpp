@@ -25,31 +25,11 @@
 
 #include <Arduino.h>
 
-#include "../include/screens.hpp"
+#include "controller_link.hpp"
 
 namespace {
 
-void drawScreen(Screen screen, const String& values) {
-  (void) screen;
-  (void) values;
-  // TODO: build each screen once as an LVGL object tree, then show and hide
-  // them. Rebuilding a screen on every line leaks memory and flickers.
-  //
-  // Keep the text large: a student reads this standing at the bin, from about
-  // an arm's length away, often in a corridor.
-}
-
-void handleLine(const String& line) {
-  if (line.startsWith("SCREEN ")) {
-    const int nameStart = 7;
-    int separator = line.indexOf(' ', nameStart);
-    String name = separator < 0 ? line.substring(nameStart) : line.substring(nameStart, separator);
-    String values = separator < 0 ? String() : line.substring(separator + 1);
-    drawScreen(screenFromName(name.c_str()), values);
-  } else if (line == "PING") {
-    Serial.println("PONG");
-  }
-}
+ControllerLink controllerLink;
 
 }  // namespace
 
@@ -67,7 +47,7 @@ void loop() {
   if (Serial.available()) {
     String line = Serial.readStringUntil('\n');
     line.trim();
-    handleLine(line);
+    controllerLink.handleLine(line);
   }
 
   // TODO: when the Cancel button is pressed, send exactly:

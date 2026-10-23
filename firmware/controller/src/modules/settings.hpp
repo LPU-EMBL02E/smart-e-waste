@@ -12,34 +12,54 @@
  *
  * The secret is never logged, never sent over the wire and never compiled in.
  */
-namespace settings {
+class Settings {
+  /*
+   * TODO: implement with Preferences (NVS) and WiFiManager.
+   *
+   * Suggested NVS namespace "ewaste", keys: api_url, dev_code, dev_secret, and
+   * for the pending request pc_session, pc_ok, pc_cycle.
+   *
+   * Add the three device fields as WiFiManagerParameters so one portal visit
+   * sets the Wi-Fi credentials and the server details together.
+   */
 
-bool begin();
+ public:
+  explicit Settings() = default;
 
-/** Opens the WiFiManager portal when no Wi-Fi credentials are stored. */
-bool ensureProvisioned();
+  bool begin() { return false; }
 
-/** Scheme, host and optional port only, e.g. "http://192.168.1.10" (P1). */
-String apiBaseUrl();
+  /** Opens the WiFiManager portal when no Wi-Fi credentials are stored. */
+  bool ensureProvisioned() { return false; }
 
-/** Sent as the X-Device-Code header. */
-String deviceCode();
+  /** Scheme, host and optional port only, e.g. "http://192.168.1.10" (P1). */
+  String apiBaseUrl() { return String(); }
 
-/** The HMAC signing secret, 64 hex characters as issued by the server. */
-String deviceSecret();
+  /** Sent as the X-Device-Code header. */
+  String deviceCode() { return String(); }
 
-bool save(const String& baseUrl, const String& deviceCode, const String& secret);
+  /** The HMAC signing secret, 64 hex characters as issued by the server. */
+  String deviceSecret() { return String(); }
 
-/**
- * The unsent `complete` call, kept across reboots.
- *
- * API_Design.md §3.6: after an item is physically deposited, three failed
- * retries mean the request is stored here, the student is shown that points are
- * pending, and it is resent before the next deposit is accepted.
- */
-bool savePendingComplete(const String& sessionId, bool actuatorOk, unsigned long cycleMs);
-bool hasPendingComplete();
-bool loadPendingComplete(String& sessionId, bool& actuatorOk, unsigned long& cycleMs);
-void clearPendingComplete();
+  bool save(const String& baseUrl, const String& deviceCode,
+            const String& secret) {
+    return false;
+  }
 
-}  // namespace settings
+  /**
+   * The unsent `complete` call, kept across reboots.
+   *
+   * API_Design.md §3.6: after an item is physically deposited, three failed
+   * retries mean the request is stored here, the student is shown that points
+   * are pending, and it is resent before the next deposit is accepted.
+   */
+  bool savePendingComplete(const String& sessionId, bool actuatorOk,
+                           unsigned long cycleMs) {
+    return false;
+  }
+  bool hasPendingComplete() { return false; }
+  bool loadPendingComplete(String& sessionId, bool& actuatorOk,
+                           unsigned long& cycleMs) {
+    return false;
+  }
+  void clearPendingComplete() {}
+};

@@ -2,6 +2,9 @@
 
 #include <Arduino.h>
 
+#include "../../include/config.hpp"
+#include "../../include/pins.hpp"
+
 /**
  * The bin-level module. System_Plan.md §8.2.
  *
@@ -11,15 +14,33 @@
  * threshold can be changed from the admin page without a reflash
  * (System_Plan.md §5.3 rule 5).
  */
-namespace bin_level {
+class BinLevel {
+  /*
+   * TODO: implement with pulseIn on PIN_ULTRASONIC_TRIGGER /
+   * PIN_ULTRASONIC_ECHO.
+   *
+   * Remember PIN_ULTRASONIC_ECHO (GPIO 35) is input-only and needs a voltage
+   * divider if the sensor runs on 5 V.
+   *
+   * Take several pulses and return the median, not the mean: an outlier off
+   * the side of a pile skews a mean but not a median. Return a negative value
+   * on timeout rather than a plausible-looking distance — a wrong distance
+   * becomes a wrong fill level, and a wrong fill level either blocks a working
+   * bin or hides a full one.
+   *
+   * Testing to record (guidelines, Step 5): sensor readings against actual
+   * measured distances, with percentage error.
+   */
 
-bool begin();
+ public:
+  explicit BinLevel() = default;
 
-/**
- * One distance reading in millimetres, or a negative value if the sensor did
- * not answer. Median of a few pulses: a single ultrasonic reading off a sloped
- * pile of e-waste is noisy.
- */
-float readDistanceMm();
+  bool begin() { return false; }
 
-}  // namespace bin_level
+  /**
+   * One distance reading in millimetres, or a negative value if the sensor did
+   * not answer. Median of a few pulses: a single ultrasonic reading off a
+   * sloped pile of e-waste is noisy.
+   */
+  float readDistanceMm() { return -1.0f; }
+};
