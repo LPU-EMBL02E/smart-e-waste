@@ -46,6 +46,9 @@ constexpr int ACTUATOR_PWM_DUTY = 200;  // 0-255; set on the bench
 constexpr int COMPLETE_RETRY_LIMIT = 3;
 constexpr unsigned long COMPLETE_RETRY_BASE_MS = 1000;  // doubles each attempt
 constexpr unsigned long HTTP_TIMEOUT_MS = 10000;
+// How long Api::begin() waits to join the stored Wi-Fi network at boot. A
+// starting point to confirm on the bench.
+constexpr unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 
 // TODO(team): API_Design.md §10 question 5 — the telemetry interval and the
 // backoff between `complete` retries are not set in the plan. The values here
