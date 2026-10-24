@@ -60,7 +60,7 @@ monitor, which makes each board testable on its own before integration.
 > change" and a pass/fail-plus-score answer from the camera, but not the exact
 > wording. The lines below are a proposal in the style of `API_Design.md`'s
 > `[P]` items — confirm them, then keep both sides in step. The names are also
-> mirrored in the controller's `feedback` module and `display/include/screens.hpp`.
+> mirrored in the controller's `feedback` module and `display/include/screen.hpp`.
 
 ### Controller ⇄ camera (UART 1, 115200)
 
@@ -122,7 +122,7 @@ Each one would credit points that were not earned:
 ## The one case that must not lose points
 
 Once an item is physically in the bin, the deposit happened whether or not the
-server heard about it. `api::sendComplete()` retries three times with backoff;
+server heard about it. `Api::sendComplete()` retries three times with backoff;
 if all three fail it saves the request to NVS, the panel shows "points
 pending", and the controller refuses the next deposit until it has been sent —
 including across a reboot. The server treats a repeated `complete` as
@@ -130,7 +130,7 @@ idempotent, so resending is always safe (`API_Design.md` §5.6).
 
 ## Signing
 
-The canonical string, the key and the output format are in `api.hpp` and `api.cpp`.
+The canonical string, the key and the output format are in `api.hpp`.
 Check the firmware against the two vectors in `API_Design.md` §3.4 before
 testing against a real server: `tools/simulator/test_vectors.py` asserts the
 same two, so a mismatch is immediately local to the firmware rather than a

@@ -26,43 +26,11 @@
 #include <Arduino.h>
 
 #include "../include/config.hpp"
+#include "controller_link.hpp"
 
 namespace {
 
-/**
- * TODO: implement.
- *
- *   1. esp_camera_init() with grayscale, FRAME_WIDTH x FRAME_HEIGHT.
- *      The AI-Thinker pin map is the one in the ESP32 core's
- *      camera_pins.h — do not invent pin numbers for the camera itself.
- *   2. captureReference(): discard WARMUP_FRAMES, then store one frame as the
- *      empty-platform reference. Re-taken on the controller's request, which it
- *      sends whenever the chamber is known to be empty — otherwise lighting
- *      drift slowly turns every frame into a "difference".
- *   3. verify(): capture a frame, count pixels differing from the reference by
- *      more than PIXEL_DIFFERENCE_THRESHOLD, and report
- *      score = changed / total. Pass when score >= PRESENCE_SCORE_THRESHOLD.
- *   4. Answer FAIL with score 0 when there is no reference frame yet, never OK.
- */
-void handleVerify() {
-  Serial.println("FAIL 0.0000");   // fail closed until implemented
-}
-
-void handleReference() {
-  Serial.println("ERROR not-implemented");
-}
-
-void handleLine(const String& line) {
-  if (line == "VERIFY") {
-    handleVerify();
-  } else if (line == "REFERENCE") {
-    handleReference();
-  } else if (line == "PING") {
-    Serial.println("PONG");
-  } else if (line.length() > 0) {
-    Serial.println("ERROR unknown-command");
-  }
-}
+ControllerLink controllerLink;
 
 }  // namespace
 
@@ -79,6 +47,6 @@ void loop() {
   if (Serial.available()) {
     String line = Serial.readStringUntil('\n');
     line.trim();
-    handleLine(line);
+    controllerLink.handleLine(line);
   }
 }
