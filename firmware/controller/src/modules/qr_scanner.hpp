@@ -17,7 +17,7 @@
  * never treat a scan as proof of anything. Only the server can say whether a
  * token belongs to an active user (API_Design.md §5.4).
  */
-class Scanner {
+class QrScanner {
   /*
    * TODO: implement with EspSoftwareSerial on PIN_QR_RX, receive only, 9600
    * baud.
@@ -32,7 +32,7 @@ class Scanner {
    */
 
  public:
-  explicit Scanner() = default;
+  explicit QrScanner() = default;
 
   bool begin() { return false; }
 

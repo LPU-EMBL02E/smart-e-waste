@@ -16,6 +16,14 @@ constexpr unsigned long SERIAL_QR_BAUD = 9600;
 constexpr unsigned long SERIAL_PANEL_BAUD = 115200;
 constexpr unsigned long SERIAL_CAMERA_BAUD = 115200;
 
+// -------------------------------------------------------------- setup portal
+// The Wi-Fi network the bin opens while nothing is stored, for entering the
+// Wi-Fi details, server URL, device code and secret (System_Plan.md §8).
+constexpr const char* SETUP_PORTAL_SSID = "EWaste-Setup";
+// Every wait has a timeout: without one, a bin with nothing stored would sit in
+// the portal forever. A starting point to confirm on the bench.
+constexpr unsigned long SETUP_PORTAL_TIMEOUT_S = 300;
+
 // ------------------------------------------------------------------- scale
 // How many readings to average, and how close they must be to count as stable.
 // `weight_stable` in the deposit call comes from this; the server rejects an
@@ -29,15 +37,18 @@ constexpr unsigned long SCALE_SETTLE_TIMEOUT_MS = 5000;
 // move has failed: report actuator_ok = false rather than driving the motor
 // against a jam.
 constexpr unsigned long ACTUATOR_TIMEOUT_MS = 8000;
-constexpr int ACTUATOR_PWM_DUTY = 200;   // 0-255; set on the bench
+constexpr int ACTUATOR_PWM_DUTY = 200;  // 0-255; set on the bench
 
 // ------------------------------------------------------------------- network
 // API_Design.md §3.6: fail closed before a deposit, retry after one. Once the
 // item is physically in the bin, `complete` is retried up to three times, then
 // saved to NVS and resent later — including after a reboot.
 constexpr int COMPLETE_RETRY_LIMIT = 3;
-constexpr unsigned long COMPLETE_RETRY_BASE_MS = 1000;   // doubles each attempt
+constexpr unsigned long COMPLETE_RETRY_BASE_MS = 1000;  // doubles each attempt
 constexpr unsigned long HTTP_TIMEOUT_MS = 10000;
+// How long Api::begin() waits to join the stored Wi-Fi network at boot. A
+// starting point to confirm on the bench.
+constexpr unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 
 // TODO(team): API_Design.md §10 question 5 — the telemetry interval and the
 // backoff between `complete` retries are not set in the plan. The values here

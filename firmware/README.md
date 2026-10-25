@@ -146,7 +146,7 @@ results kept. Per module:
 
 | Module | Record |
 |---|---|
-| `scanner` | Detection rate at different distances and lighting |
+| `qr_scanner` | Detection rate at different distances and lighting |
 | `scale` | Measured vs actual for a range of known weights, with % error |
 | `verifier` | Successful verification rate, ≥10 trials |
 | `actuator` | Successful cycle rate and response time, ≥10 trials |
