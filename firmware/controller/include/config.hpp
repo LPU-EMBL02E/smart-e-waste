@@ -58,6 +58,12 @@ constexpr unsigned long TELEMETRY_INTERVAL_MS = 60000;
 // ------------------------------------------------------------------ feedback
 constexpr unsigned long BEEP_SHORT_MS = 120;
 constexpr unsigned long BEEP_LONG_MS = 600;
+// The silence between repeating beeps, the same after a short or a long one so
+// both repeat evenly spaced. A starting point to confirm on the bench.
+constexpr unsigned long BEEP_GAP_MS = 2000;
+// How long a flickering LED stays on, and then off. A starting point to confirm
+// on the bench.
+constexpr unsigned long LED_FLICKER_MS = 250;
 
 // The firmware version reported as `fw` when a session opens, and stored in
 // devices.firmware_version.
