@@ -31,8 +31,8 @@
 #include "modules/api.hpp"
 #include "modules/bin_level.hpp"
 #include "modules/feedback.hpp"
+#include "modules/qr_scanner.hpp"
 #include "modules/scale.hpp"
-#include "modules/scanner.hpp"
 #include "modules/settings.hpp"
 #include "modules/verifier.hpp"
 
@@ -44,7 +44,7 @@ namespace {
 Settings settings;
 Api api{settings};
 Feedback feedback;
-Scanner scanner;
+QrScanner qrScanner;
 Scale scale;
 Verifier verifier;
 Actuator actuator;
@@ -135,7 +135,7 @@ void setup() {
     Serial.println("settings: not provisioned, the server cannot be reached");
   }
 
-  scanner.begin();
+  qrScanner.begin();
   scale.begin();
   verifier.begin();
   actuator.begin();
@@ -183,9 +183,9 @@ void loop() {
     feedback.show(Feedback::Screen::BinFull);
   }
 
-  if (scanner.hasToken()) {
-    const String token = scanner.takeToken();
-    scanner.flush();  // ignore a second scan mid-deposit
+  if (qrScanner.hasToken()) {
+    const String token = qrScanner.takeToken();
+    qrScanner.flush();  // ignore a second scan mid-deposit
     feedback.clearCancel();
     runDeposit(token);
   }
