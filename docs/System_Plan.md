@@ -750,7 +750,7 @@ small, fixed set of functions, so replacing a part changes one file.
 
 | Module | Hides | Gives the main loop |
 |---|---|---|
-| `scanner` | The QR scanner, reached through `station` | Arm and disarm; the scanned token |
+| `qr_scanner` | The QR scanner, reached through `station` | Arm and disarm; the scanned token |
 | `scale` | Load cell, amplifier, calibration | Stable weight in grams |
 | `verifier` | The camera check, reached through `station`, and the LED strip that lights it | Passed or failed, and a score; a new reference image |
 | `actuator` | BTS7960 driver, current sense, the rest time between cycles | Success or failure, and cycle time |
