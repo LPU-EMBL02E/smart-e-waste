@@ -3,6 +3,7 @@
 namespace App\Modules\Devices\Models;
 
 use App\Modules\Deposits\Models\DepositSession;
+use Database\Factories\Devices\DeviceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,6 +44,11 @@ class Device extends Model
     protected $hidden = [
         'secret',
     ];
+
+    protected static function newFactory(): DeviceFactory
+    {
+        return DeviceFactory::new();
+    }
 
     protected function casts(): array
     {

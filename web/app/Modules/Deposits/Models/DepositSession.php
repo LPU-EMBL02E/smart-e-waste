@@ -5,6 +5,7 @@ namespace App\Modules\Deposits\Models;
 use App\Modules\Deposits\Support\SessionStatus;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Identity\Models\User;
+use Database\Factories\Deposits\DepositSessionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,11 @@ class DepositSession extends Model
         'status',
         'expires_at',
     ];
+
+    protected static function newFactory(): DepositSessionFactory
+    {
+        return DepositSessionFactory::new();
+    }
 
     protected function casts(): array
     {

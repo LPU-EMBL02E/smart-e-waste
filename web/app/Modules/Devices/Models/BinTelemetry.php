@@ -2,6 +2,7 @@
 
 namespace App\Modules\Devices\Models;
 
+use Database\Factories\Devices\BinTelemetryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +39,11 @@ class BinTelemetry extends Model
         'panel_open',
         'fault_code',
     ];
+
+    protected static function newFactory(): BinTelemetryFactory
+    {
+        return BinTelemetryFactory::new();
+    }
 
     protected function casts(): array
     {
