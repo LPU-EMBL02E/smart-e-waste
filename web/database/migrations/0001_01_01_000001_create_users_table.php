@@ -12,7 +12,9 @@
  *   - first_name / last_name instead of a single name column
  *   - password is NULLABLE: it stays NULL until the student sets one from the
  *     emailed link, and login fails while it is NULL (System_Plan.md §4)
- *   - no email_verified_at or remember_token; neither is used by this design
+ *   - no remember_token; it is not used by this design
+ *   - no email_verified_at here; a later migration adds it for
+ *     self-registration (Database_Schema.md §2)
  *   - role, status, organization_id, student_number, last_login_at added
  */
 

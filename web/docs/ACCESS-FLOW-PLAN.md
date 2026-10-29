@@ -33,6 +33,13 @@ The current prototype journey is:
    review note and contact the administrator. Correction/resubmission policy is
    still a team decision; no reapplication workflow is invented here.
 
+> **Superseded.** The team later chose self-registration with **no admin
+> approval** and **required email confirmation**. That decision is now in
+> [System Plan §4](../../docs/System_Plan.md#4-modular-monolith--module-breakdown)
+> and [API §7.2/§7.6](../../docs/API_Design.md#7-web-routes), and the build spec is
+> [TRACK-A-ACCOUNTS.md](TRACK-A-ACCOUNTS.md). The pending, approve and deny states
+> below are kept for the record only; do not build them.
+
 This revision supersedes the earlier onboarding direction **for the wireframes**.
 [System Plan §4](../../docs/System_Plan.md#4-modular-monolith--module-breakdown),
 [API §7.2/§7.6](../../docs/API_Design.md#7-web-routes),
@@ -263,8 +270,8 @@ creates user and QR credential together → individual invitation → user sets 
 password → user signs in. A new account is unactivated until a password is set;
 inactive means disabled and is a separate state. Admin password fallback completes
 setup when email is unavailable. First-admin setup uses the locally logged link.
-Public self-registration would need an explicit policy/source decision and is
-outside this agreed milestone ([System Plan §4](../../docs/System_Plan.md#4-modular-monolith--module-breakdown),
+Self-registration with email confirmation has since been added to the source
+documents and is specified in [TRACK-A-ACCOUNTS.md](TRACK-A-ACCOUNTS.md) ([System Plan §4](../../docs/System_Plan.md#4-modular-monolith--module-breakdown),
 [Account Management](ACCOUNT-MANAGEMENT.md), [vocabulary](CONTEXT.md)).
 
 ## Build order and human handoffs

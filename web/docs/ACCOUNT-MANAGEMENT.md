@@ -18,10 +18,15 @@ terms are defined in [CONTEXT.md](CONTEXT.md).
 
 ### Account onboarding
 
-Keep the proposed account model: admins create accounts, users set their passwords
-through emailed links, and admins can set passwords when email is unavailable.
-There is no public self-registration. Account creation follows the existing
-student-organization requirements.
+Students register themselves at `/register`, with no admin approval, and must
+confirm their email through Laravel's email verification before any signed-in
+page opens ([System_Plan.md §4](../../docs/System_Plan.md), [API_Design.md
+§7.2, §7.6](../../docs/API_Design.md)). Registration always creates a student and
+follows the existing student-organization requirements.
+
+Admins can still create accounts one at a time or by CSV import. Those users set
+their passwords through emailed links, admins can set passwords when email is
+unavailable, and an admin-created account counts as confirmed.
 
 ### Deactivation during a session
 
@@ -93,7 +98,8 @@ only the latest issued link remains usable.
 
 - Install the committed Laravel 13 app with PHP 8.4 and Composer using
   `SETUP.md` §1–2.
-- Implement login, logout, password setup/reset, and first-admin activation.
+- Implement self-registration with email confirmation, login, logout, password
+  setup/reset, and first-admin activation.
 - Implement admin user and organization management, CSV import, individual
   invitations, and the manual password fallback.
 - Implement the account-oriented `/home` and `/admin` landing pages described
@@ -105,6 +111,8 @@ only the latest issued link remains usable.
 
 - Guests are redirected to login; students cannot access admin routes; successful
   login reaches the correct working landing page.
+- A student can register, is signed in, and sees only the confirm-email page until
+  the emailed link is used. Registration never creates an admin.
 - Unactivated and inactive accounts cannot sign in. Login failure messages and
   the documented five-attempts-per-minute limit are preserved.
 - Logout invalidates the session and regenerates the CSRF token. Deactivation

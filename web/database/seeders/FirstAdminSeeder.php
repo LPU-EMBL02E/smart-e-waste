@@ -7,11 +7,12 @@ use Illuminate\Database\Seeder;
 /**
  * The first admin account. System_Plan.md §7, step 5.
  *
- * There is no self-registration, so without this seeder nobody can sign in to a
- * fresh install and nothing else can be set up.
+ * Registration only ever creates students, so without this seeder no admin
+ * exists on a fresh install and nothing else can be set up.
  *
  * It creates ONE admin: role admin, organization_id NULL, status active, and a
- * user_qr_credentials row (every user has one). It does NOT set a password —
+ * user_qr_credentials row (every user has one), with email_verified_at set
+ * like any admin-created account (API_Design.md P47). It does NOT set a password —
  * that follows the same path as any other account, through the set-password
  * email or an admin-set password, so no default password ever exists in the
  * repository or the database.
