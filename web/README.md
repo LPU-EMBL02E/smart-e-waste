@@ -30,13 +30,14 @@ change, not a shortcut:
 2. **Reads can cross modules.** Reporting and Eloquent relations query whatever
    they need.
 3. **Modules announce, they don't call Notifications.** They dispatch
-   `DepositCompleted`, `RedemptionFulfilled` and `BinFull`; listeners react.
+   `DepositCompleted`, `RedemptionFulfilled`, `BinFull` and `BinFault`;
+   listeners react.
 
 ## Two kinds of route
 
 | Caller | Routes | Auth |
 |---|---|---|
-| The bin's NodeMCU | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
+| The bin's ESP32-S3 controller | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
 | Student | Blade pages and form posts | Session cookie + CSRF |
 | Admin | the same, under `/admin` | the same, with a role check on every route |
 

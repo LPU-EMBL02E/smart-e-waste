@@ -1,6 +1,7 @@
 # IoT-Based Smart E-Waste Collection and Monitoring System
 
-A smart e-waste bin built around an ESP32, with a Laravel web application for
+A smart e-waste bin built around an ESP32-S3 controller and a Raspberry Pi 4,
+with a Laravel web application for
 students — who earn points for deposits and redeem them for rewards — and for
 admins, who monitor bins and manage users, transactions and rewards.
 
@@ -17,12 +18,16 @@ the end, so portability is a design goal rather than an afterthought.
 
 ## The one design rule
 
-The Raspberry Pi is **only a server**. Everything at the bin runs on the bin's
-own ESP32 boards, and only the controller talks to the server, through one small
-signed API.
+The **web app is only a server**. The Pi runs it alongside a separate program,
+the **bin station**, which handles the QR scanner, the camera and the
+touchscreen. Every part of the bin sits behind the ESP32-S3 controller, either
+wired to it or reached through the bin station, and only the controller talks to
+the web app, through one small signed API.
 
-That is what lets the app stay on the Pi or move to the school's own platform
-without a rewrite, and what lets one server run more than one bin.
+That is what lets the web app stay on the Pi or move to the school's own
+platform without a rewrite. The controller runs the deposit sequence and owns
+all safety logic, so a slow or crashed Pi can never leave the actuator running.
+The project builds one bin.
 
 ---
 
@@ -47,9 +52,10 @@ web/                  the Laravel app (modular monolith, 5 modules + 1)
   routes/console.php    the one scheduled task
 
 firmware/
-  controller/           NodeMCU — runs the deposit sequence, talks to the server
-  camera/               ESP32-CAM — "is an item present?"
-  display/              ESP32-S3 panel — draws the screens with LVGL
+  controller/           ESP32-S3 — runs the deposit sequence, talks to the server
+
+station/              the bin station on the Pi: QR scanner, camera check and
+                      the bin's screen (not started yet)
 
 tools/simulator/      signs requests and drives the full deposit flow in Python
 scripts/              the two portability checks from System_Plan.md §8.1
@@ -67,26 +73,28 @@ scan QR ──► server checks the student, the bin, the rule and the daily cap
                                 │
                          weigh the item
                                 │
-                    camera confirms something is there
+            the Pi's camera confirms something is there
                                 │
               server validates the weight and computes the points
                                 │
                  actuator pushes the item into the bin
                                 │
-      limit switches confirm ──► transaction + points committed together
+  actuator current shows the end of its stroke ──► transaction + points
+                                                   committed together
 ```
 
 Four rules hold the whole thing together:
 
-1. **The server decides everything.** The device reports grams and a pass/fail.
-   It never computes points and never decides whether a bin is full.
+1. **The server decides everything.** The controller reports grams and a
+   pass/fail. It never computes points and never decides whether a bin is full.
 2. **Credit comes last** — after verification passes *and* the actuator
    confirms, in one database transaction with the transaction record.
 3. **The ledger is append-only.** There is no balance column anywhere: a balance
    is `SUM(points_delta)`, and a correction is a new reversal row.
-4. **Fail closed.** If the server is unreachable at the QR step the bin refuses
-   and nothing moves. Once an item is physically in the bin, the firmware
-   retries, then saves the request and resends it — including after a reboot.
+4. **Fail closed.** If the server or the bin station is unreachable the bin
+   refuses and nothing moves. Once an item is physically in the bin, the
+   firmware retries, then saves the request and resends it — including after a
+   reboot.
 
 ---
 
@@ -98,7 +106,8 @@ Four rules hold the whole thing together:
 | Server | Nginx + PHP 8.4-FPM, native via `apt`; no Docker |
 | App | Laravel 13, Blade, Tailwind (built with Vite on a dev machine) |
 | Data | MariaDB 11.8 LTS, InnoDB, `utf8mb4`, every timestamp in UTC |
-| Firmware | Arduino framework / C++, built with PlatformIO; LVGL on the panel |
+| Firmware | Arduino framework / C++ on the ESP32-S3, built with PlatformIO |
+| Bin station | Python 3 with `picamera2`, `numpy` and `pyserial` from `apt`; Chromium in kiosk mode for the touchscreen |
 | Device API | 7 JSON endpoints, HMAC-SHA256 signed, over the LAN |
 | Ingress | Cloudflare Tunnel until handover; swappable by design |
 
@@ -152,18 +161,31 @@ This is boilerplate and structure, not a working system.
 - The device simulator: working, dependency-free, with the seven integration
   scenarios from `API_Design.md` §8.
 - The two swappability checks, verified to catch real violations.
-- Firmware: `platformio.ini` per program, the complete NodeMCU pin map, and the
-  module interfaces from `System_Plan.md` §8.2.
 
 **Skeletons with documented bodies**
 
-Controllers, services, listeners, the seeder and the firmware module
-implementations. Each one carries the rules it must follow and the doc section
+Controllers, services, listeners and the seeder. Each one carries the rules it must follow and the doc section
 they come from; the bodies raise `LogicException` so an unimplemented path fails
 loudly instead of silently returning nothing.
 
 Blade views are not written. `web/resources/views/README.md` lists the expected
 view names per module.
+
+**Not yet matching the design**
+
+- `firmware/` still holds a NodeMCU controller and the `camera/` and `display/`
+  programs. It needs reworking for the ESP32-S3: the pin map, the `station` and
+  `interlock` modules and the actuator's current sense (`System_Plan.md` §2 and
+  §8.2). `camera/` and `display/` are not part of the design.
+- `station/`, the bin station, is not started (`System_Plan.md` §8.3,
+  `API_Design.md` §11).
+- `web/` has no `panel_open` or `fault_code` on `bin_telemetry` and no
+  `BinFault` event yet (`API_Design.md` §5.3).
+- The simulator's telemetry call does not send `panel_open` or `fault_code`.
+- `firmware/AGENTS.md` still says only `Api` knows about HTTP. The root
+  `AGENTS.md` has no rules, area or owner for `station/`, and still lists the
+  camera and display programs under `firmware/`. Changing either needs the
+  whole team.
 
 **Decisions still open**
 
@@ -175,17 +197,17 @@ code:
   `points_cost` (`System_Plan.md` §5.7).
 - The hardware weight limit — `config/ewaste.php` has no value for it yet
   (`API_Design.md` P37).
-- The actuator model, checked against the driver's stall current, and the
-  NodeMCU pin map verified on the bench (`System_Plan.md` §10).
-- The display panel's exact model, which the LVGL and serial configuration
-  depend on.
+- Hardware items for the hardware team: the actuator current-sense wiring and
+  the service-panel interlock pin, and the SSD with its adapter, on the
+  schematic; the ESP32-S3 pin map verified on the bench (`System_Plan.md` §10).
+- Bench values: the actuator's current thresholds, stroke timeout and rest time,
+  and the camera's lens position and pass thresholds (`System_Plan.md` §10).
+- The bin station API and the new telemetry fields, proposed as P42–P45 in
+  `API_Design.md` §9.
 - The eight open questions in `API_Design.md` §10 — what an admin can do with a
   session in review, what the reports contain, whether users can change their
-  own password, the set-password link lifetime, the telemetry interval, bulk
+  own password, the set-password link lifetime, the firmware timings, bulk
   invitations, the hardware weight limit, and which QR package to use.
-- The serial line protocols between the three boards are **proposed** in
-  `firmware/README.md`, not specified in the docs. Confirm them before building
-  both sides.
 
 ---
 

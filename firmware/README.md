@@ -1,110 +1,115 @@
 # Firmware
 
-Three programs, one per board. `docs/System_Plan.md` §8.2.
+One program, `controller/`, on the ESP32-S3-DevKitC-1 (N8R2).
+`docs/System_Plan.md` §2 and §8.2.
 
-| Folder | Board | Job |
-|---|---|---|
-| `controller/` | ESP32 NodeMCU | Runs the deposit sequence and talks to the server |
-| `camera/` | ESP32-CAM | Answers "is an item present?" with pass/fail and a score |
-| `display/` | ESP32-S3 panel board | Draws the screens with LVGL and reports touches |
+**The controller is in charge.** It runs the deposit sequence, owns all safety
+logic, and is the only client of the device API. The QR scanner, the camera and
+the touchscreen are connected to the Pi and run by the bin station
+(`System_Plan.md` §8.3); the controller reaches them through the bin station's
+JSON API (`API_Design.md` §11). Everything else at the bin is wired to the
+controller.
 
-**The NodeMCU is in charge.** It is the only board that joins the Wi-Fi network
-and the only one that talks to the server. The camera and the panel each do one
-job for it over a serial link. The Raspberry Pi drives no sensor, no camera and
-no display — it is only a server, which is what lets the web app move to the
-school's own platform at handover without a rewrite.
+> `camera/` and `display/` in this folder are not part of the design, and the
+> controller code still targets the NodeMCU pin map. Both are reworked to match
+> this file.
 
 ## Building
 
-PlatformIO, one environment per program:
+PlatformIO:
 
 ```bash
+cd firmware/controller
 pio run -e controller                  # build
 pio run -e controller -t upload        # flash
 pio device monitor                     # serial log
 ```
 
-Run these from inside the program's own folder (`firmware/controller`, etc.) —
-each has its own `platformio.ini`.
-
-Flashing an AI-Thinker ESP32-CAM needs an external USB-serial adapter and
-GPIO 0 pulled to ground to enter the bootloader.
-
 ## No secrets in this repository
 
-Wi-Fi credentials, the API base URL, the device code and the signing secret all
-live in the NodeMCU's non-volatile storage and are set through the setup portal
-(`settings` module). Nothing identifying a bin or a server is compiled in, which
-is what lets a bin be re-pointed at another server without reflashing
-(`System_Plan.md` §8) — and what keeps a device secret out of git.
+Wi-Fi credentials, the API base URL, the bin station URL, the device code and
+the signing secret all live in the controller's non-volatile storage and are set
+through the setup portal (`settings` module). Nothing identifying a bin or a
+server is compiled in, which is what lets a bin be re-pointed at another server
+without reflashing (`System_Plan.md` §8) — and what keeps a device secret out of
+git.
 
 ## Pin map
 
-Every pin number for the controller is in `controller/include/pins.hpp` and
-nowhere else. Two to keep in mind: GPIO 34 and 35 are **input-only**, so the
-load cell data line must stay at 3.3 V and the ultrasonic echo line needs a
-divider if the sensor runs on 5 V.
+Every pin number is in `controller/include/pins.hpp` and nowhere else. The map is
+in `System_Plan.md` §2. Things to keep in mind:
 
-**TODO(team):** verify the map on the bench, and revisit the motor pins once the
-actuator and driver are chosen (`System_Plan.md` §10).
+- **Actuator current sense is on GPIO 1, an ADC1 pin.** ADC2 can't be read while
+  Wi-Fi is on.
+- The ultrasonic echo comes through a 1 kΩ / 2 kΩ divider, and the HX711 runs on
+  3.3 V, so no input sees more than 3.3 V.
+- The driver's enable and PWM lines have 10 kΩ pull-downs, so the actuator stays
+  off while the board boots or resets.
+- Leave alone: GPIO 0, 3, 45 and 46 (boot strapping), 19 and 20 (USB), 26 to 32
+  (flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED pin of
+  the board revision in use (38 or 48).
+
+**TODO(team):** the service-panel interlock has no pin yet, and the current-sense
+wiring is not on the schematic (`System_Plan.md` §10).
 
 ---
 
-## Serial protocols
+## Modules
 
-Both links are plain text, one message per line, terminated with `\n`. Text was
-chosen over a binary framing on purpose: it can be driven by hand from a serial
-monitor, which makes each board testable on its own before integration.
+`System_Plan.md` §8.2. Only `Api` and `Station` know about HTTP; only `Settings`
+knows where the server and the bin station are.
 
-> **Proposed.** `System_Plan.md` §8.2 specifies "one line of text per screen
-> change" and a pass/fail-plus-score answer from the camera, but not the exact
-> wording. The lines below are a proposal in the style of `API_Design.md`'s
-> `[P]` items — confirm them, then keep both sides in step. The names are also
-> mirrored in the controller's `feedback` module and `display/include/screen.hpp`.
+| Module | Hides |
+|---|---|
+| `qr_scanner` | The QR scanner, through `station` |
+| `scale` | Load cell, HX711, calibration |
+| `verifier` | The camera check, through `station`, and the LED strip |
+| `actuator` | BTS7960 driver, current sense, rest time between cycles |
+| `interlock` | Service-panel switch |
+| `bin_level` | Ultrasonic sensor |
+| `feedback` | The screen, through `station`; green, amber and red LEDs; buzzer |
+| `station` | HTTP to the bin station |
+| `api` | Wi-Fi, HTTP, HMAC signing, retries, the saved unsent `complete` |
+| `settings` | Non-volatile storage and the setup portal |
 
-### Controller ⇄ camera (UART 1, 115200)
+## The bin station link
 
-| Direction | Line | Meaning |
-|---|---|---|
-| → | `VERIFY` | Is an item on the platform? |
-| ← | `OK <score>` | Yes. `score` is 0.0000–1.0000 |
-| ← | `FAIL <score>` | No |
-| → | `REFERENCE` | Re-learn the empty platform |
-| ← | `READY` | Reference stored |
-| ← | `ERROR <reason>` | Could not |
-| → | `PING` / ← `PONG` | Liveness |
+The full contract is `API_Design.md` §11. In short, the controller:
 
-The controller sends `REFERENCE` whenever the chamber is known to be empty —
-after a transfer and at boot — because lighting drift otherwise turns every
-frame into a "difference".
+- arms the scanner when the bin is ready and polls `events` for a scanned token
+  or a Cancel touch;
+- switches the LED strip on, calls `verify`, and switches it off again, then
+  copies the answer into the `deposit` call;
+- asks for a new `reference` image of the empty platform at boot and after each
+  transfer, with the LED strip on;
+- names each screen change with `screen`.
 
-**No reply means FAIL.** Points are credited only after verification *passes*,
-so a silent camera must never be read as an accepted item.
+**No answer means no deposit.** If the bin station does not answer, or `verify`
+returns an error, the controller cancels the session and the actuator does not
+move.
 
-### Controller ⇄ display panel (UART 2, 115200)
+## The actuator
 
-| Direction | Line | Meaning |
-|---|---|---|
-| → | `SCREEN <NAME> [values...]` | Draw that screen |
-| → | `PING` / ← `PONG` | Liveness |
-| ← | `TOUCH CANCEL` | The student pressed Cancel |
+The actuator's limit switches are inside it and cut its power at each end, so the
+controller judges each stroke by its current (`System_Plan.md` §8.2):
 
-Screen names: `IDLE`, `WELCOME`, `WEIGHING`, `ACCEPTED`, `DONE`, `PENDING`,
-`PROBLEM`, `BIN_FULL`, `OFFLINE`.
+- **end of stroke:** after a minimum travel time, the current falls to near zero;
+- **jam:** the current stays above the jam threshold for too long — disable the
+  driver at once;
+- **timeout:** neither happens in time — disable the driver.
 
-```
-SCREEN WELCOME Juan
-SCREEN WEIGHING
-SCREEN ACCEPTED 184.6 18
-SCREEN DONE 18 240
-SCREEN PROBLEM This bin is full
-```
+`actuator_ok` is true when the extend stroke reached its end. A failed retract
+after a good extend still credits the student but latches
+`ACTUATOR_RETRACT_FAILED`. The 20% duty cycle means a rest time between cycles.
+The thresholds and times are constants in `include/config.hpp`, set on the bench.
 
-The panel holds no state that matters. If it reboots mid-deposit the controller
-carries on, and the next `SCREEN` line puts the panel back in step.
+## Faults and the service panel
 
-`PROBLEM` carries a plain-language message, never an API error code — the error
-code is for the firmware to branch on, not for a student to read.
+Opening the service panel disables the driver at once, disarms the scanner and
+cancels an `OPEN` session. Actuator faults latch until the panel has been opened
+and closed again. Bin station faults clear when it answers normally again. The
+panel state and the current fault go out in telemetry at once on any change
+(`API_Design.md` §5.3).
 
 ---
 
@@ -116,14 +121,14 @@ Each one would credit points that were not earned:
    (`System_Plan.md` §5.7 rule 3). The device sends grams and nothing else.
 2. **Move the actuator before the server answers `accepted: true`**
    (`API_Design.md` §5.5).
-3. **Read an unreachable server or camera as a pass.** Fail closed
-   (`API_Design.md` §3.6).
+3. **Read an unreachable server or bin station as a pass.** Fail closed
+   (`API_Design.md` §3.6 and §11.1).
 
 ## The one case that must not lose points
 
 Once an item is physically in the bin, the deposit happened whether or not the
 server heard about it. `Api::sendComplete()` retries three times with backoff;
-if all three fail it saves the request to NVS, the panel shows "points
+if all three fail it saves the request to NVS, the screen shows "points
 pending", and the controller refuses the next deposit until it has been sent —
 including across a reboot. The server treats a repeated `complete` as
 idempotent, so resending is always safe (`API_Design.md` §5.6).
@@ -146,10 +151,11 @@ results kept. Per module:
 
 | Module | Record |
 |---|---|
-| `qr_scanner` | Detection rate at different distances and lighting |
+| `qr_scanner` | Detection rate at different distances and lighting, through the bin station |
 | `scale` | Measured vs actual for a range of known weights, with % error |
-| `verifier` | Successful verification rate, ≥10 trials |
-| `actuator` | Successful cycle rate and response time, ≥10 trials |
+| `verifier` | Successful verification rate, ≥10 trials, with and without an item |
+| `actuator` | Successful cycle rate and response time, ≥10 trials; current at end of stroke and at a forced stall |
+| `interlock` | The driver disables at once when the panel opens, mid-stroke included |
 | `bin_level` | Sensor reading vs actual distance, with % error |
 | `api` | Both signing vectors, then the simulator's scenarios |
 

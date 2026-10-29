@@ -1,8 +1,8 @@
 # Device simulator
 
-Speaks the device API the way the bin's NodeMCU does: the seven endpoints in
-`docs/API_Design.md` §5, signed per §3.2. Python 3 standard library only — no
-`pip install`, so it runs on a dev machine or on the Pi itself.
+Speaks the device API the way the bin's ESP32-S3 controller does: the seven
+endpoints in `docs/API_Design.md` §5, signed per §3.2. Python 3 standard library
+only — no `pip install`, so it runs on a dev machine or on the Pi itself.
 
 `docs/System_Plan.md` §10 puts this first in the build order, before the
 firmware: it lets the web app be tested against a correct client while the

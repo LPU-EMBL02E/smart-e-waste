@@ -1,7 +1,8 @@
 # Setup
 
-How to turn this repository into a running system. Two parts: the Laravel app in
-`web/`, and the three firmware programs in `firmware/`.
+How to turn this repository into a running system. Three parts: the Laravel app
+in `web/`, the controller firmware in `firmware/`, and the bin station in
+`station/`. The web app and the bin station both run on the Pi.
 
 Section references are to the files in `docs/`.
 
@@ -9,7 +10,8 @@ Section references are to the files in `docs/`.
 
 ## 1. Install the web app
 
-Needs PHP 8.4 and Composer on the machine doing the install. On the Pi:
+Needs PHP 8.4 and Composer on the machine doing the install. The Pi boots from
+its SSD (`System_Plan.md` §7, step 1). On the Pi:
 
 ```bash
 sudo apt install php8.4-cli php8.4-fpm php8.4-mysql php8.4-mbstring \
@@ -161,20 +163,35 @@ pio run -e controller -t upload
 pio device monitor
 ```
 
-No Wi-Fi credentials, server URL, device code or secret are compiled in. They
-are entered once through the setup portal and kept in the NodeMCU's
-non-volatile storage, which is what lets a bin be re-pointed at another server
-without reflashing.
+No Wi-Fi credentials, server URL, bin station URL, device code or secret are
+compiled in. They are entered once through the setup portal and kept in the
+ESP32-S3's non-volatile storage, which is what lets a bin be re-pointed at
+another server without reflashing.
 
 ---
 
-## 7. What is not built yet
+## 7. Bin station
+
+The Python program on the Pi that runs the QR scanner, the camera check and the
+touchscreen (`System_Plan.md` §8.3). It is not built yet. When it is, its setup
+is `System_Plan.md` §7, step 10:
+
+```bash
+sudo apt install python3-picamera2 python3-numpy python3-serial chromium cage
+```
+
+It runs as a systemd service, and Chromium shows its screen page in kiosk mode
+under `cage`. Enter its address in the controller's setup portal.
+
+---
+
+## 8. What is not built yet
 
 `web/` is boilerplate: the schema, the models, the routes, the error contract
 and the module wiring are real, and the controllers, services and listeners are
 documented skeletons whose bodies raise `LogicException`. Nothing in the
-request path is implemented yet, and the firmware modules are headers with
-stub bodies.
+request path is implemented yet, the firmware modules are headers with stub
+bodies, and the bin station is not started.
 
 `README.md` §"State of the repository" lists what is real, what is a skeleton,
 and the decisions still open from `docs`.
