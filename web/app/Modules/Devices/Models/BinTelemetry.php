@@ -7,11 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One ultrasonic distance reading from a bin. Database_Schema.md §5.
+ * One ultrasonic distance reading from a bin, with the service-panel state and
+ * the bin's current fault. Database_Schema.md §5.
  *
- * The device sends `distance_mm` only. BinService computes `fill_percent` and
- * `status` before the row is inserted (API_Design.md §5.3), so the firmware
- * never decides whether a bin is full.
+ * The device sends `distance_mm`, `panel_open` and `fault_code`. BinService
+ * computes `fill_percent` and `status` before the row is inserted
+ * (API_Design.md §5.3), so the firmware never decides whether a bin is full.
+ * The panel state and the fault are the device's to decide; the server only
+ * stores them.
  *
  * Has created_at but no updated_at: a reading is written once and never changed.
  */
@@ -32,6 +35,8 @@ class BinTelemetry extends Model
         'distance_mm',
         'fill_percent',
         'status',
+        'panel_open',
+        'fault_code',
     ];
 
     protected function casts(): array
@@ -39,6 +44,7 @@ class BinTelemetry extends Model
         return [
             'distance_mm' => 'decimal:2',
             'fill_percent' => 'decimal:2',
+            'panel_open' => 'boolean',
             'created_at' => 'datetime',
         ];
     }
