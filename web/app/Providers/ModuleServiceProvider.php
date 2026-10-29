@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Modules\Deposits\Events\DepositCompleted;
+use App\Modules\Devices\Events\BinFault;
 use App\Modules\Devices\Events\BinFull;
+use App\Modules\Notifications\Listeners\SendBinFaultNotifications;
 use App\Modules\Notifications\Listeners\SendBinFullNotifications;
 use App\Modules\Notifications\Listeners\SendDepositCompletedNotification;
 use App\Modules\Notifications\Listeners\SendRedemptionFulfilledNotification;
@@ -22,7 +24,7 @@ use Illuminate\Support\ServiceProvider;
  * It does two things:
  *   1. loads each module's routes — web routes in the `web` middleware group,
  *      device routes under /api/v1/device with the signature middleware;
- *   2. wires the three events to their listeners, which is the whole of the
+ *   2. wires the module events to their listeners, which is the whole of the
  *      Notifications module's coupling to the rest of the app.
  *
  * Registered in bootstrap/providers.php.
@@ -52,6 +54,7 @@ class ModuleServiceProvider extends ServiceProvider
         DepositCompleted::class => [SendDepositCompletedNotification::class],
         RedemptionFulfilled::class => [SendRedemptionFulfilledNotification::class],
         BinFull::class => [SendBinFullNotifications::class],
+        BinFault::class => [SendBinFaultNotifications::class],
     ];
 
     public function boot(): void

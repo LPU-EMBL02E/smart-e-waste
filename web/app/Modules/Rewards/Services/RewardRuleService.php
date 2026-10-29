@@ -43,7 +43,6 @@ class RewardRuleService
      */
     public function current(): ?RewardRule
     {
-        // TODO: RewardRule::inEffectAt(now())->first()
-        throw new \LogicException('Not implemented.');
+        return RewardRule::inEffectAt(now())->first();
     }
 }

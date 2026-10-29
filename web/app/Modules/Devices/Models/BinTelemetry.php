@@ -2,6 +2,7 @@
 
 namespace App\Modules\Devices\Models;
 
+use App\Modules\Devices\Support\BinFaultCode;
 use Database\Factories\Devices\BinTelemetryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,6 +52,7 @@ class BinTelemetry extends Model
             'distance_mm' => 'decimal:2',
             'fill_percent' => 'decimal:2',
             'panel_open' => 'boolean',
+            'fault_code' => BinFaultCode::class,
             'created_at' => 'datetime',
         ];
     }
