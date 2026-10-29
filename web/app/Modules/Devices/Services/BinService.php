@@ -7,7 +7,9 @@ use App\Modules\Devices\Events\BinFull;
 use App\Modules\Devices\Models\BinTelemetry;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Devices\Support\BinFaultCode;
+use App\Modules\Devices\Support\DeviceSecret;
 use App\Modules\Rewards\Services\RewardRuleService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
  * Bin telemetry, fill level, config and registration. API_Design.md §5.2–§5.3,
@@ -43,7 +45,7 @@ class BinService
      */
     public function recordTelemetry(Device $device, float $distanceMm, bool $panelOpen, ?BinFaultCode $fault): BinTelemetry
     {
-        $previous = $device->latestTelemetry()->first(['bin_telemetry.status', 'bin_telemetry.fault_code']);
+        $previous = $this->latestReading($device);
 
         $fillPercent = $this->fillPercentFor($device, $distanceMm);
 
@@ -90,10 +92,39 @@ class BinService
      */
     public function isFull(Device $device): bool
     {
-        $fillPercent = $device->latestTelemetry()->value('bin_telemetry.fill_percent');
+        $latest = $this->latestReading($device);
 
-        return $fillPercent !== null
-            && (float) $fillPercent >= (float) $device->fill_threshold_percent;
+        return $latest !== null
+            && (float) $latest->fill_percent >= (float) $device->fill_threshold_percent;
+    }
+
+    /**
+     * The bin's newest reading, or null before its first one. Its panel state
+     * and fault are the bin's current ones (Database_Schema.md §5).
+     */
+    public function latestReading(Device $device): ?BinTelemetry
+    {
+        return $device->latestTelemetry()->first();
+    }
+
+    /**
+     * The admin bin list, each bin with its latest reading eager-loaded.
+     *
+     * @return LengthAwarePaginator<int, Device>
+     */
+    public function list(): LengthAwarePaginator
+    {
+        return Device::with('latestTelemetry')->orderBy('name')->paginate();
+    }
+
+    /**
+     * A bin's fill history, newest first, on the (device_id, created_at) index.
+     *
+     * @return LengthAwarePaginator<int, BinTelemetry>
+     */
+    public function readings(Device $device): LengthAwarePaginator
+    {
+        return $device->telemetry()->latest()->latest('id')->paginate();
     }
 
     /**
@@ -125,28 +156,66 @@ class BinService
     }
 
     /**
-     * Register a bin and issue its first secret. The plain secret is returned
-     * once, for the page that shows it to the admin; after that only the
-     * encrypted column exists (API_Design.md P39).
+     * Register a bin and issue its first secret. API_Design.md §7.6
+     * ("Register or edit a bin"), P39.
      *
-     * @return array{device: Device, secret: string}
+     * The plain secret is returned once, for the page that shows it to the
+     * admin; after that only the encrypted column exists. Calibration values
+     * entered at registration set calibrated_at.
+     *
+     * @return array{0: Device, 1: string} the bin and its plain secret
      */
     public function register(array $attributes): array
     {
-        // TODO: DeviceSecret::generate()
-        throw new \LogicException('Not implemented.');
+        $secret = DeviceSecret::generate();
+
+        $device = new Device($attributes);
+        $device->secret = $secret;
+        $this->stampCalibration($device);
+        $device->save();
+
+        return [$device, $secret];
     }
 
     /**
-     * Issue a new secret for an existing bin. The old one stops working at once,
-     * so the bin cannot talk to the server until the new secret is entered in
-     * its setup portal.
+     * Save an admin's changes. API_Design.md §7.6. Saving new calibration
+     * values sets calibrated_at; saving the same values again does not.
+     */
+    public function update(Device $device, array $attributes): Device
+    {
+        $device->fill($attributes);
+        $this->stampCalibration($device);
+        $device->save();
+
+        return $device;
+    }
+
+    /**
+     * Issue a new secret for an existing bin. API_Design.md P39.
+     *
+     * The old one stops working at once, so the bin cannot talk to the server
+     * until the new secret is entered in its setup portal.
      *
      * @return string the new plain secret, shown once
      */
     public function rotateSecret(Device $device): string
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $secret = DeviceSecret::generate();
+
+        $device->secret = $secret;
+        $device->save();
+
+        return $secret;
+    }
+
+    /**
+     * calibrated_at follows the calibration values: now when new values are
+     * saved, NULL once they are cleared, untouched when they did not change.
+     */
+    private function stampCalibration(Device $device): void
+    {
+        if ($device->isDirty(['weight_offset', 'weight_scale_factor'])) {
+            $device->calibrated_at = $device->isCalibrated() ? now() : null;
+        }
     }
 }

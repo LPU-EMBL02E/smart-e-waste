@@ -6,6 +6,7 @@ use App\Modules\Devices\Http\Requests\Admin\StoreDeviceRequest;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Devices\Services\BinService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -27,8 +28,6 @@ use Illuminate\View\View;
  *
  * No delete route: a bin is retired with its status, because sessions and
  * telemetry reference it (P33).
- *
- * TODO: all method bodies.
  */
 class BinController
 {
@@ -36,37 +35,65 @@ class BinController
 
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('devices.admin.bins.index', ['devices' => $this->bins->list()]);
     }
 
     public function create(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('devices.admin.bins.create', ['device' => new Device]);
     }
 
     /** Redirects to a page that shows the plain secret once. */
     public function store(StoreDeviceRequest $request): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        [$device, $secret] = $this->bins->register($request->validated());
+
+        return $this->showSecretOnce($device, $secret);
     }
 
-    public function show(Device $device): View
+    /**
+     * One bin and its fill history. Straight after registration or a new
+     * secret, the flashed secret is shown instead, on this one request only.
+     */
+    public function show(Request $request, Device $device): View
     {
-        throw new \LogicException('Not implemented.');
+        if ($request->session()->has('secret')) {
+            return view('devices.admin.bins.secret', [
+                'device' => $device,
+                'secret' => $request->session()->get('secret'),
+            ]);
+        }
+
+        return view('devices.admin.bins.show', [
+            'device' => $device,
+            'latest' => $this->bins->latestReading($device),
+            'readings' => $this->bins->readings($device),
+        ]);
     }
 
     public function edit(Device $device): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('devices.admin.bins.edit', ['device' => $device]);
     }
 
     public function update(StoreDeviceRequest $request, Device $device): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        $this->bins->update($device, $request->validated());
+
+        return redirect()->route('admin.bins.show', $device)->with('status', 'Bin saved.');
     }
 
     public function rotateSecret(Device $device): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        return $this->showSecretOnce($device, $this->bins->rotateSecret($device));
+    }
+
+    /**
+     * Flash data lives for exactly the next request, so the secret is on screen
+     * once and gone on reload (P39).
+     */
+    private function showSecretOnce(Device $device, string $secret): RedirectResponse
+    {
+        return redirect()->route('admin.bins.show', $device)->with('secret', $secret);
     }
 }

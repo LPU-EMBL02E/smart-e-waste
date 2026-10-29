@@ -30,6 +30,15 @@ class Device extends Model
 
     public const STATUS_RETIRED = 'retired';
 
+    /**
+     * The column defaults from Database_Schema.md §4, so a new bin's register
+     * form starts from them.
+     */
+    protected $attributes = [
+        'status' => self::STATUS_ACTIVE,
+        'fill_threshold_percent' => 90,
+    ];
+
     protected $fillable = [
         'device_code',
         'name',
