@@ -6,6 +6,7 @@ use App\Modules\Deposits\Models\DepositSession;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\Redemption;
+use Database\Factories\Identity\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -56,6 +57,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
 
     protected function casts(): array
     {
