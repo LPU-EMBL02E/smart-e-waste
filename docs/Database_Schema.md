@@ -51,7 +51,7 @@ The row is created together with the user account. A scan of the token only
 identifies the user for one deposit; it can't spend points or open the account.
 
 ## 4. devices
-*(one physical unit: the bin and the ESP32 built into it)*
+*(one physical unit: the bin and the ESP32-S3 controller built into it)*
 - `id` — BIGINT UNSIGNED — **PK**
 - `device_code` — VARCHAR(50) — UNIQUE, NOT NULL — sent as the `X-Device-Code` header
 - `name` — VARCHAR(100) — NOT NULL — the bin's display name
@@ -83,6 +83,8 @@ Only a device whose `status` is `active` is accepted by the device API.
 - `distance_mm` — DECIMAL(10,2) — NOT NULL — raw reading from the device
 - `fill_percent` — DECIMAL(5,2) — NOT NULL — computed by the server on insert
 - `status` — VARCHAR(20) — NOT NULL
+- `panel_open` — BOOLEAN — NOT NULL, DEFAULT FALSE — the service-panel interlock, as reported by the device
+- `fault_code` — VARCHAR(50) — NULL — the device's current fault; NULL when it has none
 - `created_at` — TIMESTAMP — NOT NULL — when the reading was taken
 
 `fill_percent` = `(empty_distance_mm − distance_mm) / empty_distance_mm × 100`,
@@ -90,6 +92,11 @@ clamped to 0–100.
 
 Recommended `status` values: `OK`, `FULL` (`fill_percent` ≥
 `devices.fill_threshold_percent`).
+
+`fault_code` values: `ACTUATOR_JAM`, `ACTUATOR_TIMEOUT`, `ACTUATOR_RETRACT_FAILED`,
+`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`, `SCANNER_UNAVAILABLE`. The device
+decides these; the server only stores them. A bin's current panel state and fault
+are those of its latest row.
 
 ## 6. deposit_sessions
 - `id` — CHAR(36) — **PK**
@@ -223,7 +230,7 @@ stock and writes a `REVERSAL` row. A `FULFILLED` redemption can't be cancelled.
 - `created_at` — TIMESTAMP — NOT NULL
 - `updated_at` — TIMESTAMP — NOT NULL
 
-A bin-full alert is one row per admin user.
+A bin-full or bin-fault alert is one row per admin user.
 
 ## Foreign Key Summary
 

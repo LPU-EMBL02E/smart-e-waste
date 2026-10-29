@@ -5,88 +5,112 @@
 
 ## 1. Overview
 
-A smart e-waste bin built around an ESP32, with a PHP/Laravel web application for
-students (earn points for deposits, redeem rewards) and admins (monitor bins,
-manage users, transactions and rewards). The finished bin and web app will be
-physically handed over to the school after the project, so portability is a design
-goal, not an afterthought.
+A smart e-waste bin built around an ESP32-S3 controller and a Raspberry Pi 4, with
+a PHP/Laravel web application for students (earn points for deposits, redeem
+rewards) and admins (monitor bins, manage users, transactions and rewards). The
+finished bin and web app will be physically handed over to the school after the
+project, so portability is a design goal, not an afterthought.
 
-**The one design rule:** the Raspberry Pi is only a server. Everything at the bin
-runs on the bin's own ESP32 boards, and only the controller talks to the server,
-through one small signed API. This is what
-lets the app stay on the Pi or move to the school's own platform without a rewrite,
-and what lets one server run more than one bin.
+The Pi runs two separate programs:
+
+- **The web app** (Laravel and MariaDB): the server. It touches no hardware.
+- **The bin station** (Python): the Pi's half of the bin. It runs the QR scanner,
+  the camera check and the touchscreen, has no database and never calls the web
+  app (Section 8.3).
+
+**The one design rule:** the web app is only a server. Every part of the bin sits
+behind the ESP32-S3 controller, either wired to it directly or reached through the
+bin station, and only the controller talks to the web app, through one small
+signed API. This is what lets the web app stay on the Pi or move to the school's
+own platform without a rewrite. If the web app moves, the bin station stays on
+the Pi inside the bin.
+
+**One bin.** The project builds a single e-waste bin, with one ESP32-S3 controller
+and one Pi.
+
+**The controller is in charge.** It runs the deposit sequence and owns all safety
+logic, so a slow or crashed Pi can never leave the actuator running. The bin
+station only answers the controller's requests.
 
 ---
 
-## 2. Hardware (Planned)
+## 2. Hardware
 
-| Subsystem | Component(s) |
-|---|---|
-| Controller | ESP32 NodeMCU Development Board |
-| Server | Raspberry Pi 4, booted from a USB SSD |
-| Vision Subsystem | ESP32-CAM. Frame differencing against the empty platform in an LED-lit chamber; reports pass/fail and a score to the NodeMCU |
-| User Identification | QR Code Scanner Module |
-| Sensors & Measurement | Load Cell, Weight Amplifier Module, Ultrasonic Sensor |
-| Automated Transfer | DC motor or linear actuator (model to be chosen), motor driver sized to its stall current, two limit switches |
-| User Interface & Feedback | 7" capacitive touch display on an ESP32-S3 panel board (for example the Waveshare ESP32-S3-Touch-LCD-7, 800×480), with screens built in LVGL; Active Buzzer, LEDs |
-| Power Supply & Protection | 12V 5A DC supply, a step-down converter for the Pi (5V 3A), a second 5V converter for the microcontroller boards and the display, fuse, flyback diodes |
-| Network | Dedicated Wi-Fi router for the bin and the Pi |
+| Subsystem | Component(s) | Connected to |
+|---|---|---|
+| Controller | ESP32-S3-DevKitC-1, N8R2 (8 MB flash, 2 MB quad PSRAM) | Wi-Fi to the Pi |
+| Server and bin station | Raspberry Pi 4 Model B, 4 GB | Wi-Fi to the controller and to phones |
+| Pi storage | 2.5" SATA SSD, 120–256 GB, in a USB 3.0-to-SATA adapter whose chipset supports Pi USB boot. The Pi boots from it; there is no SD card | Pi, USB 3.0 port |
+| User identification | GM865 barcode and QR scanner, USB virtual serial, command-triggered | Pi, USB |
+| Item verification | Arducam IMX519 16 MP autofocus camera, lit by a 12 V white LED strip | Pi, CSI. LED strip switched by the controller |
+| Weight | 5 kg bar load cell and HX711 amplifier, powered from the controller's 3.3 V | Controller |
+| Bin level | HC-SR04 ultrasonic sensor on 5 V, with a divider on the echo line | Controller |
+| Automated transfer | 12 V linear actuator, 200 mm stroke, 100 N, 160 mm/s, 3 A maximum, 20% duty cycle, with built-in end-of-stroke limit switches | BTS7960 H-bridge, driven by the controller |
+| Bin display | 7" capacitive touchscreen, 1024×600, HDMI video and USB touch | Pi |
+| Feedback | Green, amber and red LEDs; 5 V active buzzer through a transistor | Controller |
+| Safety | Service-panel interlock switch; actuator current sense from the BTS7960 | Controller |
+| Power | S-100-12 supply, 12 V 8.5 A, behind a 2 A slow-blow mains fuse. Fused 12 V branches for the actuator (7.5 A) and LED strip (1 A). A 5.2 V 5 A buck for the Pi and touchscreen (3 A fuse), and an LM2596 set to 5.0 V for the controller and ultrasonic sensor (1 A fuse). Star ground | — |
+| Network | Dedicated Wi-Fi router for the bin and the Pi | — |
 
 **Notes:**
-- The Raspberry Pi 4 is the **server** (Laravel + MariaDB). It drives no sensors, no
-  camera and no display.
-- The motor driver in the original parts list, the TB6612FNG, handles about 1.2 A
-  continuous per channel. Check the chosen actuator's stall current against that
-  before committing to it.
-- The two limit switches are what make `actuator_ok` true or false. Without them
-  the API's actuator confirmation means nothing.
-- The 7" capacitive display is an ESP32-S3 panel board. It only runs the
-  screen: the NodeMCU tells it what to show over a serial link. A NodeMCU can't
-  drive a 7" panel itself, and the Pi is not used for it, so the Pi stays a pure
-  server.
-- There are three microcontroller boards, with one in charge. The NodeMCU runs the
-  deposit sequence, is the only board that talks to the server, and is the only
-  one that joins the Wi-Fi network. The ESP32-CAM and the panel board each do one
-  job for it.
-- The panel board takes 5 V over USB-C. Size the second 5 V converter for the
-  NodeMCU, the ESP32-CAM and the panel together.
+- The Pi runs the web app and the bin station side by side (Section 1). The web
+  app never reads the scanner, the camera or the touchscreen; only the bin station
+  does.
+- **The actuator's limit switches are inside the actuator.** They cut its power at
+  each end and are not wired to the controller. The controller instead reads the
+  BTS7960's current-sense output: current falling to near zero means the actuator
+  reached the end of its stroke, and current staying high means a jam. This is what
+  makes `actuator_ok` true or false (Section 8.2).
+- The 10 kΩ pull-downs on the driver's enable and PWM lines keep the actuator off
+  while the controller boots or resets.
+- The actuator's 20% duty cycle limits how often it may run. A cycle of about
+  2.5 s needs about 10 s of rest, so the controller enforces a rest time between
+  cycles.
+- The LED strip lights the platform so the camera sees the same scene every time.
+  The controller switches it on for each camera check and each new reference
+  image.
+- The controller uses ADC1 (GPIO 1) for current sense because ADC2 can't be read
+  while Wi-Fi is on.
+- **The Pi runs from an SSD, not an SD card,** because MariaDB writes on every
+  deposit and page view and an SD card wears out and corrupts more easily on a
+  power cut. An NVMe drive in a USB enclosure is not used: it draws more than the
+  Pi's USB ports can reliably supply.
+- The SSD draws about 0.5–0.9 A from the Pi's USB ports, which share about 1.2 A
+  with the scanner and touch panel. Count it in the 5.2 V budget, and add a hub
+  powered from the 5.2 V rail if the Pi reports under-voltage.
+- USB 3.0 gives off noise in the 2.4 GHz band the controller uses. Keep the SSD's
+  cable short and the SSD away from the Pi's antenna, and fix the SSD in place so
+  it can't shake loose.
 
-**Pin map for the NodeMCU.** The display uses none of these pins, and
-the camera uses two. Seventeen pins are used, which fits with little to spare.
+**Pin map for the ESP32-S3.**
 
 | Signal | GPIO | Notes |
 |---|---|---|
-| Load cell amplifier, data | 34 | Input-only pin. Power the amplifier from 3.3 V so this line stays at 3.3 V |
-| Load cell amplifier, clock | 25 | |
-| Ultrasonic trigger | 26 | |
-| Ultrasonic echo | 35 | Input-only pin. Needs a voltage divider if the sensor runs on 5 V |
-| Motor driver, PWM | 27 | |
-| Motor driver, direction 1 | 32 | |
-| Motor driver, direction 2 | 33 | |
-| Limit switch, home | 13 | Internal pull-up |
-| Limit switch, end | 22 | Internal pull-up |
-| Panel board serial, receive / transmit | 16 / 17 | Hardware serial port 2 |
-| ESP32-CAM serial, receive / transmit | 18 / 19 | Hardware serial port 1 |
-| QR scanner data | 4 | Software serial, receive only, 9600 baud |
-| Green LED | 21 | |
-| Red LED | 14 | |
-| Buzzer | 23 | |
+| Load cell amplifier, data | 4 | HX711 on 3.3 V |
+| Load cell amplifier, clock | 5 | |
+| Ultrasonic trigger | 6 | |
+| Ultrasonic echo | 7 | 1 kΩ / 2 kΩ divider brings the 5 V echo down to 3.3 V |
+| LED, green | 8 | |
+| LED, amber | 9 | |
+| LED, red | 10 | |
+| Buzzer | 14 | Through a 2N2222A |
+| LED strip | 15 | Through an IRLZ44N MOSFET; PWM for dimming |
+| Driver enable, both halves | 16 | `R_EN` and `L_EN` together; 10 kΩ pull-down |
+| Driver PWM, extend | 17 | `RPWM`; 10 kΩ pull-down |
+| Driver PWM, retract | 18 | `LPWM`; 10 kΩ pull-down |
+| Actuator current sense | 1 | ADC1. In the manual, **missing from the schematic** |
+| Service-panel interlock | TODO(team) | In the manual, **missing from the schematic** |
 
-Spare: GPIO 36 and 39, which are input only. GPIO 0, 2, 5, 12 and 15 affect how
-the board boots, and GPIO 1 and 3 are the USB serial port, so leave those
-unconnected.
+Leave alone: GPIO 0, 3, 45 and 46 (boot strapping), 19 and 20 (USB), 26 to 32 (the
+module's flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED
+pin of the board revision in use (38 or 48).
 
-**Serial ports.** Three devices need a serial link, and the NodeMCU has two spare
-hardware serial ports. The QR scanner only sends, and slowly, so it goes on a
-software serial pin. The camera and the panel board get the hardware ports.
-
-The map is a starting point. Verify it on the bench, and revisit the motor pins
-once the driver is chosen.
-
-**Alternative not chosen:** an ESP32-P4 panel board could do the display, camera,
-sensors and actuator on one board. It was passed over because it needs ESP-IDF
-where the rest of the firmware is Arduino.
+**Open hardware items** (Section 10): the current-sense wiring and the interlock
+are in the manual but not on the schematic, and the SSD and its adapter are in
+neither. Current sense is needed before
+`actuator_ok` means anything: wire the BTS7960's `R_IS` and `L_IS` outputs through
+a load resistor sized so GPIO 1 never sees more than 3.1 V at the actuator's stall
+current.
 
 No fabrication begins before Checkpoint 1 approval.
 
@@ -96,9 +120,10 @@ No fabrication begins before Checkpoint 1 approval.
 
 | Layer | Component | Role |
 |---|---|---|
-| **Host** | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit (Trixie, Debian 13) | Physical self-hosted server |
-| **Firmware** | Arduino framework, C++ | Controller program on the NodeMCU and camera program on the ESP32-CAM (Section 8.2) |
-| | LVGL | The bin's touchscreen, on the ESP32-S3 panel board |
+| **Host** | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit (Trixie, Debian 13) | Physical self-hosted server, and the bin station |
+| **Firmware** | Arduino framework, C++ | The controller program on the ESP32-S3 (Section 8.2) |
+| **Bin station** | Python 3 from Raspberry Pi OS, with `python3-picamera2`, `python3-numpy` and `python3-serial` from `apt` | QR scanner, camera check and the bin's screen (Section 8.3) |
+| | Chromium in kiosk mode under the `cage` Wayland compositor | Shows the bin station's screen page on the touchscreen |
 | **Presentation** | Blade | Dashboard pages; plain forms (`method="POST"` + `@csrf`) for CRUD, no AJAX |
 | | Tailwind CSS (compiled via Vite on a dev machine, not the Pi) | Styling |
 | | One small polling script (vanilla JS) | Admin live dashboard summary only |
@@ -151,11 +176,11 @@ and reads are shared.
 | Module | Owns | Logic lives in | Covers |
 |---|---|---|---|
 | **Identity** | `organizations`, `users`, `user_qr_credentials` | Laravel's built-in auth | Login and logout, password setup and reset by email, student profile and QR, admin user and organization management |
-| **Devices** | `devices`, `bin_telemetry` | `BinService`, signature middleware | Device config, telemetry, fill level, admin bin monitoring, registering a bin, entering its calibration values and rotating its secret |
+| **Devices** | `devices`, `bin_telemetry` | `BinService`, signature middleware | Device config, telemetry, fill level, bin faults, admin bin monitoring, registering a bin, entering its calibration values and rotating its secret |
 | **Deposits** | `deposit_sessions`, `transactions` | `DepositService` | Open session, deposit, complete, cancel, expiry, student history, admin transaction list and void |
 | **Rewards** | `reward_rules`, `point_ledger`, `rewards`, `redemptions` | `PointsService`, `RedemptionService` | Points rate, balance, rewards catalogue, redeeming, admin fulfilment and cancellation, reward management |
 | **Reporting** | Nothing | Read-only queries | Admin dashboard and its live summary, leaderboards, reports |
-| *Notifications* | `notifications` | Event listeners | Reacts to deposit completed, redemption fulfilled and bin full; notification list and mark-as-read for students and admins |
+| *Notifications* | `notifications` | Event listeners | Reacts to deposit completed, redemption fulfilled, bin full and bin fault; notification list and mark-as-read for students and admins |
 
 Notifications is a supporting component, not a domain module. It exposes no
 service and nothing depends on it.
@@ -180,7 +205,8 @@ an admin can resend the email. The links expire; a student who misses one uses
 2. **Reads can cross modules.** Reporting and Eloquent relationships query whatever
    they need.
 3. **Modules announce, they don't call Notifications.** They dispatch events
-   (`DepositCompleted`, `RedemptionFulfilled`, `BinFull`) and listeners react.
+   (`DepositCompleted`, `RedemptionFulfilled`, `BinFull`, `BinFault`) and
+   listeners react.
 
 Folder layout:
 ```
@@ -201,12 +227,15 @@ Three callers, two kinds of route:
 
 | Caller | Routes | Auth |
 |---|---|---|
-| ESP32 | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
+| ESP32-S3 controller | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
 | Student | Web routes (Blade pages and form posts) | Session cookie + CSRF token |
 | Admin | Web routes under `/admin` | Same session, with a role check on every route |
 
 Only the device endpoints are a JSON API. The admin dashboard's live summary is the
 one JSON web route; it uses the normal session, not the device scheme.
+
+The bin station has its own small JSON API on the bin's network, called only by
+the controller (Section 8.3). It is part of the bin, not of the web app.
 
 The detailed design (request and response bodies, session state transitions and
 the web route list) is in `API_Design.md`.
@@ -217,7 +246,7 @@ the web route list) is in `API_Design.md`.
 |---|---|---|---|
 | GET | `/device/time` | Devices | Server time for clock sync. Unsigned |
 | GET | `/device/config` | Devices | Minimum and maximum weight, session timeout, fill threshold, load cell calibration |
-| POST | `/device/telemetry` | Devices | Ultrasonic distance reading |
+| POST | `/device/telemetry` | Devices | Ultrasonic distance reading, service-panel state and any bin fault |
 | POST | `/device/sessions` | Deposits | Open a session from a QR token |
 | POST | `/device/sessions/{id}/deposit` | Deposits | Weight and verification result |
 | POST | `/device/sessions/{id}/complete` | Deposits | Actuator result; commits points |
@@ -278,6 +307,10 @@ integration testing. Nothing else in the app changes.
 7. A weight below the rule's minimum or above its maximum is rejected before the
    actuator moves.
 8. A student who has reached the daily points cap can't open a session.
+9. Safety is the controller's job. It stops taking deposits on its own when the
+   service panel is open or the actuator has faulted, and reports both in its
+   telemetry. The server records them and alerts the admins; it does not decide
+   them.
 
 ### 5.4 Example flow
 
@@ -328,6 +361,11 @@ up to 3× with backoff. If all three fail, keep the request
 in non-volatile storage, show the student that the points are pending, and resend
 it before accepting the next deposit (rule 6 in Section 5.3).
 
+The same applies to the bin station. If it is unreachable or its camera can't
+take a picture, the item is never treated as verified: the controller cancels the
+session, does not actuate, and takes no new deposit until the bin station answers
+again.
+
 **QR code:** opaque random token shown on the student's profile, not the student ID
 (guessable/forgeable). One active token per user, created with the account;
 regenerating it replaces the old one.
@@ -341,7 +379,7 @@ needs the website login, which is why the bin asks for no password or PIN.
 | Role | Pages |
 |---|---|
 | Student | Login, set or reset password, profile and QR, points balance, transaction history, organization info, leaderboard, rewards, redeem, my redemptions, notifications |
-| Admin | Dashboard with live summary, users (with CSV import and resending the set-password email), organizations, transactions and void, total collected weight, bins and fill history, device registration, rewards, redemption fulfilment and cancellation, points rate, organization leaderboard, reports, notifications |
+| Admin | Dashboard with live summary, users (with CSV import and resending the set-password email), organizations, transactions and void, total collected weight, bins with fill history, service-panel state and faults, device registration, rewards, redemption fulfilment and cancellation, points rate, organization leaderboard, reports, notifications |
 
 **Leaderboard scope:** the user leaderboard includes everyone (students and
 admins; those are the only two roles). The organization leaderboard counts
@@ -397,10 +435,10 @@ points.
 | 1 | QR token belongs to an active user | Server | `INVALID_QR`, `USER_INACTIVE` |
 | 2 | Bin is not full | Server | `BIN_FULL` |
 | 3 | A reward rule is in effect, and the student is under its `daily_points_cap` | Server | `NO_REWARD_RULE`, `DAILY_LIMIT_REACHED` |
-| 4 | An item is present | Device, reported to server | `VERIFICATION_FAILED` |
+| 4 | An item is present | Bin station camera, reported to the server by the controller | `VERIFICATION_FAILED` |
 | 5 | Weight is stable and between minimum and maximum | Server | `NO_ITEM`, `ZERO_WEIGHT`, `OVER_MAX_WEIGHT` |
 | 6 | Points are calculated | Server | — |
-| 7 | Actuator confirms the transfer | Device, reported to server | Session `FAILED` |
+| 7 | Actuator confirms the transfer | Controller, from the actuator's current, reported to server | Session `FAILED` |
 | 8 | Points are credited | Server | — |
 
 **Rules:**
@@ -524,9 +562,11 @@ rule variables, each reward's price, and each bin's fill threshold and calibrati
 
 ## 7. Deployment Plan
 
-**Local network:** the ESP32 and the Pi share a dedicated router. The Pi has a
-reserved IP or an mDNS name. The ESP32 always talks to the Pi over the LAN with
-plain HTTP and HMAC signing, so deposits never depend on internet access.
+**Local network:** the ESP32-S3 and the Pi share a dedicated router. The Pi has a
+reserved IP or an mDNS name. The controller always talks to the web app over the
+LAN with plain HTTP and HMAC signing, so deposits never depend on internet access.
+It reaches the bin station on the same Pi over plain HTTP on its own port
+(Section 8.3).
 
 **Browsers:** students and admins use the tunnel hostname (HTTPS) as the single
 canonical URL. LAN HTTP is for the device only. This keeps secure session cookies
@@ -539,7 +579,10 @@ LAN address and `SESSION_SECURE_COOKIE=false`, and rehearse switching to it once
 before the final demonstration.
 
 **Setup, native (no Docker):**
-1. Flash Raspberry Pi OS Lite 64-bit (Trixie); boot from USB SSD, not SD card.
+1. Flash Raspberry Pi OS Lite 64-bit (Trixie) to the SSD with Raspberry Pi Imager
+   and boot from it, with no SD card in the Pi. A Pi whose bootloader does not yet
+   try USB needs one boot from a temporary SD card first: `sudo rpi-eeprom-update -a`,
+   then `raspi-config` → Advanced Options → Boot Order → USB Boot.
 2. `apt install nginx mariadb-server php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-xml php8.4-curl php8.4-bcmath`
 3. `CREATE DATABASE ewaste CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
    with a dedicated MariaDB user — not `root`.
@@ -555,6 +598,12 @@ before the final demonstration.
 8. Set up `cloudflared` as a systemd service with a named tunnel on the domain.
 9. Schedule `mariadb-dump` backups (MariaDB's `mysqldump`); keep a full disk image
    of the configured Pi, and a copy of `.env` (it holds `APP_KEY`) somewhere safe.
+10. Set up the bin station (Section 8.3):
+    `apt install python3-picamera2 python3-numpy python3-serial chromium cage`,
+    run the station as a systemd service, and start Chromium in kiosk mode under
+    `cage` on the touchscreen, pointed at the station's screen page on
+    `localhost`. Then enter the station's address in the controller's setup
+    portal.
 
 ### 7.1 Ingress now and after handover
 
@@ -566,6 +615,7 @@ dependency. Laravel never calls a Cloudflare-specific API.
 | Browser ingress | Cloudflare Tunnel | ISP public IP, port forward, Certbot TLS | The school's host and TLS |
 | App host | Pi | Pi | School server |
 | Device to server | LAN HTTP + HMAC | LAN HTTP + HMAC | HTTPS + HMAC over the internet |
+| Bin station | Pi, in the bin | Pi, in the bin | Pi, in the bin. Unchanged |
 | What changes | — | Router, DNS, TLS certificate | Deploy repo, import dump, re-point each bin |
 | App code changes | — | None | None |
 
@@ -614,8 +664,9 @@ called directly, and no Resend-only feature (templates, tags, webhooks) is used.
 
 What keeps this portable:
 
-- **The Pi is a server only.** No camera, display or GPIO work on it, so the app
-  can leave it.
+- **The web app is a server only.** It touches no hardware. The scanner, camera
+  and touchscreen belong to the bin station, a separate program that stays on the
+  Pi in the bin, so the web app can leave the Pi.
 - **No Pi-specific code.** Eloquent only with no MariaDB-specific SQL, files
   through Laravel's storage disk, all URL, proxy and cookie settings in `.env`.
 - **Reproducible schema and data.** Laravel migrations, plus a dump in a portable
@@ -625,27 +676,28 @@ What keeps this portable:
   import into MySQL before handover.
 - **`APP_KEY` travels with the data.** Device secrets are encrypted with it. A new
   host must reuse the same key, or every bin has to be issued a new secret.
-- **Re-pointable firmware.** Wi-Fi credentials, `API_BASE_URL`, device code and
-  secret live in the ESP32's non-volatile storage, set through a setup portal
-  (WiFiManager or similar). No reflashing to change the server. TLS is switched on
-  by an `https://` base URL.
+- **Re-pointable firmware.** Wi-Fi credentials, `API_BASE_URL`, the bin station's
+  address, device code and secret live in the ESP32-S3's non-volatile storage, set
+  through a setup portal (WiFiManager or similar). No reflashing to change the
+  server. TLS is switched on by an `https://` base URL.
 - **Swappable services.** The app depends on Laravel's interfaces, never on a
   named service, so each one can be replaced without touching the modules
   (Section 8.1).
 - **Swappable hardware.** Each part of the bin sits behind its own firmware
-  module (Section 8.2).
+  module or bin station component (Sections 8.2 and 8.3).
 - **Minimal host requirements.** PHP 8.4, MySQL or MariaDB, and one cron entry.
 
 **At handover, give the school:**
 1. The Git repo: the web app with its migrations, `.env.example` and lock files,
-   and the three firmware programs.
+   the controller firmware and the bin station.
 2. A dump of final data, with the sandbox line removed.
 3. One `handover.md` — how to run `composer install` and `php artisan migrate`,
    point `.env` at their database, carry `APP_KEY` over (never run `key:generate`
    on a host that has existing data), add the cron entry, switch the mailer to
    the university's SMTP, re-point a bin through its setup portal, and issue a bin
    a new secret.
-4. The physical Pi, already configured and running, and the bin.
+4. The physical Pi, already configured and running the web app and the bin
+   station, and the bin.
 5. The domain, the Cloudflare account and the Resend account, registered under a
    transferable account (a group or school email, not a personal one). The Resend
    account can be closed once the school's SMTP is in use. If the domain came from
@@ -676,8 +728,8 @@ classes are written where Laravel already has a driver. Two checks keep this tru
 | Login | Laravel's auth guard; users keyed by email | Email and password | University single sign-on | Add Laravel Socialite and one controller |
 | Device connection | `API_BASE_URL` stored on the bin | LAN HTTP | HTTPS to another host | The bin's setup portal |
 | Device authentication | One middleware | HMAC signing | Another scheme | One class |
-| Item verification | `method`, `passed`, `score` in the API | ESP32-CAM frame differencing | Another camera or sensor | Firmware only; the server is unchanged |
-| Bin display | Lines of text over a serial link | ESP32-S3 panel board with LVGL | Another display | Display firmware only; the controller is unchanged |
+| Item verification | `method`, `passed`, `score` in the API | Frame differencing on the Pi camera, in the bin station | Another camera or method | Bin station only; the controller and the server are unchanged |
+| Bin display | Screen name and values sent to the bin station | Chromium kiosk page on the Pi's HDMI touchscreen | Another display | Bin station only; the controller is unchanged |
 
 Three of these are more than a settings change: file storage needs the files
 moved, background jobs need a worker process and change how a failed email is
@@ -693,43 +745,121 @@ table, which uses the same name with different columns.
 
 ### 8.2 Firmware modules
 
-The same idea on the ESP32: each hardware part sits behind one module with a
+The same idea on the ESP32-S3: each hardware part sits behind one module with a
 small, fixed set of functions, so replacing a part changes one file.
 
 | Module | Hides | Gives the main loop |
 |---|---|---|
-| `scanner` | QR scanner and its serial link | The scanned token |
+| `scanner` | The QR scanner, reached through `station` | Arm and disarm; the scanned token |
 | `scale` | Load cell, amplifier, calibration | Stable weight in grams |
-| `verifier` | ESP32-CAM link | Passed or failed, and a score |
-| `actuator` | Motor driver and limit switches | Success or failure, and cycle time |
+| `verifier` | The camera check, reached through `station`, and the LED strip that lights it | Passed or failed, and a score; a new reference image |
+| `actuator` | BTS7960 driver, current sense, the rest time between cycles | Success or failure, and cycle time |
+| `interlock` | Service-panel switch | Open or closed |
 | `bin_level` | Ultrasonic sensor | Distance in millimetres |
-| `feedback` | The serial link to the panel board, LEDs, buzzer | Screen changes, touch events and status signals |
+| `feedback` | The screen, reached through `station`; green, amber and red LEDs; buzzer | Screen changes, touch events and status signals |
+| `station` | HTTP to the bin station | One function per bin station endpoint |
 | `api` | Wi-Fi, HTTP, HMAC signing, retries, the saved unsent `complete` | One function per device endpoint |
-| `settings` | Non-volatile storage and the setup portal | Server URL, device code, secret |
+| `settings` | Non-volatile storage and the setup portal | Server URL, bin station URL, device code, secret |
 
-Pin numbers live in one header file. Only `api` knows about HTTP, and only
-`settings` knows where the server is.
+Pin numbers live in one header file. Only `api` and `station` know about HTTP:
+`api` talks to the web app, `station` to the bin station. Only `settings` knows
+where either one is.
 
-**Three firmware programs.** The modules above are the controller firmware. The
-other two programs are small:
+**One firmware program**, the controller, on the ESP32-S3. It is the only client
+of the device API.
 
-| Program | Board | Job |
+**The deposit sequence:**
+
+| Step | Controller does | Screen | LED |
+|---|---|---|---|
+| 1. Ready | Checks the service panel is closed, no actuator fault is latched, no `complete` is pending, the actuator has rested, the bin is not full and the bin station answers. Then arms the scanner | Idle | Green |
+| 2. Scan | On a scanned token, disarms the scanner and calls `POST /device/sessions` | Welcome | Amber |
+| 3. Weigh | Waits for a stable weight above zero, a Cancel touch, or the session timeout | Weighing | Amber |
+| 4. Verify | Switches the LED strip on, waits for the light to settle, asks the bin station for the camera check, switches the strip off | Weighing | Amber |
+| 5. Deposit | Calls `deposit`. A rejection ends the session | Accepted, or problem | Amber, or red |
+| 6. Transfer | Extends the actuator to the end of its stroke, then retracts it | Accepted | Amber |
+| 7. Complete | Calls `complete`, retrying and saving it if the server can't be reached | Done, or points pending | Green, or amber |
+| 8. Reset | Lights the empty platform and asks the bin station for a new reference image, sends telemetry, waits out the actuator's rest time | Idle | Green |
+
+**Actuator result.** The actuator's limit switches are inside it, so the
+controller judges each stroke by its current:
+
+- **End of stroke:** after a minimum travel time, the current falls to near zero
+  because the actuator's own limit switch has cut it.
+- **Jam:** the current stays above the jam threshold for longer than the jam
+  time. The controller disables the driver at once.
+- **Timeout:** neither happens within the stroke timeout. The controller disables
+  the driver.
+
+`actuator_ok` is true when the extend stroke reached its end, because that is the
+stroke that pushes the item into the bin. A failed retract after a good extend
+still credits the student, but latches an `ACTUATOR_RETRACT_FAILED` fault and
+takes the bin out of service. The thresholds and times are firmware constants set
+on the bench.
+
+**Faults and the service panel.** Opening the service panel disables the driver
+at once, disarms the scanner, cancels an `OPEN` session and shows the problem
+screen. An actuator fault (`ACTUATOR_JAM`, `ACTUATOR_TIMEOUT`,
+`ACTUATOR_RETRACT_FAILED`) latches until the service panel has been opened and
+closed again, so someone has looked at the bin before it moves again. The bin
+station faults (`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`,
+`SCANNER_UNAVAILABLE`) clear on their own when the bin station answers normally
+again. The controller reports the panel state and the current fault in its
+telemetry, sent at once on any change.
+
+**LEDs:** green when ready, amber while a deposit is in progress or points are
+pending, red for a problem, a fault or an open service panel.
+
+**Screens:** idle, welcome, weighing, accepted, done, points pending, problem
+(with the reason), bin full and offline. Touch is used for one thing at first: a
+Cancel button, which makes the controller call the cancel endpoint.
+
+### 8.3 Bin station
+
+A Python program on the Pi, run as a systemd service. It is the Pi's half of the
+bin: it runs the parts the hardware connects to the Pi, and answers the
+controller over a small JSON API on the bin's network (`API_Design.md` §11).
+
+| Component | Hides | Gives the controller |
 |---|---|---|
-| Controller | NodeMCU | Runs the deposit sequence and talks to the server |
-| Camera | ESP32-CAM | Answers "is an item present?" with passed or failed, and a score |
-| Display | ESP32-S3 panel board | Draws the screens with LVGL and reports touches |
+| Scanner | GM865 over USB virtual serial, in command-triggered mode | Scanned tokens, while the controller has the scanner armed |
+| Camera | IMX519 over CSI, through `picamera2`, and the frame differencing | Passed or failed, and a score; a stored reference image |
+| Screen | The kiosk page on the touchscreen | Shows the screen the controller names; reports Cancel touches |
 
-The controller sends the panel one line of text per screen change: the screen name
-and the values to show. The panel sends back one line per touch. It never talks to
-the server or reads a sensor, so it holds no state that matters.
+**What it never does:** it has no database, holds no device secret, never calls
+the web app and makes no decision about a deposit. It holds no state that
+matters: a restart loses only the reference image, which the controller asks for
+again, and any unread events.
 
-Screens: idle, welcome, weighing, accepted, done, points pending, problem (with
-the reason), bin full and offline. Touch is used for one thing at first: a Cancel button, which
-makes the controller call the cancel endpoint.
+**Camera check.** Frame differencing against the empty platform:
+
+- Focus, exposure and white balance are fixed when the reference is taken and
+  reused for every check, so autofocus and auto-exposure can't make an empty
+  platform look different. The LED strip gives the same light each time.
+- Both images are taken small and in grayscale. The score is the share of pixels
+  whose brightness differs from the reference by more than a pixel threshold, from
+  0.0000 to 1.0000. The check passes when the score is at or above a pass
+  threshold.
+- The lens position and both thresholds are in the bin station's own settings
+  file and are set on the bench.
+- With no reference image stored, a check fails.
+
+**Scanner.** The bin station triggers the scanner only while the controller has
+it armed, which the controller does only when the bin is ready. Arming clears any
+token read earlier, so a stale scan can't open a session.
+
+**Screen.** Chromium runs in kiosk mode and shows a page served by the bin station
+on `localhost`. The page receives screen changes from the bin station as
+server-sent events and posts Cancel touches back. If the controller has not
+called for longer than the controller timeout, the bin station shows the offline
+screen on its own.
+
+**Dependencies:** Python 3 and the `apt` packages in Section 3 only, so the bin
+station keeps to the Pi's version policy.
 
 **Repository layout.** One Git repository with a folder for each
-program: `web/` for the Laravel app, `firmware/controller/`, `firmware/camera/`,
-`firmware/display/`, `tools/simulator/` and `docs/`.
+program: `web/` for the Laravel app, `firmware/controller/`, `station/`,
+`tools/simulator/` and `docs/`.
 
 ---
 
@@ -760,8 +890,6 @@ points rate).
 ## 10. Open Items
 
 **Team decisions still to confirm:**
-- [ ] Display board: confirm the exact model of the ESP32-S3 7" panel board, and
-      how its serial connector is selected on that board.
 - [ ] Domain: get one before the tunnel and email are set up. The options are a
       first-year-free domain from the GitHub Student Developer Pack, or a low-cost
       paid one. It is needed for email as well as for a stable tunnel hostname.
@@ -776,11 +904,26 @@ points rate).
 - [ ] Collected weight: voided deposits are excluded (Section 5.6).
 - [ ] Daily cap: voided deposits still count toward the day's cap (Section 5.7).
 - [ ] Touchscreen: a Cancel button only, at first (Section 8.2).
-- [ ] Repository: one repo with a folder per program (Section 8.2).
+- [ ] Repository: one repo with a folder per program (Section 8.3).
+- [ ] Actuator result: `actuator_ok` follows the extend stroke, and a failed
+      retract after a good extend still credits the student (Section 8.2).
+- [ ] Bin station API: no authentication; it relies on the bin's dedicated
+      router (Section 8.3, `API_Design.md` §11).
 
 **Before Checkpoint 1:**
-- [ ] Choose the actuator model and check its stall current against the driver.
-- [ ] Verify the NodeMCU pin map on the bench (Section 2).
+- [ ] Add the actuator current-sense wiring (BTS7960 `R_IS`/`L_IS` to GPIO 1,
+      with a load resistor) and the service-panel interlock to the schematic,
+      and assign the interlock pin (Section 2).
+- [ ] Add the SSD and its USB-to-SATA adapter to the hardware manual and the
+      schematic, on a USB 3.0 port, and count its current in the 5.2 V budget
+      (Section 2).
+- [ ] Check the Pi-to-controller Wi-Fi with the SSD running. If USB 3.0 noise
+      causes dropped requests, decide between an Ethernet cable from the Pi to
+      the router and putting the Pi on the router's 5 GHz band (Section 2).
+- [ ] Verify the ESP32-S3 pin map on the bench (Section 2).
+- [ ] Set on the bench: the actuator's end-of-stroke and jam current thresholds,
+      stroke timeout and rest time (Section 8.2), and the camera's lens position
+      and pass thresholds (Section 8.3).
 - [ ] Set the five point variables and get them approved (Section 5.7; guidelines,
       Step 9): `points_per_gram`, `minimum_weight_g`, `maximum_weight_g`,
       `daily_points_cap`, and each reward's `points_cost`.

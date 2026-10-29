@@ -9,6 +9,9 @@ This file covers the two kinds of route the system has:
 
 - **The device API:** the seven JSON endpoints under `/api/v1/device` that the bin's
   controller calls.
+- **The bin station API:** the JSON endpoints the bin station on the Pi offers the
+  controller on the bin's network (Section 11). They are part of the bin, not of
+  the web app.
 - **The web routes:** every student and admin page and form post, including the
   admin dashboard's live summary, which is the one JSON web route.
 
@@ -37,11 +40,12 @@ Laravel behaviour and were not re-checked against the 13 documentation.
 
 | Caller | Routes | Auth |
 |---|---|---|
-| ESP32 controller (NodeMCU) | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
+| ESP32-S3 controller | `/api/v1/device/*`, JSON, stateless | HMAC-SHA256 signature + timestamp |
 | Student | Web routes (Blade pages and form posts) | Session cookie + CSRF token |
 | Admin | Web routes under `/admin` | Same session, with a role check on every route |
 
-Only the NodeMCU talks to the server. The ESP32-CAM and the panel board never do.
+Only the controller talks to the server. The bin station never does; it only
+answers the controller (Section 11).
 
 ---
 
@@ -344,12 +348,13 @@ GET /api/v1/device/config
 
 ### 5.3 POST /device/telemetry
 
-One ultrasonic distance reading. The device reports the raw distance; the server
-computes the fill level.
+One ultrasonic distance reading, with the service-panel state and the bin's
+current fault. The device reports the raw distance; the server computes the fill
+level.
 
 ```http
 POST /api/v1/device/telemetry
-{ "distance_mm": 412.5 }
+{ "distance_mm": 412.5, "panel_open": false, "fault_code": null }
 → 201 { "fill_percent": 17.5, "status": "OK" }
 ```
 
@@ -358,6 +363,12 @@ The example assumes `devices.empty_distance_mm` is 500.
 | Field | Rule |
 |---|---|
 | `distance_mm` | Required. Number, 0 or more, at most two decimal places |
+| `panel_open` | Required. Boolean. The service-panel interlock **[P42]** |
+| `fault_code` | Required, may be null. One of the `bin_telemetry.fault_code` values in `Database_Schema.md` §5 **[P42]** |
+
+The device decides the panel state and the fault, and stops taking deposits on
+its own while either is set (`System_Plan.md` §8.2). The server only stores and
+reports them.
 
 **Server steps:**
 
@@ -369,12 +380,17 @@ The example assumes `devices.empty_distance_mm` is 500.
 4. Dispatch `BinFull` when this row is `FULL` and the device's previous row was
    not, or there was no previous row **[P19]**. The listener writes one
    notification row per admin user.
+5. Dispatch `BinFault` when this row's `fault_code` is not null and differs from
+   the device's previous row, or there was no previous row **[P43]**. The listener
+   writes one notification row per admin user. An open service panel raises no
+   notification: it is opened on purpose.
 
 The reply returns the computed values so the bin can show its bin-full screen
 **[P18]**.
 
 The firmware sends a reading at boot, after each session reaches a final state,
-and on a fixed interval **[P16]**. The interval is not set here (Section 10).
+whenever the panel state or the fault changes, and on a fixed interval **[P16]**.
+The interval is not set here (Section 10).
 
 ### 5.4 POST /device/sessions
 
@@ -452,6 +468,11 @@ POST /api/v1/device/sessions/b3f1…/deposit
 | `verification.passed` | Required. Boolean | `verification_passed` |
 | `verification.score` | Optional. Number from 0 to 1, at most four decimal places | `verification_score` |
 
+The three `verification` values are the bin station's answer to
+`POST /station/v1/verify` (Section 11.5), passed on unchanged by the controller.
+When the bin station can't be reached or can't take a picture, the controller
+does not call `deposit`; it cancels the session.
+
 The six values are stored on the session whether the deposit is accepted or
 rejected **[P22]**.
 
@@ -486,7 +507,7 @@ POST /api/v1/device/sessions/b3f1…/complete
 
 | Field | Rule | Stored in |
 |---|---|---|
-| `actuator_ok` | Required. Boolean. True only when the limit switches confirm the transfer | `actuator_ok` |
+| `actuator_ok` | Required. Boolean. True only when the extend stroke reached its end, judged from the actuator's current (`System_Plan.md` §8.2) | `actuator_ok` |
 | `cycle_ms` | Optional. Integer, 0 or more | `actuator_cycle_ms` |
 
 Both outcomes run in one database transaction that first locks the session row
@@ -702,7 +723,7 @@ transaction is `COMPLETED`. Voided deposits are excluded.
 | GET | `/admin/bins` | `admin.bins.index` | Bin list with current fill level |
 | GET | `/admin/bins/create` | `admin.bins.create` | Register form |
 | POST | `/admin/bins` | `admin.bins.store` | Register a bin and issue its secret |
-| GET | `/admin/bins/{device}` | `admin.bins.show` | One bin and its fill history |
+| GET | `/admin/bins/{device}` | `admin.bins.show` | One bin, its fill history, service-panel state and faults |
 | GET | `/admin/bins/{device}/edit` | `admin.bins.edit` | Edit form, including calibration values |
 | PUT | `/admin/bins/{device}` | `admin.bins.update` | Save changes |
 | POST | `/admin/bins/{device}/secret` | `admin.bins.secret` | Issue a new secret |
@@ -739,6 +760,7 @@ GET /admin/dashboard/summary
     "generated_at": "2026-10-03T01:39:00Z",
     "bins": [
       { "id": 1, "name": "Bin 1", "fill_percent": 17.5, "status": "OK",
+        "panel_open": false, "fault_code": null,
         "last_seen_at": "2026-10-03T01:38:42Z" }
     ],
     "today": { "deposits": 12, "weight_g": 2210.4, "points_awarded": 221 },
@@ -751,7 +773,7 @@ GET /admin/dashboard/summary
 
 | Field | Source |
 |---|---|
-| `bins[]` | Each device that is not `retired`, with its latest `bin_telemetry` row. `fill_percent` and `status` are null when the bin has no reading |
+| `bins[]` | Each device that is not `retired`, with its latest `bin_telemetry` row. `fill_percent`, `status`, `panel_open` and `fault_code` are null when the bin has no reading |
 | `today.deposits` | Count of `COMPLETED` transactions created since midnight, Asia/Manila |
 | `today.weight_g` | Sum of `net_weight_g` for those transactions' sessions |
 | `today.points_awarded` | Sum of `points_awarded` for those transactions |
@@ -905,6 +927,7 @@ Modules dispatch events and never call Notifications directly. Listeners write t
 | `DepositCompleted` | Deposits, after `complete` commits | The depositing user | `DEPOSIT_COMPLETED` |
 | `RedemptionFulfilled` | Rewards, after an admin fulfils | The redeeming user | `REDEMPTION_FULFILLED` |
 | `BinFull` | Devices, from telemetry (Section 5.3) | One row per admin user | `BIN_FULL` |
+| `BinFault` | Devices, from telemetry (Section 5.3) | One row per admin user | `BIN_FAULT` **[P43]** |
 
 ---
 
@@ -926,6 +949,9 @@ simulator before real hardware is used:
 - An `ACCEPTED` session accepts `complete` after the review threshold has passed.
 - Every error reply on a device route is JSON in the error shape, including a
   malformed body.
+- A bin station that does not answer, or answers `verify` with an error, never
+  leads to a `deposit` call or an actuator move.
+- A token scanned before the scanner was armed never opens a session.
 
 ---
 
@@ -977,6 +1003,10 @@ written as if each is accepted.
 | P39 | Device secret | 64 hex characters, generated by the server, shown once |
 | P40 | Notification types | `DEPOSIT_COMPLETED`, `REDEMPTION_FULFILLED`, `BIN_FULL` |
 | P41 | Form limits not in the schema | Password at least 8 characters; `points_cost` at least 1; `void_reason` required |
+| P42 | Telemetry fields | `panel_open` and `fault_code` are required in every telemetry call; `fault_code` is null when the bin has no fault |
+| P43 | `BinFault` event | Dispatched when a reading carries a fault that differs from the previous reading's. Notification type `BIN_FAULT`. No notification for an open service panel |
+| P44 | Bin station API | Every detail of Section 11: paths, bodies, error codes, the event queue and the controller timeout |
+| P45 | Bin station access | No authentication. The bin station listens on the bin's dedicated network only, and the controller trusts its answers as it trusts its own sensors |
 
 ---
 
@@ -995,10 +1025,181 @@ answer them.
    route is designed for it.
 4. **Link lifetime.** Laravel's documented setting for a reset link is 60 minutes.
    Is that long enough for the set-password email sent to a new account?
-5. **Firmware timing.** The telemetry interval and the backoff between `complete`
-   retries are not set.
+5. **Firmware timing.** The telemetry interval, the backoff between `complete`
+   retries, the bin station event poll interval and the bin station's controller
+   timeout are not set.
 6. **Bulk invitations.** After a CSV import, is a bulk "send set-password emails"
    action needed, or is sending from each user's row enough?
 7. **Hardware weight limit.** The value for the new setting in P37.
 8. **QR library.** Which Composer package renders the QR code, and whether it
    supports Laravel 13.
+
+---
+
+## 11. Bin Station API
+
+The bin station is the Python program on the Pi that runs the QR scanner, the
+camera check and the touchscreen (`System_Plan.md` §8.3). It offers these
+endpoints to the controller on the bin's network. The controller is its only
+caller, and the bin station never calls the web app. Every detail in this section
+is **[P44]**.
+
+### 11.1 Conventions
+
+- **Base URL:** the controller stores the bin station's URL in non-volatile
+  storage, set through its setup portal, for example `http://192.168.1.10:8080`.
+  Paths start at `/station/v1`.
+- **Bodies:** JSON in UTF-8, as in Section 3.1.
+- **No signing.** The bin station listens on the bin's dedicated network only
+  **[P45]**.
+- **Errors** use the shape in Section 3.5, with the codes in Section 11.8.
+- **Contact:** every call from the controller resets the controller timeout
+  (Section 11.9).
+- **Fail closed:** the controller treats no reply, an unreadable reply or any
+  error as a failed answer. It never reads a missing camera answer as a pass.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/station/v1/health` | What is working |
+| PUT | `/station/v1/scanner` | Arm or disarm the scanner |
+| GET | `/station/v1/events` | Scanned tokens and touches since the last call |
+| POST | `/station/v1/verify` | Camera check |
+| POST | `/station/v1/reference` | Store the empty platform as the reference |
+| PUT | `/station/v1/screen` | Show a screen |
+
+### 11.2 GET /station/v1/health
+
+```http
+GET /station/v1/health
+→ 200 { "scanner": true, "camera": true, "reference": true }
+```
+
+| Field | Meaning |
+|---|---|
+| `scanner` | The scanner's serial port is open |
+| `camera` | The camera is open |
+| `reference` | A reference image is stored |
+
+The controller calls it in its ready check before arming the scanner, and on its
+telemetry interval. `scanner` false gives the fault `SCANNER_UNAVAILABLE`,
+`camera` false gives `CAMERA_UNAVAILABLE`, and no reply gives
+`STATION_UNREACHABLE`. With `reference` false, the controller takes a reference
+(Section 11.6) before arming the scanner.
+
+### 11.3 PUT /station/v1/scanner
+
+```http
+PUT /station/v1/scanner
+{ "armed": true }
+→ 200 { "armed": true }
+```
+
+While armed, the bin station triggers the scanner and queues each token it reads
+as an event. Arming clears any token already queued, so a scan from before the
+bin was ready can't open a session. The controller arms the scanner when the bin
+is ready and disarms it as soon as it takes a token.
+
+Arming while the scanner is not connected gives 503 `SCANNER_UNAVAILABLE`.
+
+### 11.4 GET /station/v1/events
+
+```http
+GET /station/v1/events
+→ 200 { "events": [
+    { "type": "qr", "token": "k7Qx…" },
+    { "type": "touch", "action": "cancel" }
+  ] }
+```
+
+Returns the queued events, oldest first, and removes them from the queue. An
+empty queue gives `"events": []`.
+
+| `type` | Fields | Meaning |
+|---|---|---|
+| `qr` | `token`: the scanned text, at most 64 characters | A QR code was read while the scanner was armed |
+| `touch` | `action`: `cancel` | The student pressed Cancel on the screen |
+
+The controller polls this while the scanner is armed or a session is `OPEN`. The
+poll interval is a firmware constant. The queue holds at most 16 events and drops
+the oldest when full.
+
+### 11.5 POST /station/v1/verify
+
+The camera check. No body.
+
+```http
+POST /station/v1/verify
+→ 200 { "method": "cam_diff", "passed": true, "score": 0.87 }
+```
+
+| Field | Meaning |
+|---|---|
+| `method` | Always `cam_diff`: frame differencing against the reference |
+| `passed` | `score` is at or above the pass threshold |
+| `score` | Share of pixels that differ from the reference, 0.0000 to 1.0000 |
+
+- The controller switches the LED strip on and waits for the light to settle
+  before calling, and switches it off after the reply.
+- The controller copies the three fields unchanged into the `verification`
+  object of `deposit` (Section 5.5).
+- No reference stored gives 409 `NO_REFERENCE`. A camera that can't take a
+  picture gives 503 `CAMERA_UNAVAILABLE`. On either, or on no reply, the
+  controller cancels the session (Section 5.7) and does not call `deposit`.
+
+### 11.6 POST /station/v1/reference
+
+Takes a picture of the empty platform and stores it as the reference. No body.
+
+```http
+POST /station/v1/reference
+→ 200 { "stored": true }
+```
+
+- The controller calls it only when the scale reads an empty platform and with
+  the LED strip on: at boot, after each transfer, and whenever `health` reports
+  no reference.
+- Focus, exposure and white balance are fixed at this moment and reused for every
+  check until the next reference (`System_Plan.md` §8.3).
+- A camera that can't take a picture gives 503 `CAMERA_UNAVAILABLE`, and the old
+  reference is kept.
+
+### 11.7 PUT /station/v1/screen
+
+```http
+PUT /station/v1/screen
+{ "screen": "ACCEPTED", "values": { "weight_g": 184.6, "points": 18 } }
+→ 200 { "screen": "ACCEPTED" }
+```
+
+| `screen` | `values` |
+|---|---|
+| `IDLE` | none |
+| `WELCOME` | `name`: the `display_name` from `POST /device/sessions` |
+| `WEIGHING` | none |
+| `ACCEPTED` | `weight_g`, `points`: the `points_preview` from `deposit` |
+| `DONE` | `points`, `balance`: from `complete` |
+| `PENDING` | none |
+| `PROBLEM` | `message`: plain language for the student, never an error code |
+| `BIN_FULL` | none |
+| `OFFLINE` | none |
+
+`values` may be left out for a screen that takes none. An unknown screen or a
+missing value gives 422 `VALIDATION_ERROR`. The bin station pushes the screen to
+the kiosk page at once.
+
+### 11.8 Error codes
+
+| `code` | HTTP | Raised by |
+|---|---|---|
+| `VALIDATION_ERROR` | 422 | `scanner`, `screen` |
+| `NO_REFERENCE` | 409 | `verify` |
+| `CAMERA_UNAVAILABLE` | 503 | `verify`, `reference` |
+| `SCANNER_UNAVAILABLE` | 503 | `scanner` |
+
+### 11.9 Controller timeout
+
+When no call has come from the controller for longer than the controller timeout,
+the bin station disarms the scanner and shows `OFFLINE` on its own, so a student
+is never shown a ready screen by a bin whose controller is down. The next call
+from the controller ends it. The timeout is in the bin station's settings file and
+must be longer than the controller's event poll interval.
