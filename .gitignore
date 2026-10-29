@@ -49,11 +49,20 @@ __pycache__/
 *.dump
 
 # ---------------------------------------------------------------------------
+# Hardware department's manual and schematic — binary drafts kept locally,
+# not tracked. Patterns so later revisions stay ignored too.
+# ---------------------------------------------------------------------------
+/docs/*Hardware-Manual*.docx
+/docs/Schematic_*.pdf
+
+# ---------------------------------------------------------------------------
 # Editors and OS
 # ---------------------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
+# LibreOffice lock files, present while a document is open
+.~lock.*
 # Claude Code's local settings and agent files
 .claude/
 .DS_Store
