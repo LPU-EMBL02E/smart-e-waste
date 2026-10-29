@@ -27,7 +27,8 @@
 - `role` — VARCHAR(20) — NOT NULL, DEFAULT `student` — values: `student`, `admin`
 - `student_number` — VARCHAR(50) — UNIQUE, NULL
 - `email` — VARCHAR(255) — UNIQUE, NOT NULL
-- `password` — VARCHAR(255) — NULL — NULL until the student sets a password from the emailed link; login fails while it is NULL
+- `email_verified_at` — TIMESTAMP — NULL — when the email was confirmed; NULL until a self-registered student follows the confirmation link, and set at creation for an account an admin creates
+- `password` — VARCHAR(255) — NULL — NULL until the student sets a password from the emailed link; login fails while it is NULL. Set at registration for a self-registered student
 - `first_name` — VARCHAR(100) — NOT NULL
 - `last_name` — VARCHAR(100) — NOT NULL
 - `status` — VARCHAR(20) — NOT NULL, DEFAULT `active` — values: `active`, `inactive`

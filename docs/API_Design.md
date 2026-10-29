@@ -613,6 +613,8 @@ pages themselves and the rules behind them come from the plan.
 
 | Method | Path | Route name | Module | Purpose |
 |---|---|---|---|---|
+| GET | `/register` | `register` | Identity | Registration form |
+| POST | `/register` | — | Identity | Create a student account and sign in |
 | GET | `/login` | `login` | Identity | Login form |
 | POST | `/login` | — | Identity | Sign in with email and password |
 | POST | `/logout` | `logout` | Identity | Sign out. Needs a signed-in user |
@@ -636,12 +638,35 @@ pages themselves and the rules behind them come from the plan.
   to an account **[P30]**.
 - The link lifetime is Laravel's `expire` setting for password resets in
   `config/auth.php`. Laravel's documentation shows 60 minutes (Section 10).
+- **Registration** always creates a `student` whose `status` is `active`; the
+  form has no role field. The rules are in Section 7.6. `POST /register` is
+  limited to 5 attempts a minute for each IP address **[P46]**. A successful
+  registration signs the student in and redirects to `/email/verify`.
+
+**Email confirmation.** These are the three routes in Laravel's email
+verification documentation, with the same names. They need a signed-in user.
+
+| Method | Path | Route name | Module | Purpose |
+|---|---|---|---|---|
+| GET | `/email/verify` | `verification.notice` | Identity | Page asking the student to confirm their email, with a resend button |
+| GET | `/email/verify/{id}/{hash}` | `verification.verify` | Identity | The link in the email. Sets `users.email_verified_at` and redirects to `/home` |
+| POST | `/email/verification-notification` | `verification.send` | Identity | Send the link again |
+
+- The link is signed and expires after Laravel's `verification.expire` setting
+  in `config/auth.php`, 60 minutes by default (Section 10).
+- `POST /email/verification-notification` is limited to 6 a minute, as in
+  Laravel's documentation **[P46]**.
+- A user whose email is not confirmed can sign in, but every signed-in page
+  except these three redirects to `/email/verify` (Section 7.3).
 
 ### 7.3 Signed-in routes
 
 These are the pages the plan lists for students. They are open to any signed-in
-user, because every user has a QR token and admins appear on the user
-leaderboard **[P31]**.
+user whose email is confirmed, because every user has a QR token and admins
+appear on the user leaderboard **[P31]**. They use Laravel's `verified`
+middleware; a user whose email is not confirmed is sent to `/email/verify`. The
+profile page that shows the QR code is one of them, so a student can't deposit
+before confirming **[P48]**.
 
 | Method | Path | Route name | Module | Purpose |
 |---|---|---|---|---|
@@ -668,8 +693,8 @@ leaderboard **[P31]**.
 
 ### 7.4 Admin routes
 
-All are under `/admin`, with the `auth` middleware and an admin role check, and
-route names starting with `admin.`.
+All are under `/admin`, with the `auth` and `verified` middleware and an admin
+role check, and route names starting with `admin.`.
 
 **Dashboard and reporting (Reporting)**
 
@@ -799,7 +824,8 @@ Lengths and required fields come from the schema. Other limits are **[P41]**.
 
 - Creating a user inserts the `users` row with `password` NULL and its
   `user_qr_credentials` row in one database transaction. The token is 40 random
-  letters and digits **[P35]**.
+  letters and digits **[P35]**. `email_verified_at` is set at creation, because
+  an admin entered the details **[P47]**.
 - The set-password email is sent during the request. If the send fails, the user
   is still created and the admin is told the email was not sent.
 - `PUT /admin/users/{user}/password` takes `password` and
@@ -810,12 +836,31 @@ Lengths and required fields come from the schema. Other limits are **[P41]**.
 - Columns, with a header row: `student_number`, `first_name`, `last_name`,
   `email`, `organization_code`.
 - Every row becomes a `student`. `organization_code` must match an existing
-  `organizations.code`.
+  `organizations.code`. Each account counts as confirmed **[P47]**.
 - The file is validated as a whole. If any row is invalid, nothing is imported
   and the page lists the rows and their errors.
 - The import sends no email. Set-password emails are sent afterwards from the
   user list. This keeps a large import inside one request with no queue, and
   inside the mail service's daily limit.
+
+**Register** (`POST /register`)
+
+| Field | Rule |
+|---|---|
+| `first_name`, `last_name` | Required, at most 100 characters each |
+| `email` | Required, a valid email, at most 255 characters, unique |
+| `student_number` | Required, at most 50 characters, unique **[P46]** |
+| `organization_id` | Required. An existing organization whose `is_active` is true |
+| `password` | Required, at least 8 characters, with `password_confirmation` **[P41]** |
+
+- The `users` row (`role` = `student`, `status` = `active`, `email_verified_at`
+  NULL) and its `user_qr_credentials` row are inserted in one database
+  transaction, as when an admin creates a user.
+- The confirmation email is sent after the commit, through Laravel's
+  `Registered` event. If the send fails, the account is still created and the
+  student is told to use the resend button.
+- On a validation failure the form comes back with the errors and the old
+  input, except the password fields.
 
 **Create or edit an organization**
 
@@ -1007,6 +1052,9 @@ written as if each is accepted.
 | P43 | `BinFault` event | Dispatched when a reading carries a fault that differs from the previous reading's. Notification type `BIN_FAULT`. No notification for an open service panel |
 | P44 | Bin station API | Every detail of Section 11: paths, bodies, error codes, the event queue and the controller timeout |
 | P45 | Bin station access | No authentication. The bin station listens on the bin's dedicated network only, and the controller trusts its answers as it trusts its own sensors |
+| P46 | Registration | `student_number` is required when a student registers. `POST /register` is limited to 5 attempts a minute per IP address; the resend button to 6 a minute |
+| P47 | Admin-created accounts | Count as confirmed: `email_verified_at` is set when an admin creates the account, one at a time or by CSV import |
+| P48 | Unconfirmed accounts | Can sign in but see only the confirmation page. The device API does not check confirmation; the QR code is only shown once the email is confirmed |
 
 ---
 
@@ -1023,8 +1071,9 @@ answer them.
 3. **Own password and profile.** The plan covers setting a password by email and
    by an admin. Can a signed-in user change their own password or details? No
    route is designed for it.
-4. **Link lifetime.** Laravel's documented setting for a reset link is 60 minutes.
-   Is that long enough for the set-password email sent to a new account?
+4. **Link lifetime.** Laravel's documented setting for a reset link is 60 minutes,
+   and the email confirmation link uses the same default. Is that long enough
+   for the set-password email sent to a new account?
 5. **Firmware timing.** The telemetry interval, the backoff between `complete`
    retries, the bin station event poll interval and the bin station's controller
    timeout are not set.

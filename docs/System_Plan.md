@@ -185,17 +185,26 @@ and reads are shared.
 Notifications is a supporting component, not a domain module. It exposes no
 service and nothing depends on it.
 
-**Accounts:** admins create student accounts one at a time or by CSV
-import; there is no self-registration. A new account gets an email with a link to
-set its password, and "Forgot password" sends the same kind of link, both through
-Laravel's built-in password reset. Admins can also set a password from the user
-management page, which is the fallback when email can't be sent.
+**Accounts:** students register themselves, with no admin approval. A student
+enters their name, student number, email, organization and a password, and is
+signed in at once. They must confirm their email, through a link sent to it,
+before they can use any signed-in page; until then they see only a page asking
+them to confirm, with a button to send the link again. This uses Laravel's
+built-in email verification. Registration always creates a student; only an
+admin can create an admin.
 
-A new account has no password: `users.password` stays NULL until the student sets
-one, and login fails for an account with no password. No default password is ever
-assigned or emailed. The user list shows which accounts have not been activated, so
-an admin can resend the email. The links expire; a student who misses one uses
-"Forgot password" to get a new link.
+Admins can also create accounts one at a time or by CSV import. Such an account
+gets an email with a link to set its password, and "Forgot password" sends the
+same kind of link, both through Laravel's built-in password reset. Admins can
+also set a password from the user management page, which is the fallback when
+email can't be sent. An account an admin creates counts as confirmed, because an
+admin entered its details and the set-password link goes to the same address.
+
+An account an admin creates has no password: `users.password` stays NULL until
+the student sets one, and login fails for an account with no password. No
+default password is ever assigned or emailed. The user list shows which accounts
+have not been activated, so an admin can resend the email. The links expire; a
+student who misses one uses "Forgot password" to get a new link.
 
 **Boundary rules:**
 1. **Writes go through the owning module's service.** Deposits never inserts into
@@ -378,7 +387,7 @@ needs the website login, which is why the bin asks for no password or PIN.
 
 | Role | Pages |
 |---|---|
-| Student | Login, set or reset password, profile and QR, points balance, transaction history, organization info, leaderboard, rewards, redeem, my redemptions, notifications |
+| Student | Register, confirm email, login, set or reset password, profile and QR, points balance, transaction history, organization info, leaderboard, rewards, redeem, my redemptions, notifications |
 | Admin | Dashboard with live summary, users (with CSV import and resending the set-password email), organizations, transactions and void, total collected weight, bins with fill history, service-panel state and faults, device registration, rewards, redemption fulfilment and cancellation, points rate, organization leaderboard, reports, notifications |
 
 **Leaderboard scope:** the user leaderboard includes everyone (students and
@@ -643,16 +652,19 @@ called directly, and no Resend-only feature (templates, tags, webhooks) is used.
 | Needs | The `resend/resend-php` package; the domain verified in Resend with DNS records | SMTP credentials from the school's IT office |
 | App code changes | — | None |
 
-- **Scope:** two emails only — set your password (new account) and
-  forgot password. Notifications stay in-app in the `notifications` table.
+- **Scope:** three emails only — confirm your email (self-registration), set
+  your password (an account an admin created) and forgot password.
+  Notifications stay in-app in the `notifications` table.
 - **The domain is required for this.** Without a verified domain, Resend delivers
   only to the account owner's own address.
 - **Free plan limits:** 100 emails a day and 3,000 a month, with one domain. A CSV
   import of more than 100 students has to be invited over several days, or the
-  rest given passwords by an admin.
+  rest given passwords by an admin. More than 100 students registering in one
+  day hits the same limit: the rest get their confirmation link the next day,
+  using the resend button.
 - **No queue.** Mail is sent during the request. A failed send must not fail the
-  action: catch it, tell the admin the email was not sent, and use the admin
-  password fallback.
+  action: catch it and say the email was not sent. An admin then uses the admin
+  password fallback; a registering student uses the resend button later.
 - **Email needs the internet.** On the LAN demo fallback, or in any outage, no
   email goes out; the bin and the dashboard still work.
 - **Development and tests** use `MAIL_MAILER=log`, which writes emails to the log
@@ -893,10 +905,11 @@ points rate).
 - [ ] Domain: get one before the tunnel and email are set up. The options are a
       first-year-free domain from the GitHub Student Developer Pack, or a low-cost
       paid one. It is needed for email as well as for a stable tunnel hostname.
-- [ ] Accounts: admins create student accounts, students set their password by
-      email, and there is no self-registration (Section 4).
-- [ ] Email scope: password setup and reset only; notifications stay in-app
-      (Section 7.2).
+- [ ] Accounts: students register themselves and confirm their email, with no
+      admin approval; admins can also create accounts, which set their password
+      by email (Section 4).
+- [ ] Email scope: email confirmation, password setup and reset only;
+      notifications stay in-app (Section 7.2).
 - [ ] Demo fallback: a LAN `.env` for when the internet is down (Section 7).
 - [ ] Negative balances: allowed after a void (Section 6.1).
 - [ ] Redemptions: an admin can cancel one while it is pending (Section 6.1).
