@@ -7,6 +7,7 @@ use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\Redemption;
 use App\Modules\Rewards\Models\RewardRule;
+use App\Modules\Rewards\Support\LedgerEntryType;
 
 /**
  * The ONLY code that writes point_ledger. System_Plan.md §4, boundary rule 1.
@@ -19,7 +20,9 @@ use App\Modules\Rewards\Models\RewardRule;
  * a REVERSAL row, and a balance is always SUM(points_delta)
  * (System_Plan.md §5.7 rule 7).
  *
- * TODO: all method bodies. The rules they must follow are in the docblocks.
+ * TODO: pointsEarnedBy, debitRedemption, reverseTransaction and
+ * reverseRedemption (redemptions, voids and leaderboards; not the deposit path).
+ * The rules they must follow are in their docblocks.
  */
 class PointsService
 {
@@ -33,8 +36,7 @@ class PointsService
      */
     public function balanceFor(User $user): int
     {
-        // TODO: PointLedgerEntry::where('user_id', $user->id)->sum('points_delta')
-        throw new \LogicException('Not implemented.');
+        return (int) PointLedgerEntry::where('user_id', $user->id)->sum('points_delta');
     }
 
     /**
@@ -62,9 +64,13 @@ class PointsService
      */
     public function pointsEarnedToday(User $user): int
     {
-        // TODO: join deposit_sessions, filter created_at >=
-        //       now(config('ewaste.display_timezone'))->startOfDay()->utc()
-        throw new \LogicException('Not implemented.');
+        $localMidnight = now(config('ewaste.display_timezone'))->startOfDay()->utc();
+
+        return (int) Transaction::query()
+            ->join('deposit_sessions', 'deposit_sessions.id', '=', 'transactions.session_id')
+            ->where('deposit_sessions.user_id', $user->id)
+            ->where('transactions.created_at', '>=', $localMidnight)
+            ->sum('transactions.points_awarded');
     }
 
     /**
@@ -76,8 +82,8 @@ class PointsService
      */
     public function isUnderDailyCap(User $user, RewardRule $rule): bool
     {
-        // TODO: ! $rule->hasDailyCap() || $this->pointsEarnedToday($user) < $rule->daily_points_cap
-        throw new \LogicException('Not implemented.');
+        return ! $rule->hasDailyCap()
+            || $this->pointsEarnedToday($user) < $rule->daily_points_cap;
     }
 
     /**
@@ -87,12 +93,19 @@ class PointsService
      *
      * The unique (transaction_id, entry_type) index makes a second EARN for the
      * same transaction impossible.
+     *
+     * The user comes from the transaction's session; pass the transaction with
+     * its session relation set to save a query.
      */
     public function creditDeposit(Transaction $transaction): PointLedgerEntry
     {
-        // TODO: insert EARN, +$transaction->points_awarded,
-        //       user from $transaction->session->user_id
-        throw new \LogicException('Not implemented.');
+        return PointLedgerEntry::create([
+            'user_id' => $transaction->session->user_id,
+            'transaction_id' => $transaction->id,
+            'entry_type' => LedgerEntryType::Earn,
+            'points_delta' => $transaction->points_awarded,
+            'description' => "Deposit {$transaction->transaction_code}",
+        ]);
     }
 
     /**
@@ -137,7 +150,6 @@ class PointsService
      */
     public function ruleInEffectAt(\DateTimeInterface $at): ?RewardRule
     {
-        // TODO: RewardRule::inEffectAt($at)->first()
-        throw new \LogicException('Not implemented.');
+        return RewardRule::inEffectAt($at)->first();
     }
 }
