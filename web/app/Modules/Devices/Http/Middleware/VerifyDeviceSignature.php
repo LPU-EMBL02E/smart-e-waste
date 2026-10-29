@@ -69,7 +69,7 @@ class VerifyDeviceSignature
         // error, then counts forward from that.
         $window = (int) config('ewaste.device.signature_window_seconds');
 
-        if (abs(time() - (int) $timestamp) > $window) {
+        if (abs(now()->getTimestamp() - (int) $timestamp) > $window) {
             throw DeviceApiException::of(DeviceErrorCode::ClockSkew, 'Timestamp outside the signature window.');
         }
 
