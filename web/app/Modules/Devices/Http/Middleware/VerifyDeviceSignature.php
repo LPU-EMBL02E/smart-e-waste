@@ -32,9 +32,8 @@ use Symfony\Component\HttpFoundation\Response;
  *
  *   $request->attributes->get('device')
  *
- * STATUS: written from the spec but NOT yet executed — there is no PHP in the
- * authoring environment. Verify with tools/simulator/test_vectors.py and
- * tests/Feature/Device/DeviceSignatureTest.php before trusting it.
+ * Checked against both vectors in API_Design.md §3.4, and every failure in
+ * §3.3, by tests/Feature/Device/DeviceSignatureTest.php.
  */
 class VerifyDeviceSignature
 {
