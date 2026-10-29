@@ -156,6 +156,15 @@ class BinService
     }
 
     /**
+     * Save the firmware version a bin reported when opening a session.
+     * API_Design.md §5.4 (`fw`), P6. No write when it has not changed.
+     */
+    public function recordFirmwareVersion(Device $device, string $version): void
+    {
+        $device->forceFill(['firmware_version' => $version])->save();
+    }
+
+    /**
      * Register a bin and issue its first secret. API_Design.md §7.6
      * ("Register or edit a bin"), P39.
      *

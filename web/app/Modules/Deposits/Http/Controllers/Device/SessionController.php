@@ -7,6 +7,7 @@ use App\Modules\Deposits\Http\Requests\Device\OpenSessionRequest;
 use App\Modules\Deposits\Http\Requests\Device\RecordDepositRequest;
 use App\Modules\Deposits\Services\DepositService;
 use App\Modules\Devices\Models\Device;
+use App\Modules\Rewards\Services\PointsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,23 +19,25 @@ use Illuminate\Http\Request;
  *   POST /device/sessions/{id}/complete    actuator result; credits points
  *   POST /device/sessions/{id}/cancel      cancel an open session
  *
- * This controller only shapes requests and replies. Every rule and state
- * transition is in DepositService, so the state machine can be tested without
- * HTTP.
+ * This controller only shapes requests and replies. Every rule, state
+ * transition and lookup is in DepositService, so the state machine can be
+ * tested without HTTP.
  *
  * A session id that does not exist, or that belongs to ANOTHER device, is 404
  * SESSION_NOT_FOUND — never a plain 404 page, because device routes always
- * answer in JSON (P2, P8). Resolve the session with the calling device in the
- * lookup rather than relying on route-model binding, or one bin could act on
- * another bin's session.
+ * answer in JSON (P2, P8). DepositService scopes every lookup to the calling
+ * device instead of relying on route-model binding, so one bin can never act
+ * on another bin's session.
  *
- * TODO: all method bodies. The state table in API_Design.md §4.2 says exactly
- * what each call must answer in each of the seven states, including the replay
- * cases that return a recorded outcome instead of an error.
+ * Every call answers per the state table in API_Design.md §4.2, including the
+ * replays that return a recorded outcome instead of an error.
  */
 class SessionController
 {
-    public function __construct(private DepositService $deposits) {}
+    public function __construct(
+        private DepositService $deposits,
+        private PointsService $points,
+    ) {}
 
     /**
      * -> 201 { session_id, expires_in_s, user: { display_name } }
@@ -44,19 +47,33 @@ class SessionController
      */
     public function store(OpenSessionRequest $request): JsonResponse
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $session = $this->deposits->openSession(
+            $this->device($request),
+            $request->validated('qr_token'),
+            $request->validated('fw'),
+        );
+
+        return new JsonResponse([
+            'session_id' => $session->id,
+            'expires_in_s' => (int) config('ewaste.session_timeout_seconds'),
+            'user' => ['display_name' => $session->user->displayName()],
+        ], 201);
     }
 
     /**
      * -> 200 { accepted: true, points_preview: 18 }
      *
-     * points_preview is a preview only. Nothing is credited here.
+     * points_preview is a preview only. Nothing is credited here. A rejection is
+     * an error reply, thrown by the service after the REJECTED state is saved.
      */
     public function deposit(RecordDepositRequest $request, string $sessionId): JsonResponse
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $session = $this->deposits->recordDeposit($this->device($request), $sessionId, $request->validated());
+
+        return new JsonResponse([
+            'accepted' => true,
+            'points_preview' => $this->deposits->pointsPreview($session),
+        ]);
     }
 
     /**
@@ -64,11 +81,22 @@ class SessionController
      *
      * Also 200 when actuator_ok is false, with transaction_id null and
      * points_awarded 0 (P26). Idempotent: a repeat returns the stored result.
+     * The balance is read at reply time (P10).
      */
     public function complete(CompleteSessionRequest $request, string $sessionId): JsonResponse
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $session = $this->deposits->complete(
+            $this->device($request),
+            $sessionId,
+            $request->boolean('actuator_ok'),
+            $request->validated('cycle_ms'),
+        );
+
+        return new JsonResponse([
+            'transaction_id' => $session->transaction?->id,
+            'points_awarded' => $session->transaction?->points_awarded ?? 0,
+            'balance' => $this->points->balanceFor($session->user),
+        ]);
     }
 
     /**
@@ -76,21 +104,14 @@ class SessionController
      */
     public function cancel(Request $request, string $sessionId): JsonResponse
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $session = $this->deposits->cancel($this->device($request), $sessionId);
+
+        return new JsonResponse(['status' => $session->status]);
     }
 
-    /**
-     * The session for this request, or 404 SESSION_NOT_FOUND. Scoped to the
-     * calling device, so a bin can never act on another bin's session.
-     */
-    private function resolveSession(Request $request, string $sessionId): mixed
+    /** The calling bin, set by VerifyDeviceSignature. */
+    private function device(Request $request): Device
     {
-        /** @var Device $device */
-        $device = $request->attributes->get('device');
-
-        // TODO: DepositSession::where('id',...)->where('device_id',$device->id)->first()
-        //       ?? throw DeviceApiException::of(DeviceErrorCode::SessionNotFound)
-        throw new \LogicException('Not implemented.');
+        return $request->attributes->get('device');
     }
 }
