@@ -15,8 +15,8 @@ The Pi runs two separate programs:
 
 - **The web app** (Laravel and MariaDB): the server. It touches no hardware.
 - **The bin station** (Python): the Pi's half of the bin. It runs the QR scanner,
-  the camera check and the touchscreen, has no database and never calls the web
-  app (Section 8.3).
+  the camera check with its e-waste model, and the touchscreen, has no database
+  and never calls the web app (Section 8.3).
 
 **The one design rule:** the web app is only a server. Every part of the bin sits
 behind the ESP32-S3 controller, either wired to it directly or reached through the
@@ -27,6 +27,11 @@ the Pi inside the bin.
 
 **One bin.** The project builds a single e-waste bin, with one ESP32-S3 controller
 and one Pi.
+
+**Only e-waste goes in.** The student drops the item through a slot onto a
+tilting flap. The camera checks that something is there, and a small model on
+the Pi checks that it is e-waste. The flap then tips the item into the bin, or
+back out to a return tray. Every rejected item comes back out (Section 8.2).
 
 **The controller is in charge.** It runs the deposit sequence and owns all safety
 logic, so a slow or crashed Pi can never leave the actuator running. The bin
@@ -42,13 +47,17 @@ station only answers the controller's requests.
 | Server and bin station | Raspberry Pi 4 Model B, 4 GB | Wi-Fi to the controller and to phones |
 | Pi storage | 2.5" SATA SSD, 120–256 GB, in a USB 3.0-to-SATA adapter whose chipset supports Pi USB boot. The Pi boots from it; there is no SD card | Pi, USB 3.0 port |
 | User identification | GM865 barcode and QR scanner, USB virtual serial, command-triggered | Pi, USB |
-| Item verification | Arducam IMX519 16 MP autofocus camera, lit by a 12 V white LED strip | Pi, CSI. LED strip switched by the controller |
+| Item verification | Arducam IMX519 16 MP autofocus camera above the flap, lit by a 12 V white LED strip. The bin station checks that an item is there, then runs an e-waste model on the Pi's CPU (Section 8.3) | Pi, CSI. LED strip switched by the controller |
 | Weight | 5 kg bar load cell and HX711 amplifier, powered from the controller's 3.3 V | Controller |
 | Bin level | HC-SR04 ultrasonic sensor on 5 V, with a divider on the echo line | Controller |
-| Automated transfer | 12 V linear actuator, 200 mm stroke, 100 N, 160 mm/s, 3 A maximum, 20% duty cycle, with built-in end-of-stroke limit switches | BTS7960 H-bridge, driven by the controller |
+| Intake and return | A mail-style slot that drops the item onto the flap, and a return tray on the student's side | — |
+| Sorting flap | The weighing platform, on a pivot. It rests level; it tips one way to drop the item into the bin and the other way to slide it out to the return tray | Load cell, actuator |
+| Automated transfer | 12 V linear actuator, 200 mm stroke, 100 N, 160 mm/s, 3 A maximum, 20% duty cycle, with built-in end-of-stroke limit switches. It tips the flap: extending tips it toward the bin, retracting toward the return tray | BTS7960 H-bridge, driven by the controller |
+| Flap level | `TODO(team)`: a switch that closes when the flap is level, or an actuator with position feedback | Controller |
 | Bin display | 7" capacitive touchscreen, 1024×600, HDMI video and USB touch | Pi |
 | Feedback | Green, amber and red LEDs; 5 V active buzzer through a transistor | Controller |
 | Safety | Service-panel interlock switch; actuator current sense from the BTS7960 | Controller |
+| Pi cooling | Heatsink and fan on the Pi, because the Pi sits in a closed bin and runs the model. `TODO(team)`: the part | Pi, 5 V |
 | Power | S-100-12 supply, 12 V 8.5 A, behind a 2 A slow-blow mains fuse. Fused 12 V branches for the actuator (7.5 A) and LED strip (1 A). A 5.2 V 5 A buck for the Pi and touchscreen (3 A fuse), and an LM2596 set to 5.0 V for the controller and ultrasonic sensor (1 A fuse). Star ground | — |
 | Network | Dedicated Wi-Fi router for the bin and the Pi | — |
 
@@ -61,12 +70,20 @@ station only answers the controller's requests.
   BTS7960's current-sense output: current falling to near zero means the actuator
   reached the end of its stroke, and current staying high means a jam. This is what
   makes `actuator_ok` true or false (Section 8.2).
+- **The two ends of the stroke are the two tipped positions of the flap.** Level
+  is in the middle of the stroke, where the current shows nothing, so the
+  controller reads the flap level sensor to stop the actuator there.
+- **The load cell carries the flap and its pivot,** so an item is weighed while
+  the flap is level. `TODO(team)`: the mounting, and whether the actuator's 200 mm
+  stroke and 100 N suit the flap's geometry.
+- **Hands stay clear of the flap.** The slot is shaped so a hand can't reach the
+  flap while it moves. `TODO(team)`: the slot's design.
 - The 10 kΩ pull-downs on the driver's enable and PWM lines keep the actuator off
   while the controller boots or resets.
 - The actuator's 20% duty cycle limits how often it may run. A cycle of about
   2.5 s needs about 10 s of rest, so the controller enforces a rest time between
   cycles.
-- The LED strip lights the platform so the camera sees the same scene every time.
+- The LED strip lights the flap so the camera sees the same scene every time.
   The controller switches it on for each camera check and each new reference
   image.
 - The controller uses ADC1 (GPIO 1) for current sense because ADC2 can't be read
@@ -100,6 +117,7 @@ station only answers the controller's requests.
 | Driver PWM, retract | 18 | `LPWM`; 10 kΩ pull-down |
 | Actuator current sense | 1 | ADC1. In the manual, **missing from the schematic** |
 | Service-panel interlock | TODO(team) | In the manual, **missing from the schematic** |
+| Flap level sensor | TODO(team) | **Missing from the manual and the schematic** |
 
 Leave alone: GPIO 0, 3, 45 and 46 (boot strapping), 19 and 20 (USB), 26 to 32 (the
 module's flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED
@@ -107,7 +125,8 @@ pin of the board revision in use (38 or 48).
 
 **Open hardware items** (Section 10): the current-sense wiring and the interlock
 are in the manual but not on the schematic, and the SSD and its adapter are in
-neither. Current sense is needed before
+neither. Nor are the slot, the flap and its pivot, the return tray, the flap
+level sensor and the Pi's cooling. Current sense is needed before
 `actuator_ok` means anything: wire the BTS7960's `R_IS` and `L_IS` outputs through
 a load resistor sized so GPIO 1 never sees more than 3.1 V at the actuator's stall
 current.
@@ -122,7 +141,8 @@ No fabrication begins before Checkpoint 1 approval.
 |---|---|---|
 | **Host** | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit (Trixie, Debian 13) | Physical self-hosted server, and the bin station |
 | **Firmware** | Arduino framework, C++ | The controller program on the ESP32-S3 (Section 8.2) |
-| **Bin station** | Python 3 from Raspberry Pi OS, with `python3-picamera2`, `python3-numpy` and `python3-serial` from `apt` | QR scanner, camera check and the bin's screen (Section 8.3) |
+| **Bin station** | Python 3 from Raspberry Pi OS, with `python3-picamera2`, `python3-numpy`, `python3-serial` and `python3-onnxruntime` from `apt` | QR scanner, camera check with the e-waste model, and the bin's screen (Section 8.3) |
+| | An e-waste image classifier in ONNX format, trained on a dev machine | Runs on the Pi's CPU through ONNX Runtime. Training never runs on the Pi |
 | | Chromium in kiosk mode under the `cage` Wayland compositor | Shows the bin station's screen page on the touchscreen |
 | **Presentation** | Blade | Dashboard pages; plain forms (`method="POST"` + `@csrf`) for CRUD, no AJAX |
 | | Tailwind CSS (compiled via Vite on a dev machine, not the Pi) | Styling |
@@ -314,12 +334,16 @@ integration testing. Nothing else in the app changes.
    the review threshold (Section 6.3) is listed for admin review, and is never
    expired silently.
 7. A weight below the rule's minimum or above its maximum is rejected before the
-   actuator moves.
+   flap tips toward the bin.
 8. A student who has reached the daily points cap can't open a session.
 9. Safety is the controller's job. It stops taking deposits on its own when the
    service panel is open or the actuator has faulted, and reports both in its
    telemetry. The server records them and alerts the admins; it does not decide
    them.
+10. Every rejected item comes back. When a session ends without a transfer and
+    the scale reads an item on the flap, the controller tips it out to the return
+    tray (Section 8.2). The server is not told; the session's state already says
+    no points were credited.
 
 ### 5.4 Example flow
 
@@ -330,7 +354,7 @@ POST /api/v1/device/sessions
 
 POST /api/v1/device/sessions/b3f1…/deposit
 { "weight_g": 184.6, "weight_stable": true, "samples": 20,
-  "verification": { "method": "cam_diff", "passed": true, "score": 0.87 } }
+  "verification": { "method": "ewaste_model", "passed": true, "score": 0.93 } }
 → 200 { "accepted": true, "points_preview": 18 }
 
 POST /api/v1/device/sessions/b3f1…/complete
@@ -359,21 +383,22 @@ come from the reward rule in effect (Section 5.7).
 | Above max weight | 422 | `OVER_MAX_WEIGHT` |
 | Daily points cap reached | 429 | `DAILY_LIMIT_REACHED` |
 | No reward rule in effect | 503 | `NO_REWARD_RULE` |
-| Verification failed | 422 | `VERIFICATION_FAILED` |
+| Verification failed: no item seen, or not e-waste | 422 | `VERIFICATION_FAILED` |
 | Session timed out | 410 | `SESSION_EXPIRED` |
 | DB failure | 503 | `DB_UNAVAILABLE` (with `Retry-After`) |
 | Actuator failure | 200 | `actuator_ok:false`, session → `FAILED`, no points |
 
 **Network failure policy:** fail closed. If the server is unreachable at the QR step,
-reject and don't actuate. After an item is physically deposited, retry `complete`
+reject and don't actuate. If it is unreachable at the `deposit` step, the item is
+never tipped into the bin: the controller returns it to the tray. After an item is physically deposited, retry `complete`
 up to 3× with backoff. If all three fail, keep the request
 in non-volatile storage, show the student that the points are pending, and resend
 it before accepting the next deposit (rule 6 in Section 5.3).
 
-The same applies to the bin station. If it is unreachable or its camera can't
-take a picture, the item is never treated as verified: the controller cancels the
-session, does not actuate, and takes no new deposit until the bin station answers
-again.
+The same applies to the bin station. If it is unreachable, its camera can't
+take a picture or its model can't run, the item is never treated as verified: the
+controller cancels the session, returns the item to the tray, and takes no new
+deposit until the bin station answers again.
 
 **QR code:** opaque random token shown on the student's profile, not the student ID
 (guessable/forgeable). One active token per user, created with the account;
@@ -437,22 +462,22 @@ first rule after setup, and until then every session is refused with
 `NO_REWARD_RULE`.
 
 **Order of checks for one deposit.** A failure at any step ends the session with no
-points.
+points. A failure at steps 4 and 5 also returns the item to the tray.
 
 | Step | Check | Decided by | On failure |
 |---|---|---|---|
 | 1 | QR token belongs to an active user | Server | `INVALID_QR`, `USER_INACTIVE` |
 | 2 | Bin is not full | Server | `BIN_FULL` |
 | 3 | A reward rule is in effect, and the student is under its `daily_points_cap` | Server | `NO_REWARD_RULE`, `DAILY_LIMIT_REACHED` |
-| 4 | An item is present | Bin station camera, reported to the server by the controller | `VERIFICATION_FAILED` |
+| 4 | An item is present, and the e-waste model says it is e-waste | Bin station camera and model, reported to the server by the controller | `VERIFICATION_FAILED` |
 | 5 | Weight is stable and between minimum and maximum | Server | `NO_ITEM`, `ZERO_WEIGHT`, `OVER_MAX_WEIGHT` |
 | 6 | Points are calculated | Server | — |
-| 7 | Actuator confirms the transfer | Controller, from the actuator's current, reported to server | Session `FAILED` |
+| 7 | The flap tipped the item into the bin | Controller, from the actuator's current, reported to server | Session `FAILED` |
 | 8 | Points are credited | Server | — |
 
 **Rules:**
-1. **One rate for every item.** The camera confirms that something is on the
-   platform, not what it is, so a higher rate for some items could not be verified.
+1. **One rate for every item.** The e-waste model decides only whether an item is
+   e-waste, not what kind, so a higher rate for some items could not be verified.
 2. **Round down, whole points only.** The system never awards more than was
    weighed.
 3. **The server calculates.** The device sends grams and never sends points.
@@ -475,13 +500,16 @@ points.
 to it. Changing a reward's price doesn't affect past redemptions; each one stores
 the cost it was redeemed at.
 
-**Known limitation.** Weight is the only thing measured, so a heavy object that is
-not e-waste earns the same as real e-waste. Three controls limit this:
+**Known limitation.** The e-waste model can be wrong. An item it wrongly accepts
+earns points like real e-waste, by weight; real e-waste it wrongly rejects is
+returned, and the student can try again. Three controls limit the first case:
 `maximum_weight_g`, `daily_points_cap`, and the admin void. State this in the
-report's scope and limitations.
+report's scope and limitations, with the model's measured error rates
+(Section 8.3).
 
-**Left out on purpose:** item categories, tiered rates, streaks and bonuses. None
-can be verified by this hardware, and each adds rules to test and defend.
+**Left out on purpose:** item categories, tiered rates, streaks and bonuses. The
+model says only e-waste or not, so none can be verified by this hardware, and
+each adds rules to test and defend.
 
 ---
 
@@ -608,7 +636,8 @@ before the final demonstration.
 9. Schedule `mariadb-dump` backups (MariaDB's `mysqldump`); keep a full disk image
    of the configured Pi, and a copy of `.env` (it holds `APP_KEY`) somewhere safe.
 10. Set up the bin station (Section 8.3):
-    `apt install python3-picamera2 python3-numpy python3-serial chromium cage`,
+    `apt install python3-picamera2 python3-numpy python3-serial python3-onnxruntime chromium cage`,
+    copy the e-waste model file to the path in the station's settings file,
     run the station as a systemd service, and start Chromium in kiosk mode under
     `cage` on the touchscreen, pointed at the station's screen page on
     `localhost`. Then enter the station's address in the controller's setup
@@ -702,15 +731,17 @@ What keeps this portable:
 **At handover, give the school:**
 1. The Git repo: the web app with its migrations, `.env.example` and lock files,
    the controller firmware and the bin station.
-2. A dump of final data, with the sandbox line removed.
-3. One `handover.md` — how to run `composer install` and `php artisan migrate`,
+2. The e-waste model file in use, how it was trained, and its measured error
+   rates (Section 8.3).
+3. A dump of final data, with the sandbox line removed.
+4. One `handover.md` — how to run `composer install` and `php artisan migrate`,
    point `.env` at their database, carry `APP_KEY` over (never run `key:generate`
    on a host that has existing data), add the cron entry, switch the mailer to
    the university's SMTP, re-point a bin through its setup portal, and issue a bin
    a new secret.
-4. The physical Pi, already configured and running the web app and the bin
+5. The physical Pi, already configured and running the web app and the bin
    station, and the bin.
-5. The domain, the Cloudflare account and the Resend account, registered under a
+6. The domain, the Cloudflare account and the Resend account, registered under a
    transferable account (a group or school email, not a personal one). The Resend
    account can be closed once the school's SMTP is in use. If the domain came from
    a student offer tied to one person, the school replaces it with a name of its
@@ -740,7 +771,7 @@ classes are written where Laravel already has a driver. Two checks keep this tru
 | Login | Laravel's auth guard; users keyed by email | Email and password | University single sign-on | Add Laravel Socialite and one controller |
 | Device connection | `API_BASE_URL` stored on the bin | LAN HTTP | HTTPS to another host | The bin's setup portal |
 | Device authentication | One middleware | HMAC signing | Another scheme | One class |
-| Item verification | `method`, `passed`, `score` in the API | Frame differencing on the Pi camera, in the bin station | Another camera or method | Bin station only; the controller and the server are unchanged |
+| Item verification | `method`, `passed`, `score` in the API | Frame differencing, then an e-waste model, on the Pi camera, in the bin station | Another camera, model or method | Bin station only; the controller and the server are unchanged |
 | Bin display | Screen name and values sent to the bin station | Chromium kiosk page on the Pi's HDMI touchscreen | Another display | Bin station only; the controller is unchanged |
 
 Three of these are more than a settings change: file storage needs the files
@@ -764,8 +795,8 @@ small, fixed set of functions, so replacing a part changes one file.
 |---|---|---|
 | `qr_scanner` | The QR scanner, reached through `station` | Arm and disarm; the scanned token |
 | `scale` | Load cell, amplifier, calibration | Stable weight in grams |
-| `verifier` | The camera check, reached through `station`, and the LED strip that lights it | Passed or failed, and a score; a new reference image |
-| `actuator` | BTS7960 driver, current sense, the rest time between cycles | Success or failure, and cycle time |
+| `verifier` | The camera check and the e-waste model, reached through `station`, and the LED strip that lights them | Passed or failed, the method that decided, and a score; a new reference image |
+| `actuator` | BTS7960 driver, current sense, the flap level sensor, the rest time between cycles | Tip to the bin, tip to the return tray, back to level; success or failure, and cycle time |
 | `interlock` | Service-panel switch | Open or closed |
 | `bin_level` | Ultrasonic sensor | Distance in millimetres |
 | `feedback` | The screen, reached through `station`; green, amber and red LEDs; buzzer | Screen changes, touch events and status signals |
@@ -784,37 +815,41 @@ of the device API.
 
 | Step | Controller does | Screen | LED |
 |---|---|---|---|
-| 1. Ready | Checks the service panel is closed, no actuator fault is latched, no `complete` is pending, the actuator has rested, the bin is not full and the bin station answers. Then arms the scanner | Idle | Green |
+| 1. Ready | Checks the service panel is closed, no actuator fault is latched, no `complete` is pending, the actuator has rested, the flap is level and empty, the bin is not full and the bin station answers. An item already on the flap is returned first. Then arms the scanner | Idle | Green |
 | 2. Scan | On a scanned token, disarms the scanner and calls `POST /device/sessions` | Welcome | Amber |
-| 3. Weigh | Waits for a stable weight above zero, a Cancel touch, or the session timeout | Weighing | Amber |
-| 4. Verify | Switches the LED strip on, waits for the light to settle, asks the bin station for the camera check, switches the strip off | Weighing | Amber |
-| 5. Deposit | Calls `deposit`. A rejection ends the session | Accepted, or problem | Amber, or red |
-| 6. Transfer | Extends the actuator to the end of its stroke, then retracts it | Accepted | Amber |
+| 3. Weigh | Waits for the item to drop through the slot onto the flap and for a stable weight above zero, a Cancel touch, or the session timeout | Weighing | Amber |
+| 4. Verify | Switches the LED strip on, waits for the light to settle, asks the bin station for the camera check (presence, then the e-waste model), switches the strip off | Weighing | Amber |
+| 5. Deposit | Calls `deposit`. A rejection ends the session and returns the item | Accepted, or problem | Amber, or red |
+| 6. Transfer | Extends the actuator to the end of its stroke, tipping the item into the bin, then brings the flap back to level | Accepted | Amber |
 | 7. Complete | Calls `complete`, retrying and saving it if the server can't be reached | Done, or points pending | Green, or amber |
-| 8. Reset | Lights the empty platform and asks the bin station for a new reference image, sends telemetry, waits out the actuator's rest time | Idle | Green |
+| 8. Reset | Lights the empty flap and asks the bin station for a new reference image, sends telemetry, waits out the actuator's rest time | Idle | Green |
+| Return | Whenever a session ends without a transfer and the scale reads an item on the flap: after a rejected `deposit`, a Cancel touch, a timeout, or an unreachable server or bin station. Retracts the actuator to the end of its stroke, sliding the item out to the return tray, then brings the flap back to level, and goes on to step 8 | Problem, asking the student to take the item from the tray | Red |
 
 **Actuator result.** The actuator's limit switches are inside it, so the
-controller judges each stroke by its current:
+controller judges each stroke to a tipped position by its current, and each
+stroke back to level by the flap level sensor:
 
 - **End of stroke:** after a minimum travel time, the current falls to near zero
   because the actuator's own limit switch has cut it.
+- **Level:** the flap level sensor closes. The controller stops the driver.
 - **Jam:** the current stays above the jam threshold for longer than the jam
   time. The controller disables the driver at once.
 - **Timeout:** neither happens within the stroke timeout. The controller disables
   the driver.
 
 `actuator_ok` is true when the extend stroke reached its end, because that is the
-stroke that pushes the item into the bin. A failed retract after a good extend
-still credits the student, but latches an `ACTUATOR_RETRACT_FAILED` fault and
-takes the bin out of service. The thresholds and times are firmware constants set
-on the bench.
+stroke that tips the item into the bin. A failed return to level after a good
+extend still credits the student, but latches an `ACTUATOR_RETRACT_FAILED` fault
+and takes the bin out of service. A stroke of a return that jams or times out
+latches `ACTUATOR_JAM` or `ACTUATOR_TIMEOUT`; the session is already closed with no
+points. The thresholds and times are firmware constants set on the bench.
 
 **Faults and the service panel.** Opening the service panel disables the driver
 at once, disarms the scanner, cancels an `OPEN` session and shows the problem
 screen. An actuator fault (`ACTUATOR_JAM`, `ACTUATOR_TIMEOUT`,
 `ACTUATOR_RETRACT_FAILED`) latches until the service panel has been opened and
 closed again, so someone has looked at the bin before it moves again. The bin
-station faults (`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`,
+station faults (`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`, `MODEL_UNAVAILABLE`,
 `SCANNER_UNAVAILABLE`) clear on their own when the bin station answers normally
 again. The controller reports the panel state and the current fault in its
 telemetry, sent at once on any change.
@@ -835,26 +870,75 @@ controller over a small JSON API on the bin's network (`API_Design.md` §11).
 | Component | Hides | Gives the controller |
 |---|---|---|
 | Scanner | GM865 over USB virtual serial, in command-triggered mode | Scanned tokens, while the controller has the scanner armed |
-| Camera | IMX519 over CSI, through `picamera2`, and the frame differencing | Passed or failed, and a score; a stored reference image |
+| Camera | IMX519 over CSI, through `picamera2`, and the frame differencing | The presence step of the camera check; a stored reference image |
+| Model | The e-waste model file, run through ONNX Runtime | The e-waste step of the camera check |
 | Screen | The kiosk page on the touchscreen | Shows the screen the controller names; reports Cancel touches |
 
 **What it never does:** it has no database, holds no device secret, never calls
-the web app and makes no decision about a deposit. It holds no state that
-matters: a restart loses only the reference image, which the controller asks for
-again, and any unread events.
+the web app and makes no decision about a deposit: it reports passed or failed,
+and the server decides. It holds no state that matters: a restart loses only the
+reference image, which the controller asks for again, and any unread events. The
+model is loaded again from its file.
 
-**Camera check.** Frame differencing against the empty platform:
+**Camera check.** Two steps on the same moment's picture. Either one can fail the
+check, and the answer names the step that decided it.
 
-- Focus, exposure and white balance are fixed when the reference is taken and
-  reused for every check, so autofocus and auto-exposure can't make an empty
-  platform look different. The LED strip gives the same light each time.
-- Both images are taken small and in grayscale. The score is the share of pixels
-  whose brightness differs from the reference by more than a pixel threshold, from
-  0.0000 to 1.0000. The check passes when the score is at or above a pass
-  threshold.
-- The lens position and both thresholds are in the bin station's own settings
-  file and are set on the bench.
-- With no reference image stored, a check fails.
+1. **Presence:** frame differencing against the empty flap.
+   - Focus, exposure and white balance are fixed when the reference is taken and
+     reused for every check, so autofocus and auto-exposure can't make an empty
+     flap look different. The LED strip gives the same light each time.
+   - Both images are taken small and in grayscale. The score is the share of
+     pixels whose brightness differs from the reference by more than a pixel
+     threshold, from 0.0000 to 1.0000. This step passes when the score is at or
+     above the presence threshold.
+   - With no reference image stored, a check fails.
+   - When this step fails, the answer is `cam_diff` with the presence score, and
+     the model is not run.
+2. **E-waste model:** run only when presence passes, on a colour picture of the
+   flap. The score is the model's probability that the item is e-waste, from
+   0.0000 to 1.0000. This step passes when the score is at or above the model's
+   pass threshold. The answer is `ewaste_model` with that score.
+
+The lens position, the pixel threshold, the presence threshold and the model's
+pass threshold are in the bin station's own settings file and are set on the
+bench.
+
+**The e-waste model.** An image classifier with two outcomes, e-waste or not. One
+colour picture in; the probability that it shows e-waste out.
+
+- **What it is:** a small network made for phones and boards like the Pi, such as
+  MobileNetV3-Small, exported in ONNX format. `TODO(team)`: the network.
+- **Where it is trained:** on a dev machine or a cloud notebook, never on the Pi.
+  The training libraries are not bin station dependencies and never go on the
+  Pi. `TODO(team)`: where the training code and the pictures are kept.
+- **What it is trained on:** pictures taken in this bin, by this camera, with the
+  LED strip on and the lens at the fixed position, of e-waste and of common items
+  that are not e-waste, such as bottles, cups, wrappers and paper. Pictures are
+  taken on the bench, never from students' deposits. `TODO(team)`: the item list
+  and how many pictures of each.
+- **How it is measured:** on pictures kept out of training. Report how often it
+  accepts an item that is not e-waste and how often it rejects real e-waste.
+  `TODO(team)`: the target for each, approved by the instructor.
+- **The model file** sits on the Pi, at the path in the settings file. The bin
+  station loads it once at start and runs it once to warm it up. With no model,
+  or one that fails to load or to run, every check fails; the model is never
+  skipped.
+- **No pictures are kept.** The bin station stores only the reference image,
+  in memory. It saves no picture of a deposit.
+
+**Load on the Pi.** The Pi 4 has room for the model next to the web app and
+MariaDB:
+
+- The model runs once per deposit, on one picture, not on a video stream. A
+  network of this size takes tens of milliseconds on the Pi 4's CPU; even a few
+  hundred milliseconds is short next to the deposit sequence.
+- ONNX Runtime is limited to two threads in the settings file, so two of the
+  Pi's four cores stay free for Nginx, PHP and MariaDB.
+- It needs about 100–200 MB of memory, against the 4 GB in the Pi.
+- The Pi needs its heatsink and fan (Section 2): a hot Pi in a closed bin slows
+  itself down.
+- Measure on the bench how long `verify` takes with the web app serving pages at
+  the same time. The controller's timeout for `verify` must be longer.
 
 **Scanner.** The bin station triggers the scanner only while the controller has
 it armed, which the controller does only when the bin is ready. Arming clears any
@@ -867,7 +951,8 @@ called for longer than the controller timeout, the bin station shows the offline
 screen on its own.
 
 **Dependencies:** Python 3 and the `apt` packages in Section 3 only, so the bin
-station keeps to the Pi's version policy.
+station keeps to the Pi's version policy. ONNX Runtime comes from `apt` as well,
+as `python3-onnxruntime`.
 
 **Repository layout.** One Git repository with a folder for each
 program: `web/` for the Laravel app, `firmware/controller/` for the controller,
@@ -892,8 +977,8 @@ tested and changed together, through the API in `API_Design.md` §11.
 | Stage | Items |
 |---|---|
 | Input | Student QR code, e-waste item placed, measured weight, camera image, bin-level reading |
-| Process | Authenticate user, measure & calibrate, verify item, compute points, automated transfer, record transaction |
-| Output | Reward points, transaction record, result on the bin's display, dashboard update, bin-level status, system notification |
+| Process | Authenticate user, measure & calibrate, verify item (present and e-waste), compute points, automated transfer or return, record transaction |
+| Output | Reward points, transaction record, result on the bin's display, a rejected item returned to the tray, dashboard update, bin-level status, system notification |
 
 The feedback loop is what makes this a *monitoring* system: bin-level data and
 dashboard activity shape the next transaction and any admin adjustment (e.g.
@@ -924,6 +1009,10 @@ points rate).
       retract after a good extend still credits the student (Section 8.2).
 - [ ] Bin station API: no authentication; it relies on the bin's dedicated
       router (Section 8.3, `API_Design.md` §11).
+- [ ] E-waste model and sorting flap: the camera check adds a model that decides
+      e-waste or not, and a tilting flap returns every rejected item to a tray
+      (Sections 2, 8.2 and 8.3). Get the instructor's approval for this as the
+      verification method (guidelines, Item Verification).
 
 **Before Checkpoint 1:**
 - [ ] Add the actuator current-sense wiring (BTS7960 `R_IS`/`L_IS` to GPIO 1,
@@ -932,13 +1021,17 @@ points rate).
 - [ ] Add the SSD and its USB-to-SATA adapter to the hardware manual and the
       schematic, on a USB 3.0 port, and count its current in the 5.2 V budget
       (Section 2).
+- [ ] Add the slot, the flap and its pivot, the return tray, the flap level
+      sensor and its pin, and the Pi's heatsink and fan to the hardware manual
+      and the schematic. Count the fan in the 5.2 V budget, and check that the
+      actuator suits the flap (Section 2).
 - [ ] Check the Pi-to-controller Wi-Fi with the SSD running. If USB 3.0 noise
       causes dropped requests, decide between an Ethernet cable from the Pi to
       the router and putting the Pi on the router's 5 GHz band (Section 2).
 - [ ] Verify the ESP32-S3 pin map on the bench (Section 2).
 - [ ] Set on the bench: the actuator's end-of-stroke and jam current thresholds,
-      stroke timeout and rest time (Section 8.2), and the camera's lens position
-      and pass thresholds (Section 8.3).
+      stroke timeout and rest time (Section 8.2), and the camera's lens position,
+      the presence thresholds and the model's pass threshold (Section 8.3).
 - [ ] Set the five point variables and get them approved (Section 5.7; guidelines,
       Step 9): `points_per_gram`, `minimum_weight_g`, `maximum_weight_g`,
       `daily_points_cap`, and each reward's `points_cost`.
@@ -948,6 +1041,8 @@ points rate).
 - [ ] Add the two swappability checks to the repo: no vendor SDK imports in
       `app/`, and no `env()` outside `config/` (Section 8.1).
 - [ ] Write the OpenAPI spec for the seven device endpoints and serve via Swagger UI.
+- [ ] Collect pictures in the built bin, train the e-waste model, measure it on
+      pictures kept out of training, and record its error rates (Section 8.3).
 - [ ] Build a device simulator that signs requests, to test retries, expired
       sessions and repeated `complete` calls before relying on real hardware.
       Do this first, so firmware and web work can proceed in parallel.

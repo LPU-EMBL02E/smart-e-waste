@@ -179,7 +179,8 @@ A replayed `POST /device/sessions` can interrupt a deposit that has not reached
 **[P13]**.
 
 **Network failure policy (firmware):** fail closed. If the server is unreachable at
-the QR step, reject and do not actuate. After an item is physically deposited,
+the QR step, reject and do not actuate. If it is unreachable at the `deposit`
+step, return the item to the tray. After an item is physically deposited,
 retry `complete` up to 3 times with backoff. If all three fail, keep the request
 in non-volatile storage, show the student that the points are pending, and resend
 it before accepting the next deposit.
@@ -449,13 +450,14 @@ failed check rolls the transaction back, so the request changes nothing.
 ### 5.5 POST /device/sessions/{id}/deposit
 
 Reports the weight and the verification result. The server decides whether the
-item is accepted. The actuator must not move until this call returns
-`accepted: true`.
+item is accepted. The flap must not tip toward the bin until this call returns
+`accepted: true`. On any other answer, or none, the controller returns the item
+to the tray (`System_Plan.md` §8.2).
 
 ```http
 POST /api/v1/device/sessions/b3f1…/deposit
 { "weight_g": 184.6, "weight_stable": true, "samples": 20,
-  "verification": { "method": "cam_diff", "passed": true, "score": 0.87 } }
+  "verification": { "method": "ewaste_model", "passed": true, "score": 0.93 } }
 → 200 { "accepted": true, "points_preview": 18 }
 ```
 
@@ -470,8 +472,11 @@ POST /api/v1/device/sessions/b3f1…/deposit
 
 The three `verification` values are the bin station's answer to
 `POST /station/v1/verify` (Section 11.5), passed on unchanged by the controller.
-When the bin station can't be reached or can't take a picture, the controller
-does not call `deposit`; it cancels the session.
+`verification.method` says which step of the camera check decided: `cam_diff`
+when no item was seen, `ewaste_model` when the e-waste model ran **[P49]**. When
+the bin station can't be reached, can't take a picture or can't run its model,
+the controller does not call `deposit`; it cancels the session and returns the
+item.
 
 The six values are stored on the session whether the deposit is accepted or
 rejected **[P22]**.
@@ -995,7 +1000,12 @@ simulator before real hardware is used:
 - Every error reply on a device route is JSON in the error shape, including a
   malformed body.
 - A bin station that does not answer, or answers `verify` with an error, never
-  leads to a `deposit` call or an actuator move.
+  leads to a `deposit` call or to the flap tipping toward the bin.
+- A bin station with no model, or a model that fails to run, never answers
+  `verify` with a pass.
+- A deposit that ends without a transfer, with an item on the flap, returns the
+  item to the tray: a rejected `deposit`, a Cancel touch, a timeout, or an
+  unreachable server or bin station.
 - A token scanned before the scanner was armed never opens a session.
 
 ---
@@ -1055,6 +1065,7 @@ written as if each is accepted.
 | P46 | Registration | `student_number` is required when a student registers. `POST /register` is limited to 5 attempts a minute per IP address; the resend button to 6 a minute |
 | P47 | Admin-created accounts | Count as confirmed: `email_verified_at` is set when an admin creates the account, one at a time or by CSV import |
 | P48 | Unconfirmed accounts | Can sign in but see only the confirmation page. The device API does not check confirmation; the QR code is only shown once the email is confirmed |
+| P49 | E-waste check | `verification.method` is `cam_diff` when the presence step failed and `ewaste_model` when the model ran; `score` is that step's score. `health` reports `model`. A missing or failing model is 503 `MODEL_UNAVAILABLE` from the bin station and the bin fault `MODEL_UNAVAILABLE` in telemetry |
 
 ---
 
@@ -1105,22 +1116,23 @@ is **[P44]**.
 - **Contact:** every call from the controller resets the controller timeout
   (Section 11.9).
 - **Fail closed:** the controller treats no reply, an unreadable reply or any
-  error as a failed answer. It never reads a missing camera answer as a pass.
+  error as a failed answer. It never reads a missing camera or model answer as a
+  pass.
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/station/v1/health` | What is working |
 | PUT | `/station/v1/scanner` | Arm or disarm the scanner |
 | GET | `/station/v1/events` | Scanned tokens and touches since the last call |
-| POST | `/station/v1/verify` | Camera check |
-| POST | `/station/v1/reference` | Store the empty platform as the reference |
+| POST | `/station/v1/verify` | Camera check: presence, then the e-waste model |
+| POST | `/station/v1/reference` | Store the empty flap as the reference |
 | PUT | `/station/v1/screen` | Show a screen |
 
 ### 11.2 GET /station/v1/health
 
 ```http
 GET /station/v1/health
-→ 200 { "scanner": true, "camera": true, "reference": true }
+→ 200 { "scanner": true, "camera": true, "reference": true, "model": true }
 ```
 
 | Field | Meaning |
@@ -1128,12 +1140,14 @@ GET /station/v1/health
 | `scanner` | The scanner's serial port is open |
 | `camera` | The camera is open |
 | `reference` | A reference image is stored |
+| `model` | The e-waste model is loaded and ran its warm-up **[P49]** |
 
 The controller calls it in its ready check before arming the scanner, and on its
 telemetry interval. `scanner` false gives the fault `SCANNER_UNAVAILABLE`,
-`camera` false gives `CAMERA_UNAVAILABLE`, and no reply gives
-`STATION_UNREACHABLE`. With `reference` false, the controller takes a reference
-(Section 11.6) before arming the scanner.
+`camera` false gives `CAMERA_UNAVAILABLE`, `model` false gives
+`MODEL_UNAVAILABLE`, and no reply gives `STATION_UNREACHABLE`. With `reference`
+false, the controller takes a reference (Section 11.6) before arming the
+scanner.
 
 ### 11.3 PUT /station/v1/scanner
 
@@ -1174,39 +1188,46 @@ the oldest when full.
 
 ### 11.5 POST /station/v1/verify
 
-The camera check. No body.
+The camera check, in two steps (`System_Plan.md` §8.3). No body.
 
 ```http
 POST /station/v1/verify
-→ 200 { "method": "cam_diff", "passed": true, "score": 0.87 }
+→ 200 { "method": "ewaste_model", "passed": true, "score": 0.93 }
 ```
+
+1. **Presence:** frame differencing against the reference. When it fails, the
+   reply is `cam_diff` with `passed` false, and the model is not run.
+2. **E-waste model:** run when presence passes. The reply is `ewaste_model`,
+   passed or not.
 
 | Field | Meaning |
 |---|---|
-| `method` | Always `cam_diff`: frame differencing against the reference |
-| `passed` | `score` is at or above the pass threshold |
-| `score` | Share of pixels that differ from the reference, 0.0000 to 1.0000 |
+| `method` | The step that decided **[P49]**: `cam_diff` for presence, `ewaste_model` for the model |
+| `passed` | `score` is at or above that step's threshold |
+| `score` | For `cam_diff`, the share of pixels that differ from the reference. For `ewaste_model`, the model's probability that the item is e-waste. Both 0.0000 to 1.0000 |
 
 - The controller switches the LED strip on and waits for the light to settle
   before calling, and switches it off after the reply.
 - The controller copies the three fields unchanged into the `verification`
   object of `deposit` (Section 5.5).
 - No reference stored gives 409 `NO_REFERENCE`. A camera that can't take a
-  picture gives 503 `CAMERA_UNAVAILABLE`. On either, or on no reply, the
-  controller cancels the session (Section 5.7) and does not call `deposit`.
+  picture gives 503 `CAMERA_UNAVAILABLE`. No model, or a model that fails to
+  run, gives 503 `MODEL_UNAVAILABLE` **[P49]**. On any of these, or on no reply,
+  the controller cancels the session (Section 5.7), returns the item and does
+  not call `deposit`.
 
 ### 11.6 POST /station/v1/reference
 
-Takes a picture of the empty platform and stores it as the reference. No body.
+Takes a picture of the empty flap and stores it as the reference. No body.
 
 ```http
 POST /station/v1/reference
 → 200 { "stored": true }
 ```
 
-- The controller calls it only when the scale reads an empty platform and with
-  the LED strip on: at boot, after each transfer, and whenever `health` reports
-  no reference.
+- The controller calls it only when the scale reads an empty flap, with the flap
+  level and the LED strip on: at boot, after each transfer or return, and
+  whenever `health` reports no reference.
 - Focus, exposure and white balance are fixed at this moment and reused for every
   check until the next reference (`System_Plan.md` §8.3).
 - A camera that can't take a picture gives 503 `CAMERA_UNAVAILABLE`, and the old
@@ -1243,6 +1264,7 @@ the kiosk page at once.
 | `VALIDATION_ERROR` | 422 | `scanner`, `screen` |
 | `NO_REFERENCE` | 409 | `verify` |
 | `CAMERA_UNAVAILABLE` | 503 | `verify`, `reference` |
+| `MODEL_UNAVAILABLE` | 503 | `verify` **[P49]** |
 | `SCANNER_UNAVAILABLE` | 503 | `scanner` |
 
 ### 11.9 Controller timeout

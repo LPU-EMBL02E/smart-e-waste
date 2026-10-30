@@ -5,11 +5,12 @@ with a Laravel web application for
 students — who earn points for deposits and redeem them for rewards — and for
 admins, who monitor bins and manage users, transactions and rewards.
 
-A student scans their QR code, places an item on the weighing platform, and the
-bin measures it, confirms with a camera that something is actually there,
-transfers it into the collection container, and records the deposit. Points are
-credited only after both the verification and the actuator confirm — never
-because the load cell felt weight.
+A student scans their QR code and drops an item through a slot onto a tilting
+flap. The bin weighs it, confirms with a camera that something is there, and
+asks a small model on the Pi whether it is e-waste. E-waste is tipped into the
+collection container and the deposit recorded; anything else is tipped back out
+to a return tray. Points are credited only after both the verification and the
+actuator confirm — never because the load cell felt weight.
 
 **EMBL02E project.** The bin and the web app are handed over to the school at
 the end, so portability is a design goal rather than an afterthought.
@@ -19,8 +20,8 @@ the end, so portability is a design goal rather than an afterthought.
 ## The one design rule
 
 The **web app is only a server**. The Pi runs it alongside a separate program,
-the **bin station**, which handles the QR scanner, the camera and the
-touchscreen. Every part of the bin sits behind the ESP32-S3 controller, either
+the **bin station**, which handles the QR scanner, the camera with its e-waste
+model, and the touchscreen. Every part of the bin sits behind the ESP32-S3 controller, either
 wired to it or reached through the bin station, and only the controller talks to
 the web app, through one small signed API.
 
@@ -54,7 +55,8 @@ web/                  the Laravel app (modular monolith, 5 modules + 1)
 firmware/
   controller/           ESP32-S3 — runs the deposit sequence, talks to the server
   station/              the bin station, Python on the Pi: QR scanner, camera
-                        check and the bin's screen (not started yet)
+                        check with the e-waste model, and the bin's screen
+                        (not started yet)
 
 tools/simulator/      signs requests and drives the full deposit flow in Python
 scripts/              the two portability checks from System_Plan.md §8.1
@@ -74,13 +76,18 @@ scan QR ──► server checks the student, the bin, the rule and the daily cap
                                 │
             the Pi's camera confirms something is there
                                 │
+              the Pi's model confirms it is e-waste
+                                │
               server validates the weight and computes the points
                                 │
-                 actuator pushes the item into the bin
+              actuator tips the flap: the item drops into the bin
                                 │
   actuator current shows the end of its stroke ──► transaction + points
                                                    committed together
 ```
+
+Any rejection along the way, a Cancel or a timeout tips the flap the other way,
+and the item slides out to the return tray. No points.
 
 Four rules hold the whole thing together:
 
@@ -90,8 +97,9 @@ Four rules hold the whole thing together:
    confirms, in one database transaction with the transaction record.
 3. **The ledger is append-only.** There is no balance column anywhere: a balance
    is `SUM(points_delta)`, and a correction is a new reversal row.
-4. **Fail closed.** If the server or the bin station is unreachable the bin
-   refuses and nothing moves. Once an item is physically in the bin, the
+4. **Fail closed.** If the server, the bin station or its model is unavailable
+   the bin refuses, and nothing goes into the bin; an item already on the flap
+   is returned. Once an item is physically in the bin, the
    firmware retries, then saves the request and resends it — including after a
    reboot.
 
@@ -106,7 +114,8 @@ Four rules hold the whole thing together:
 | App | Laravel 13, Blade, Tailwind (built with Vite on a dev machine) |
 | Data | MariaDB 11.8 LTS, InnoDB, `utf8mb4`, every timestamp in UTC |
 | Firmware | Arduino framework / C++ on the ESP32-S3, built with PlatformIO |
-| Bin station | Python 3 with `picamera2`, `numpy` and `pyserial` from `apt`; Chromium in kiosk mode for the touchscreen |
+| Bin station | Python 3 with `picamera2`, `numpy`, `pyserial` and ONNX Runtime from `apt`; Chromium in kiosk mode for the touchscreen |
+| E-waste model | A small image classifier in ONNX format, trained on a dev machine, run on the Pi's CPU |
 | Device API | 7 JSON endpoints, HMAC-SHA256 signed, over the LAN |
 | Ingress | Cloudflare Tunnel until handover; swappable by design |
 
@@ -211,6 +220,10 @@ rules it must follow and the doc section they come from, and raises
   required `cancel_reason` when cancelling a redemption, 404 for an inactive
   reward's page, the `home_recent_transactions` setting, and leaderboard ties
   ordered by user id.
+- The e-waste model and the sorting flap are planned (`System_Plan.md` §2,
+  §8.2 and §8.3) but not built: the web app's `BinFaultCode` has no
+  `MODEL_UNAVAILABLE` yet, and the controller has no flap level sensor and no
+  return.
 - `firmware/AGENTS.md` still says only `Api` knows about HTTP, though the
   controller's `station` module also speaks HTTP to the bin station. Changing it
   needs the whole team.
@@ -227,11 +240,16 @@ code:
   (`API_Design.md` P37).
 - Hardware items for the hardware team: the actuator current-sense wiring and
   the service-panel interlock pin, and the SSD with its adapter, on the
-  schematic; the ESP32-S3 pin map verified on the bench (`System_Plan.md` §10).
+  schematic; the slot, the flap and its pivot, the return tray, the flap level
+  sensor and the Pi's cooling, in the manual and the schematic; the ESP32-S3 pin
+  map verified on the bench (`System_Plan.md` §10).
+- The e-waste model: the network, the training pictures, and the error rates to
+  reach, approved by the instructor (`System_Plan.md` §8.3).
 - Bench values: the actuator's current thresholds, stroke timeout and rest time,
-  and the camera's lens position and pass thresholds (`System_Plan.md` §10).
-- The bin station API and the new telemetry fields, proposed as P42–P45 in
-  `API_Design.md` §9.
+  and the camera's lens position, presence thresholds and the model's pass
+  threshold (`System_Plan.md` §10).
+- The bin station API, the new telemetry fields and the e-waste check, proposed
+  as P42–P45 and P49 in `API_Design.md` §9.
 - The eight open questions in `API_Design.md` §10 — what an admin can do with a
   session in review, what the reports contain, whether users can change their
   own password, the set-password link lifetime, the firmware timings, bulk

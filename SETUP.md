@@ -172,16 +172,17 @@ another server without reflashing.
 
 ## 7. Bin station
 
-The Python program on the Pi that runs the QR scanner, the camera check and the
-touchscreen, in `firmware/station/` (`System_Plan.md` §8.3). It is not built
+The Python program on the Pi that runs the QR scanner, the camera check with its
+e-waste model, and the touchscreen, in `firmware/station/` (`System_Plan.md` §8.3). It is not built
 yet. When it is, its setup
 is `System_Plan.md` §7, step 10:
 
 ```bash
-sudo apt install python3-picamera2 python3-numpy python3-serial chromium cage
+sudo apt install python3-picamera2 python3-numpy python3-serial python3-onnxruntime chromium cage
 ```
 
-It runs as a systemd service, and Chromium shows its screen page in kiosk mode
+Copy the e-waste model file to the path in the bin station's settings file. It
+is trained on a dev machine, never on the Pi. It runs as a systemd service, and Chromium shows its screen page in kiosk mode
 under `cage`. Enter its address in the controller's setup portal.
 
 ---

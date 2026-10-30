@@ -74,28 +74,32 @@ over the API in `docs/API_Design.md` §11.
 
 - **Python 3 from Raspberry Pi OS, and only the `apt` packages in
   `System_Plan.md` §3**: `python3-picamera2`, `python3-numpy`,
-  `python3-serial`. Everything else from the standard library. No `pip install`
+  `python3-serial`, `python3-onnxruntime`. Everything else from the standard library. No `pip install`
   on the Pi, no virtualenv, no web framework.
-- **One module per part**, each one class: the scanner, the camera, the screen,
-  the event queue, the HTTP API. Only the scanner module touches the serial
-  port; only the camera module imports `picamera2`.
-- **No hardware import at module load** outside those two modules, so the tests
-  and the API run on a laptop with no camera or scanner.
+- **One module per part**, each one class: the scanner, the camera, the e-waste
+  model, the screen, the event queue, the HTTP API. Only the scanner module
+  touches the serial port; only the camera module imports `picamera2`; only the
+  model module imports `onnxruntime`.
+- **No hardware or runtime import at module load** outside those three modules,
+  so the tests and the API run on a laptop with no camera, scanner or model.
+- **Never train on the Pi.** Training code and its libraries stay off the Pi and
+  out of the bin station's dependencies; the Pi gets the exported model file.
 - **It decides nothing about a deposit,** holds no secret and no database, and
   never calls the web app. It answers the controller and nothing else.
 - **Fail closed.** No reference image means the check fails; a camera that
-  can't take a picture is an error, never a pass.
+  can't take a picture, or a model that is missing or fails to run, is an
+  error, never a pass.
 - **Every wait has a timeout**, the serial port included.
-- Bench values (lens position, thresholds, the controller timeout, the serial
-  device, the listen address) live in the bin station's settings file, never
-  in code. The repository holds an example file only.
+- Bench values (lens position, thresholds, the model file's path and threads,
+  the controller timeout, the serial device, the listen address) live in the
+  bin station's settings file, never in code. The repository holds an example file only.
 - Type hints on functions, a module docstring on each file, and tests with the
   standard library's `unittest`.
 
 ## Dependencies (§7)
 
 - Firmware libraries must be pinned to a version in `platformio.ini`.
-- The bin station adds no dependency beyond the three `apt` packages above.
+- The bin station adds no dependency beyond the four `apt` packages above.
 
 ## Before you open a PR (§8)
 

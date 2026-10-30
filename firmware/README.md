@@ -9,8 +9,9 @@ Two programs:
   build spec is [docs/TRACK-E-BIN-STATION.md](docs/TRACK-E-BIN-STATION.md).
 
 **The controller is in charge.** It runs the deposit sequence, owns all safety
-logic, and is the only client of the device API. The QR scanner, the camera and
-the touchscreen are connected to the Pi and run by the bin station
+logic, and is the only client of the device API. The QR scanner, the camera (with
+the e-waste model) and the touchscreen are connected to the Pi and run by the bin
+station
 (`System_Plan.md` §8.3); the controller reaches them through the bin station's
 JSON API (`API_Design.md` §11). Everything else at the bin is wired to the
 controller.
@@ -54,8 +55,8 @@ in `System_Plan.md` §2. Things to keep in mind:
   (flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED pin of
   the board revision in use (38 or 48).
 
-**TODO(team):** the service-panel interlock has no pin yet, and the current-sense
-wiring is not on the schematic (`System_Plan.md` §10).
+**TODO(team):** the service-panel interlock and the flap level sensor have no pin
+yet, and the current-sense wiring is not on the schematic (`System_Plan.md` §10).
 
 ---
 
@@ -68,8 +69,8 @@ knows where the server and the bin station are.
 |---|---|
 | `qr_scanner` | The QR scanner, through `station` |
 | `scale` | Load cell, HX711, calibration |
-| `verifier` | The camera check, through `station`, and the LED strip |
-| `actuator` | BTS7960 driver, current sense, rest time between cycles |
+| `verifier` | The camera check and the e-waste model, through `station`, and the LED strip |
+| `actuator` | BTS7960 driver, current sense, the flap level sensor, rest time between cycles |
 | `interlock` | Service-panel switch |
 | `bin_level` | Ultrasonic sensor |
 | `feedback` | The screen, through `station`; green, amber and red LEDs; buzzer |
@@ -85,27 +86,39 @@ The full contract is `API_Design.md` §11. In short, the controller:
   or a Cancel touch;
 - switches the LED strip on, calls `verify`, and switches it off again, then
   copies the answer into the `deposit` call;
-- asks for a new `reference` image of the empty platform at boot and after each
-  transfer, with the LED strip on;
+- asks for a new `reference` image of the empty flap at boot and after each
+  transfer or return, with the flap level and the LED strip on;
 - names each screen change with `screen`.
 
 **No answer means no deposit.** If the bin station does not answer, or `verify`
-returns an error, the controller cancels the session and the actuator does not
-move.
+returns an error, the controller cancels the session and returns the item; the
+flap never tips toward the bin.
 
-## The actuator
+## The actuator and the flap
+
+The actuator tips the weighing flap (`System_Plan.md` §2 and §8.2). Extending
+tips it toward the bin; retracting tips it toward the return tray; level is in
+the middle, read from the flap level sensor.
+
+- **Transfer**, after `accepted: true`: extend to the end, then back to level.
+- **Return**, whenever a session ends without a transfer and the scale reads an
+  item on the flap (a rejected `deposit`, Cancel, a timeout, an unreachable
+  server or bin station): retract to the end, then back to level.
 
 The actuator's limit switches are inside it and cut its power at each end, so the
-controller judges each stroke by its current (`System_Plan.md` §8.2):
+controller judges each stroke to an end by its current, and each stroke back to
+level by the level sensor:
 
 - **end of stroke:** after a minimum travel time, the current falls to near zero;
+- **level:** the level sensor closes — stop the driver;
 - **jam:** the current stays above the jam threshold for too long — disable the
   driver at once;
 - **timeout:** neither happens in time — disable the driver.
 
-`actuator_ok` is true when the extend stroke reached its end. A failed retract
-after a good extend still credits the student but latches
-`ACTUATOR_RETRACT_FAILED`. The 20% duty cycle means a rest time between cycles.
+`actuator_ok` is true when the extend stroke reached its end. A failed return to
+level after a good extend still credits the student but latches
+`ACTUATOR_RETRACT_FAILED`. A return stroke that jams or times out latches
+`ACTUATOR_JAM` or `ACTUATOR_TIMEOUT`. The 20% duty cycle means a rest time between cycles.
 The thresholds and times are constants in `include/config.hpp`, set on the bench.
 
 ## Faults and the service panel
@@ -124,7 +137,7 @@ Each one would credit points that were not earned:
 
 1. **Compute points.** The server computes them from grams
    (`System_Plan.md` §5.7 rule 3). The device sends grams and nothing else.
-2. **Move the actuator before the server answers `accepted: true`**
+2. **Tip the flap toward the bin before the server answers `accepted: true`**
    (`API_Design.md` §5.5).
 3. **Read an unreachable server or bin station as a pass.** Fail closed
    (`API_Design.md` §3.6 and §11.1).
@@ -158,8 +171,8 @@ results kept. Per module:
 |---|---|
 | `qr_scanner` | Detection rate at different distances and lighting, through the bin station |
 | `scale` | Measured vs actual for a range of known weights, with % error |
-| `verifier` | Successful verification rate, ≥10 trials, with and without an item |
-| `actuator` | Successful cycle rate and response time, ≥10 trials; current at end of stroke and at a forced stall |
+| `verifier` | Successful verification rate, ≥10 trials, with and without an item; e-waste and non-e-waste items, with the model's accept and reject counts; the time `verify` takes |
+| `actuator` | Successful transfer and return rate and response time, ≥10 trials each; current at end of stroke and at a forced stall; the flap stops level every time |
 | `interlock` | The driver disables at once when the panel opens, mid-stroke included |
 | `bin_level` | Sensor reading vs actual distance, with % error |
 | `api` | Both signing vectors, then the simulator's scenarios |
