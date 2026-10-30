@@ -5,6 +5,7 @@ namespace App\Modules\Rewards\Models;
 use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Support\LedgerEntryType;
+use Database\Factories\Rewards\PointLedgerEntryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +39,11 @@ class PointLedgerEntry extends Model
         'points_delta',
         'description',
     ];
+
+    protected static function newFactory(): PointLedgerEntryFactory
+    {
+        return PointLedgerEntryFactory::new();
+    }
 
     protected function casts(): array
     {

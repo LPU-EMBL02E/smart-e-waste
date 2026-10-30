@@ -2,6 +2,7 @@
 
 namespace App\Modules\Rewards\Models;
 
+use Database\Factories\Rewards\RewardFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,11 @@ class Reward extends Model
         'stock_quantity',
         'is_active',
     ];
+
+    protected static function newFactory(): RewardFactory
+    {
+        return RewardFactory::new();
+    }
 
     protected function casts(): array
     {
