@@ -904,7 +904,8 @@ pass threshold are in the bin station's own settings file and are set on the
 bench.
 
 **The e-waste model.** An image classifier with two outcomes, e-waste or not. One
-colour picture in; the probability that it shows e-waste out.
+colour picture in; the probability that it shows e-waste out. How to collect the
+data, train it and measure it is in `EWASTE-MODEL.md`.
 
 - **What it is:** a small network made for phones and boards like the Pi, such as
   MobileNetV3-Small, exported in ONNX format. `TODO(team)`: the network.

@@ -1,14 +1,15 @@
 # E-waste model
 
 How to build the model the bin station uses to decide whether an item is
-e-waste: the data, the training, the tests and what to record. It is a working
-note for the bin station's owner. The rules come from `docs/`, which wins over
-this note if the two ever disagree:
+e-waste: the data, the training, the tests and what to record. It adds detail to
+the rules in these sections, which it never overrides:
 
 - `System_Plan.md` §5.7 (the check order and the known limitation), §8.3 (the
   camera check, the e-waste model and the load on the Pi), §10 (open items)
 - `API_Design.md` §11.2 and §11.5 (`health` and `verify`), P49
-- The bin station side: [TRACK-E-BIN-STATION.md](TRACK-E-BIN-STATION.md), step E5
+- The bin station side:
+  [firmware/docs/TRACK-E-BIN-STATION.md](../firmware/docs/TRACK-E-BIN-STATION.md),
+  step E5
 
 **Training never runs on the Pi,** and nothing from it goes in
 `firmware/station/` except the exported model file's path in the settings file.
