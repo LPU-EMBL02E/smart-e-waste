@@ -64,12 +64,13 @@ class PointLedgerEntry extends Model
      * (Database_Schema.md §9, API_Design.md §7.3).
      *
      * The one definition of the rule: PointsService::pointsEarnedBy() and the
-     * leaderboards both use it.
+     * leaderboards both use it. The columns are qualified because the
+     * organization leaderboard joins users onto the ledger.
      */
     public function scopeCountsAsEarned(Builder $query): Builder
     {
-        return $query->whereNotNull('transaction_id')
-            ->whereIn('entry_type', [LedgerEntryType::Earn, LedgerEntryType::Reversal]);
+        return $query->whereNotNull($query->qualifyColumn('transaction_id'))
+            ->whereIn($query->qualifyColumn('entry_type'), [LedgerEntryType::Earn, LedgerEntryType::Reversal]);
     }
 
     // ---------------------------------------------------------------- relations

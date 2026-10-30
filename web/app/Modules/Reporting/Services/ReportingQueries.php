@@ -2,7 +2,11 @@
 
 namespace App\Modules\Reporting\Services;
 
-use Illuminate\Support\Collection;
+use App\Modules\Identity\Models\Organization;
+use App\Modules\Identity\Models\User;
+use App\Modules\Rewards\Models\PointLedgerEntry;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Read-only queries behind the admin dashboard, the leaderboards and the
@@ -46,12 +50,26 @@ class ReportingQueries
      * a transaction. Redemption rows are ignored.
      *
      * Includes every user, admins included: those are the only two roles and
-     * every user has a QR token.
+     * every user has a QR token (API_Design.md P31).
+     *
+     * One query: the ledger grouped by user, joined to the users for their
+     * names. Each User carries an integer `points_earned`.
+     *
+     * @return Collection<int, User>
      */
     public function userLeaderboard(int $limit = 50): Collection
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $earned = $this->pointsEarned()
+            ->addSelect('point_ledger.user_id')
+            ->groupBy('point_ledger.user_id');
+
+        return User::query()
+            ->joinSub($earned, 'earned', 'earned.user_id', '=', 'users.id')
+            ->orderByDesc('earned.points_earned')
+            ->orderBy('users.id')
+            ->limit($limit)
+            ->withCasts(['points_earned' => 'integer'])
+            ->get(['users.id', 'users.first_name', 'users.last_name', 'earned.points_earned']);
     }
 
     /**
@@ -60,12 +78,27 @@ class ReportingQueries
      * group (System_Plan.md §5.6).
      *
      * An organization's score is the total points earned by the students
-     * CURRENTLY in it.
+     * CURRENTLY in it, so the ledger is grouped by the users' organization_id
+     * as it is now.
+     *
+     * One query. Each Organization carries an integer `points_earned`.
+     *
+     * @return Collection<int, Organization>
      */
     public function organizationLeaderboard(): Collection
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $earned = $this->pointsEarned()
+            ->join('users', 'users.id', '=', 'point_ledger.user_id')
+            ->where('users.role', User::ROLE_STUDENT)
+            ->addSelect('users.organization_id')
+            ->groupBy('users.organization_id');
+
+        return Organization::query()
+            ->joinSub($earned, 'earned', 'earned.organization_id', '=', 'organizations.id')
+            ->orderByDesc('earned.points_earned')
+            ->orderBy('organizations.id')
+            ->withCasts(['points_earned' => 'integer'])
+            ->get(['organizations.id', 'organizations.name', 'earned.points_earned']);
     }
 
     /**
@@ -90,5 +123,24 @@ class ReportingQueries
     public function report(array $filters): array
     {
         throw new \LogicException('Not implemented: report contents are an open question.');
+    }
+
+    // ---------------------------------------------------------------- helpers
+
+    /**
+     * SUM(points_delta) AS points_earned over the rows that count as earned,
+     * for the caller to group. Both leaderboards rank on it.
+     *
+     * Ties and zero scores, until the team decides otherwise
+     * (web/docs/TRACK-D-REPORTING-AND-HISTORY.md, question 2): a score of zero
+     * is not listed, and the callers order equal scores by id so the order is
+     * stable.
+     */
+    private function pointsEarned(): Builder
+    {
+        return PointLedgerEntry::query()
+            ->countsAsEarned()
+            ->selectRaw('SUM(point_ledger.points_delta) AS points_earned')
+            ->having('points_earned', '>', 0);
     }
 }
