@@ -188,11 +188,14 @@ under `cage`. Enter its address in the controller's setup portal.
 
 ## 8. What is not built yet
 
-`web/` is boilerplate: the schema, the models, the routes, the error contract
-and the module wiring are real, and the controllers, services and listeners are
-documented skeletons whose bodies raise `LogicException`. Nothing in the
-request path is implemented yet, the firmware modules are headers with stub
-bodies, and the bin station is not started.
+In `web/`, the device API, the deposit path, points, redemptions and the
+reporting pages work. Accounts do not: there is no login, registration or first
+admin yet (Track A), so a running app can't be signed in to. The device API
+can still be driven with the simulator once a bin row exists, and
+`php artisan test` covers the rest.
+
+The firmware modules are headers with stub bodies, and the bin station is not
+started.
 
 `README.md` §"State of the repository" lists what is real, what is a skeleton,
 and the decisions still open from `docs`.

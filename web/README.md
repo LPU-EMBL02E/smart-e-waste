@@ -9,10 +9,10 @@ A modular monolith: one Laravel app, one database, organized by domain.
 
 | Module | Owns | Logic in |
 |---|---|---|
-| `Identity` | `organizations`, `users`, `user_qr_credentials` | Laravel's built-in auth |
+| `Identity` | `organizations`, `users`, `user_qr_credentials` | Laravel's built-in auth, `AccountService` |
 | `Devices` | `devices`, `bin_telemetry` | `BinService`, the signature middleware |
 | `Deposits` | `deposit_sessions`, `transactions` | `DepositService` |
-| `Rewards` | `reward_rules`, `point_ledger`, `rewards`, `redemptions` | `PointsService`, `RedemptionService`, `RewardRuleService` |
+| `Rewards` | `reward_rules`, `point_ledger`, `rewards`, `redemptions` | `PointsService`, `RedemptionService`, `RewardRuleService`, `RewardService` |
 | `Reporting` | nothing | read-only queries |
 | `Notifications` | `notifications` | event listeners |
 

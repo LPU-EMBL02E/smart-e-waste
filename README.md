@@ -135,7 +135,22 @@ Full instructions: **[SETUP.md](SETUP.md)**.
 
 ## State of the repository
 
-This is boilerplate and structure, not a working system.
+The web app's deposit path, points, redemptions and reporting work and are
+tested. Accounts (signing in) and the two programs in `firmware/` are not built
+yet, so it is not a working system end to end.
+
+**Build tracks**
+
+Each track has a build spec: the steps, the service methods and the tests each
+step needs.
+
+| Track | Covers | Spec | State |
+|---|---|---|---|
+| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Only step A0 built |
+| B | Device API, bins, points rule, ledger credit, deposit sessions | [web/docs/TRACK-B-DEPOSIT-PATH.md](web/docs/TRACK-B-DEPOSIT-PATH.md) | Built (#30) |
+| C | Rewards, redeeming, fulfilling, cancelling, voids | [web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md](web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md) | Built (#31) |
+| D | Home, history, leaderboards, dashboard, notifications | [web/docs/TRACK-D-REPORTING-AND-HISTORY.md](web/docs/TRACK-D-REPORTING-AND-HISTORY.md) | Built (#32) |
+| E | The bin station | [firmware/docs/TRACK-E-BIN-STATION.md](firmware/docs/TRACK-E-BIN-STATION.md) | Not started |
 
 **Real and usable now**
 
@@ -150,10 +165,19 @@ This is boilerplate and structure, not a working system.
 - The device error contract: `DeviceErrorCode` (status and `retryable` per code),
   `DeviceApiException`, and `DeviceExceptions` so no device route can ever
   answer with HTML.
-- The HMAC signature middleware, written from the spec — **not yet exercised
-  by a test**: both tests in `DeviceSignatureTest` are still marked incomplete.
-  Its canonical string was verified against both test vectors by independent
-  implementations in Python.
+- The HMAC signature middleware, tested against both signing vectors and the
+  failure cases in `API_Design.md` §8.
+- The seven device endpoints and the deposit state machine: telemetry with
+  `panel_open` and `fault_code`, bin config, sessions with row locks and replay
+  handling, and the points credit in the same transaction (Track B).
+- The ledger's other side: the reward catalogue, redeeming, fulfilling and
+  cancelling redemptions, and voiding a transaction, all through
+  `PointsService` (Track C).
+- The read side: the student's home page and history, both leaderboards, the
+  admin dashboard with its live summary, the review list and notifications
+  (Track D).
+- The bin and points-rate admin pages.
+- Feature tests for all of the above: `cd web && php artisan test`.
 - FormRequest validation rules wherever `API_Design.md` tabulates them,
   including the three constraints between the reward rule variables.
 - `config/ewaste.php` and `.env.example`, fully annotated.
@@ -161,26 +185,32 @@ This is boilerplate and structure, not a working system.
   scenarios from `API_Design.md` §8.
 - The two swappability checks, verified to catch real violations.
 
-**Skeletons with documented bodies**
+**Not built yet**
 
-Controllers, services, listeners and the seeder. Each one carries the rules it must follow and the doc section
-they come from; the bodies raise `LogicException` so an unimplemented path fails
-loudly instead of silently returning nothing.
+- **Accounts (Track A).** Login, logout, registration and email confirmation,
+  password links, the profile and QR page, the admin user and organization
+  pages, and `FirstAdminSeeder`. Until they land nobody can sign in, so the
+  pages above are reached only by the tests, which sign in a factory user.
+- **The reports page**, until the team decides what reports contain
+  (`API_Design.md` §10 q2).
+- **The visual design.** The views that exist are bare Blade with no styling.
+- **The bin station (Track E)**, in `firmware/station/`.
 
-Blade views are not written. `web/resources/views/README.md` lists the expected
-view names per module.
+Unbuilt controllers and services are documented skeletons: each carries the
+rules it must follow and the doc section they come from, and raises
+`LogicException` so an unbuilt path fails loudly.
 
 **Not yet matching the design**
 
 - `firmware/` still holds a NodeMCU controller and the `camera/` and `display/`
   programs. It needs reworking for the ESP32-S3: the pin map, the `station` and
   `interlock` modules and the actuator's current sense (`System_Plan.md` §2 and
-  §8.2). `camera/` and `display/` are not part of the design.
-- `firmware/station/`, the bin station, is not started (`System_Plan.md` §8.3,
-  `API_Design.md` §11).
-- `web/` has no `panel_open` or `fault_code` on `bin_telemetry` and no
-  `BinFault` event yet (`API_Design.md` §5.3).
-- The simulator's telemetry call does not send `panel_open` or `fault_code`.
+  §8.2). `camera/` and `display/` are not part of the design; the bin station
+  takes over their jobs.
+- Some choices made while building Tracks C and D are not in `docs/` yet: a
+  required `cancel_reason` when cancelling a redemption, 404 for an inactive
+  reward's page, the `home_recent_transactions` setting, and leaderboard ties
+  ordered by user id.
 - `firmware/AGENTS.md` still says only `Api` knows about HTTP, though the
   controller's `station` module also speaks HTTP to the bin station. Changing it
   needs the whole team.
