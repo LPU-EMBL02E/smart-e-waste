@@ -27,7 +27,7 @@ around.
 | A table, column, key or constraint | `docs/Database_Schema.md` |
 | How to build and run | `SETUP.md` |
 | Notes for one app only (UI design guide, team workflow, drafts) | `<app>/docs/`, e.g. `web/docs/` |
-| Coding rules for firmware C++ | [`firmware/AGENTS.md`](firmware/AGENTS.md) |
+| Coding rules for firmware: C++, and the bin station's Python | [`firmware/AGENTS.md`](firmware/AGENTS.md) |
 
 - `<app>/docs/` holds working notes for one area and is reviewed by that area's
   owner. It may add detail but never overrides `docs/`: if the two disagree,
@@ -115,7 +115,8 @@ fails review.
 | JS / CSS | Prettier | `npx prettier --write <files>` |
 | Everything | `.editorconfig` | UTF-8, LF, final newline, 4 spaces (2 for C++/JS/CSS/YAML/JSON) |
 
-C++ formatting is in [`firmware/AGENTS.md`](firmware/AGENTS.md).
+C++ formatting, and the bin station's Python, are in
+[`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 Never hand-format against a tool, and never reformat files you didn't otherwise
 change.
@@ -165,6 +166,9 @@ change.
 See [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 ### 4.5 Python (`tools/`)
+
+The bin station in `firmware/station/` is Python too, but runs on the Pi with
+its own rules: see [`firmware/AGENTS.md`](firmware/AGENTS.md).
 
 - Standard library only (the simulator must run anywhere with `python3`).
 - Type hints on functions, a module docstring explaining usage, exit code 0/1 for
@@ -302,7 +306,7 @@ Changes to an area need review from its owner.
 | Area | Covers | Owner |
 |---|---|---|
 | `web/` | Laravel app, migrations, routes, views, PHP tests | `TODO(team)` |
-| `firmware/` | controller, camera, display programs | `TODO(team)` |
+| `firmware/` | controller firmware, the bin station (`firmware/station/`), and the old camera and display programs | `TODO(team)` |
 | `docs/` | design docs — the source of truth | `TODO(team)` |
 
 `tools/`, `scripts/` and root files (including this one) can be reviewed by any

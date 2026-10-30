@@ -1,6 +1,7 @@
 # AGENTS.md — firmware
 
-C++ rules for `firmware/`. This file adds to the root `AGENTS.md`, it does not
+Rules for `firmware/`: C++ for the ESP32 programs, and Python for the bin
+station in `station/`. This file adds to the root `AGENTS.md`, it does not
 replace it: the project rules (§2), scope rules (§3), tests, PRs and ownership
 there apply here too. Section numbers refer to the root file.
 
@@ -11,6 +12,7 @@ there apply here too. Section numbers refer to the root file.
 | Code | Tool | Command |
 |---|---|---|
 | C++ (`firmware/`) | clang-format, repo `.clang-format` (Google style, 2-space) | `clang-format -i <files>` |
+| Python (`firmware/station/`) | ruff | `ruff format firmware/station/ && ruff check firmware/station/` |
 
 ## Firmware C++ (§4.4)
 
@@ -65,12 +67,40 @@ there apply here too. Section numbers refer to the root file.
   changes.
 - Logging stays at `CORE_DEBUG_LEVEL=2` in committed code.
 
+## Bin station Python (`station/`)
+
+The Pi's half of the bin (`docs/System_Plan.md` §8.3), answering the controller
+over the API in `docs/API_Design.md` §11.
+
+- **Python 3 from Raspberry Pi OS, and only the `apt` packages in
+  `System_Plan.md` §3**: `python3-picamera2`, `python3-numpy`,
+  `python3-serial`. Everything else from the standard library. No `pip install`
+  on the Pi, no virtualenv, no web framework.
+- **One module per part**, each one class: the scanner, the camera, the screen,
+  the event queue, the HTTP API. Only the scanner module touches the serial
+  port; only the camera module imports `picamera2`.
+- **No hardware import at module load** outside those two modules, so the tests
+  and the API run on a laptop with no camera or scanner.
+- **It decides nothing about a deposit,** holds no secret and no database, and
+  never calls the web app. It answers the controller and nothing else.
+- **Fail closed.** No reference image means the check fails; a camera that
+  can't take a picture is an error, never a pass.
+- **Every wait has a timeout**, the serial port included.
+- Bench values (lens position, thresholds, the controller timeout, the serial
+  device, the listen address) live in the bin station's settings file, never
+  in code. The repository holds an example file only.
+- Type hints on functions, a module docstring on each file, and tests with the
+  standard library's `unittest`.
+
 ## Dependencies (§7)
 
 - Firmware libraries must be pinned to a version in `platformio.ini`.
+- The bin station adds no dependency beyond the three `apt` packages above.
 
 ## Before you open a PR (§8)
 
 ```bash
-cd firmware/<program> && pio run             # each program you touched
+cd firmware/<program> && pio run             # each C++ program you touched
+ruff format --check firmware/station/ && ruff check firmware/station/   # station/
+python3 -m unittest discover -s firmware/station/tests                 # station/
 ```

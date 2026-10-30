@@ -1,7 +1,12 @@
 # Firmware
 
-One program, `controller/`, on the ESP32-S3-DevKitC-1 (N8R2).
-`docs/System_Plan.md` §2 and §8.2.
+Two programs:
+
+- `controller/`, on the ESP32-S3-DevKitC-1 (N8R2). `docs/System_Plan.md` §2 and
+  §8.2. The rest of this file is about it.
+- `station/`, the bin station: Python on the Pi, run as a systemd service.
+  `docs/System_Plan.md` §8.3 and `docs/API_Design.md` §11. Not started yet; the
+  build spec is [docs/TRACK-E-BIN-STATION.md](docs/TRACK-E-BIN-STATION.md).
 
 **The controller is in charge.** It runs the deposit sequence, owns all safety
 logic, and is the only client of the device API. The QR scanner, the camera and
@@ -10,9 +15,9 @@ the touchscreen are connected to the Pi and run by the bin station
 JSON API (`API_Design.md` §11). Everything else at the bin is wired to the
 controller.
 
-> `camera/` and `display/` in this folder are not part of the design, and the
-> controller code still targets the NodeMCU pin map. Both are reworked to match
-> this file.
+> `camera/` and `display/` in this folder are not part of the design: the bin
+> station in `station/` takes over their jobs. The controller code still targets
+> the NodeMCU pin map. Both are reworked to match this file.
 
 ## Building
 

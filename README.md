@@ -53,9 +53,8 @@ web/                  the Laravel app (modular monolith, 5 modules + 1)
 
 firmware/
   controller/           ESP32-S3 — runs the deposit sequence, talks to the server
-
-station/              the bin station on the Pi: QR scanner, camera check and
-                      the bin's screen (not started yet)
+  station/              the bin station, Python on the Pi: QR scanner, camera
+                        check and the bin's screen (not started yet)
 
 tools/simulator/      signs requests and drives the full deposit flow in Python
 scripts/              the two portability checks from System_Plan.md §8.1
@@ -177,15 +176,14 @@ view names per module.
   programs. It needs reworking for the ESP32-S3: the pin map, the `station` and
   `interlock` modules and the actuator's current sense (`System_Plan.md` §2 and
   §8.2). `camera/` and `display/` are not part of the design.
-- `station/`, the bin station, is not started (`System_Plan.md` §8.3,
+- `firmware/station/`, the bin station, is not started (`System_Plan.md` §8.3,
   `API_Design.md` §11).
 - `web/` has no `panel_open` or `fault_code` on `bin_telemetry` and no
   `BinFault` event yet (`API_Design.md` §5.3).
 - The simulator's telemetry call does not send `panel_open` or `fault_code`.
-- `firmware/AGENTS.md` still says only `Api` knows about HTTP. The root
-  `AGENTS.md` has no rules, area or owner for `station/`, and still lists the
-  camera and display programs under `firmware/`. Changing either needs the
-  whole team.
+- `firmware/AGENTS.md` still says only `Api` knows about HTTP, though the
+  controller's `station` module also speaks HTTP to the bin station. Changing it
+  needs the whole team.
 
 **Decisions still open**
 

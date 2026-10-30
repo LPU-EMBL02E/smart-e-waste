@@ -1,8 +1,8 @@
 # Setup
 
 How to turn this repository into a running system. Three parts: the Laravel app
-in `web/`, the controller firmware in `firmware/`, and the bin station in
-`station/`. The web app and the bin station both run on the Pi.
+in `web/`, the controller firmware in `firmware/controller/`, and the bin station
+in `firmware/station/`. The web app and the bin station both run on the Pi.
 
 Section references are to the files in `docs/`.
 
@@ -173,7 +173,8 @@ another server without reflashing.
 ## 7. Bin station
 
 The Python program on the Pi that runs the QR scanner, the camera check and the
-touchscreen (`System_Plan.md` §8.3). It is not built yet. When it is, its setup
+touchscreen, in `firmware/station/` (`System_Plan.md` §8.3). It is not built
+yet. When it is, its setup
 is `System_Plan.md` §7, step 10:
 
 ```bash
