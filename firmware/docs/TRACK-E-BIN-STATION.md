@@ -71,11 +71,10 @@ where a part would touch hardware.
    | `pass_threshold` | Score at or above which the check passes. `TODO(team)` |
    | `controller_timeout_s` | §11.9. Longer than the controller's event poll interval. `TODO(team)` |
 
-3. **CI.** Extend the existing `ruff` job in `.github/workflows/tools.yml` to
-   check `firmware/station/` as well, and add a step that runs
-   `python3 -m unittest discover -s firmware/station/tests`. CI installs
-   `numpy` pinned to the version Trixie ships, for the score tests only. Keep the
-   job name, so the required check on `main` doesn't change.
+3. **CI is already set up.** The `ruff` job in `.github/workflows/tools.yml`
+   formats and lints `firmware/station/` as soon as the folder exists, and runs
+   `python3 -m unittest discover -s firmware/station/tests` once `tests/` has a
+   file, on Python 3.13 with numpy 2.2.4, as on Trixie. Nothing to add here.
 
 Tests (`tests/test_settings.py`):
 - `test_it_loads_the_example_settings`

@@ -1,4 +1,5 @@
-# ruff format and lint for the Python tools (AGENTS.md §4.1 and §8). Runs on
+# ruff format and lint for the Python tools and the bin station, and the bin
+# station's unit tests (AGENTS.md §4.1 and §8, firmware/AGENTS.md). Runs on
 # every PR so it can be a required check on main.
 name: Tools
 
@@ -18,14 +19,31 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          # The Pi's Python (Raspberry Pi OS Trixie), where the simulator and the
+          # bin station both run.
+          python-version: "3.13"
 
       # Pinned so a new ruff release cannot fail a PR that changed nothing.
       - name: Install ruff
         run: pip install ruff==0.17.0
 
+      # firmware/station/ is checked once it exists (Track E, step E0).
+      - name: Choose paths
+        run: |
+          paths="tools/"
+          if [ -d firmware/station ]; then paths="$paths firmware/station/"; fi
+          echo "PY_PATHS=$paths" >> "$GITHUB_ENV"
+
       - name: Format
-        run: ruff format --check tools/
+        run: ruff format --check $PY_PATHS
 
       - name: Lint
-        run: ruff check tools/
+        run: ruff check $PY_PATHS
+
+      # numpy pinned to the version Trixie ships as python3-numpy, for the
+      # camera score tests. The Pi itself installs it from apt, never pip.
+      - name: Bin station tests
+        if: hashFiles('firmware/station/tests/**') != ''
+        run: |
+          pip install numpy==2.2.4
+          python3 -m unittest discover -s firmware/station/tests
