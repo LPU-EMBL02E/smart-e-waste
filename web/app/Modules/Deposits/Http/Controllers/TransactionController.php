@@ -2,6 +2,7 @@
 
 namespace App\Modules\Deposits\Http\Controllers;
 
+use App\Modules\Deposits\Services\DepositService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -13,13 +14,15 @@ use Illuminate\View\View;
  *
  * Each row shows the session's weight and the points awarded, and marks voided
  * transactions, so a student can see why a balance changed.
- *
- * TODO: method body.
  */
 class TransactionController
 {
+    public function __construct(private DepositService $deposits) {}
+
     public function index(Request $request): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('deposits.transactions.index', [
+            'transactions' => $this->deposits->transactionsFor($request->user()),
+        ]);
     }
 }

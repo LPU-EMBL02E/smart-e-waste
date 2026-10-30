@@ -318,6 +318,30 @@ class DepositService
     }
 
     /**
+     * A user's own transactions, newest first, for /transactions and the recent
+     * list on /home, with the session eager-loaded for its weight. Voided ones
+     * are included, with their status, so a student can see why a balance
+     * changed (API_Design.md §7.3).
+     *
+     * `transactions` has no user column, so this joins through
+     * deposit_sessions.user_id, the way PointsService::pointsEarnedToday() does.
+     * The caller passes the user from the request, never an id from input
+     * (§7.1).
+     *
+     * @return LengthAwarePaginator<int, Transaction>
+     */
+    public function transactionsFor(User $user, ?int $perPage = null): LengthAwarePaginator
+    {
+        return Transaction::query()
+            ->select('transactions.*')
+            ->join('deposit_sessions', 'deposit_sessions.id', '=', 'transactions.session_id')
+            ->where('deposit_sessions.user_id', $user->id)
+            ->with('session')
+            ->latest('transactions.id')
+            ->paginate($perPage);
+    }
+
+    /**
      * One transaction with what its page shows: the session's weight,
      * verification and actuator values, who deposited at which bin, and who
      * voided it.
