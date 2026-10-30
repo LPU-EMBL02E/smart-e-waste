@@ -1,7 +1,8 @@
 # Track E — Bin station
 
 Build spec for the bin station in `firmware/station/`: the Python program on the
-Pi that runs the QR scanner, the camera check and the touchscreen, and answers
+Pi that runs the QR scanner, the camera check with its e-waste model, and the
+touchscreen, and answers
 the controller over a small JSON API. It replaces the old `firmware/camera/` and
 `firmware/display/` programs.
 
@@ -18,7 +19,7 @@ The controller decides; the bin station reports what it sees and shows what it
 is told.
 
 **Logic first, hardware later.** Steps E0–E3 run on any laptop with fakes in the
-tests. Only E4–E6 need the Pi, the camera and the scanner.
+tests. Only E4–E7 need the Pi, the camera, the model file and the scanner.
 
 ---
 
@@ -37,6 +38,8 @@ firmware/station/
     contact.py               ControllerContact: the controller timeout
     screen.py                Screen: current screen, validation, page updates
     camera.py                Camera, and the pure score function
+    model.py                 EwasteModel: loads and runs the ONNX model
+    check.py                 the two-step camera check: presence, then the model
     scanner.py               Scanner
     api.py                   the controller API (§11) and the error shape
     page.py                  the kiosk page server (localhost only)
@@ -54,7 +57,7 @@ where a part would touch hardware.
 ## Step E0 — Skeleton and checks
 
 1. The layout above, with `python3 -m bin_station --settings <file>` as the
-   entry point. Python 3.13 (Trixie's), standard library plus the three `apt`
+   entry point. Python 3.13 (Trixie's), standard library plus the four `apt`
    packages only.
 2. **`Settings`** reads a TOML file with `tomllib` and fails at start with a
    clear message for a missing or invalid value. Keys:
@@ -68,13 +71,17 @@ where a part would touch hardware.
    | `lens_position` | Fixed focus (`System_Plan.md` §8.3). `TODO(team)`, set on the bench |
    | `image_width`, `image_height` | The small capture size for the check |
    | `pixel_threshold` | Brightness difference that counts a pixel as changed. `TODO(team)` |
-   | `pass_threshold` | Score at or above which the check passes. `TODO(team)` |
+   | `presence_threshold` | Presence score at or above which an item is seen. `TODO(team)` |
+   | `model_path` | The e-waste model file on the Pi (`System_Plan.md` §8.3) |
+   | `model_threads` | ONNX Runtime's thread limit: 2, so the web app keeps two cores |
+   | `model_pass_threshold` | E-waste probability at or above which the check passes. `TODO(team)` |
    | `controller_timeout_s` | §11.9. Longer than the controller's event poll interval. `TODO(team)` |
 
 3. **CI is already set up.** The `ruff` job in `.github/workflows/tools.yml`
    formats and lints `firmware/station/` as soon as the folder exists, and runs
    `python3 -m unittest discover -s firmware/station/tests` once `tests/` has a
-   file, on Python 3.13 with numpy 2.2.4, as on Trixie. Nothing to add here.
+   file, on Python 3.13 with numpy 2.2.4, as on Trixie. The tests never import
+   `onnxruntime`, so CI needs nothing added.
 
 Tests (`tests/test_settings.py`):
 - `test_it_loads_the_example_settings`
@@ -116,10 +123,10 @@ endpoints in §11, under `/station/v1`. Each request calls
 
 | Endpoint | Does |
 |---|---|
-| `GET /health` | `scanner`, `camera`, `reference` as booleans (§11.2) |
+| `GET /health` | `scanner`, `camera`, `reference`, `model` as booleans (§11.2) |
 | `PUT /scanner` | Body `{ "armed": bool }`. Arming clears queued tokens; arming with no scanner is 503 `SCANNER_UNAVAILABLE` (§11.3) |
 | `GET /events` | `EventQueue.take_all()` (§11.4) |
-| `POST /verify` | `Camera.check()`: `{ "method": "cam_diff", "passed", "score" }`, score rounded to 4 places; 409 `NO_REFERENCE`, 503 `CAMERA_UNAVAILABLE` (§11.5) |
+| `POST /verify` | `check()` in `check.py`: `{ "method", "passed", "score" }`, `method` `cam_diff` or `ewaste_model`, score rounded to 4 places; 409 `NO_REFERENCE`, 503 `CAMERA_UNAVAILABLE`, 503 `MODEL_UNAVAILABLE` (§11.5) |
 | `POST /reference` | `Camera.take_reference()`: `{ "stored": true }`; 503 `CAMERA_UNAVAILABLE` keeps the old reference (§11.6) |
 | `PUT /screen` | `Screen.show()`: `{ "screen" }`; 422 `VALIDATION_ERROR` for an unknown screen or a missing value (§11.7) |
 
@@ -137,6 +144,7 @@ camera objects):
 - `test_it_returns_the_check_in_the_documented_shape`
 - `test_it_answers_no_reference_with_409`
 - `test_it_answers_a_camera_failure_with_503_and_never_a_pass`
+- `test_it_answers_a_model_failure_with_503_and_never_a_pass`
 - `test_it_refuses_an_unknown_screen_and_a_missing_value`
 - `test_it_answers_invalid_json_with_a_validation_error`
 - `test_it_resets_the_controller_timeout_on_every_call`
@@ -186,9 +194,10 @@ class so the rest runs without it:
   and white balance settle once, then **fix** them; capture small and grayscale;
   keep the image and the fixed controls in memory. On a failure, raise and keep
   the old reference.
-- `check()`: capture with the same fixed controls, score it against the
-  reference, pass at or above `pass_threshold`. No reference raises
-  `NoReference`; a failed capture raises `CameraUnavailable`, never a pass.
+- `capture()`: one capture with the same fixed controls, giving the small
+  grayscale image for the presence score and a colour image at the model's
+  input size. No reference raises `NoReference`; a failed capture raises
+  `CameraUnavailable`, never a pass.
 - The reference lives in memory only. A restart loses it, and `health` reports
   `reference: false` until the controller takes a new one (§8.3).
 
@@ -200,13 +209,52 @@ Tests (`tests/test_score.py`):
 - `test_it_scores_the_share_of_changed_pixels`
 - `test_it_ignores_changes_under_the_pixel_threshold`
 
-On the Pi, once: take a reference of the empty platform, then check it empty
+On the Pi, once: take a reference of the empty flap, then check it empty
 and with a phone, a charger and a sheet of paper on it. Record the scores in the
-PR; the team sets both thresholds from them.
+PR; the team sets the pixel and presence thresholds from them.
 
 ---
 
-## Step E5 — The scanner (Pi and GM865)
+## Step E5 — The e-waste model (Pi and the model file)
+
+**`EwasteModel`**, the only code that imports `onnxruntime`, imported inside the
+class so the rest runs without it (`System_Plan.md` §8.3):
+- `load()` at start: open `model_path` with `model_threads` threads, then run
+  one warm-up picture. `is_loaded()` for `health`. A missing file or a failed
+  load leaves it unloaded, and `health` says so.
+- `probability(image) -> float`: the model's probability that the colour image
+  shows e-waste, from 0.0 to 1.0. A failed run raises `ModelUnavailable`, never
+  a pass.
+
+**`check()`** in `check.py`, a plain function tested with a fake camera and a
+fake model:
+1. `Camera.capture()`, then `score()` against the reference. Below
+   `presence_threshold`: answer `cam_diff`, failed, with that score, and do not
+   run the model.
+2. Otherwise `EwasteModel.probability()` on the colour image: answer
+   `ewaste_model` with that score, passed at or above `model_pass_threshold`.
+
+Tests (`tests/test_check.py`):
+- `test_it_fails_on_presence_without_running_the_model`
+- `test_it_passes_when_the_model_says_e_waste`
+- `test_it_fails_when_the_model_says_not_e_waste`
+- `test_it_never_passes_when_the_model_is_not_loaded`
+
+**Training is not part of this step,** and nothing from it goes in
+`firmware/station/` except the exported model file's path in the settings.
+Train on a dev machine on pictures taken in the bin (`System_Plan.md` §8.3).
+`TODO(team)`: the network, the pictures, where they are kept, and the error
+rates to reach.
+
+On the Pi, once: with the web app running, time `verify` for an empty flap,
+for e-waste and for items that are not. Then run the model on the pictures
+kept out of training and record how often it accepts an item that is not
+e-waste and how often it rejects real e-waste. Record both in the PR; the team
+sets `model_pass_threshold` from them.
+
+---
+
+## Step E6 — The scanner (Pi and GM865)
 
 **`Scanner`**, the only code that opens the serial port (`pyserial`):
 - `open()` at start; `is_open()` for `health`. A failed open leaves it closed
@@ -229,13 +277,13 @@ on a phone, and record the read distance and lighting that work.
 
 ---
 
-## Step E6 — Running on the Pi
+## Step E7 — Running on the Pi
 
 Follows `System_Plan.md` §7 step 10, and fills in `SETUP.md` §7:
 
-1. `sudo apt install python3-picamera2 python3-numpy python3-serial chromium cage`
+1. `sudo apt install python3-picamera2 python3-numpy python3-serial python3-onnxruntime chromium cage`
 2. Copy `settings.example.toml` to `/etc/ewaste-station/settings.toml` and set
-   the bench values.
+   the bench values. Copy the model file to `model_path`.
 3. `ewaste-station.service`: runs `python3 -m bin_station`, restarts on failure,
    starts at boot.
 4. `ewaste-kiosk.service`: `cage` running Chromium in kiosk mode at the page's
@@ -244,13 +292,14 @@ Follows `System_Plan.md` §7 step 10, and fills in `SETUP.md` §7:
 
 ---
 
-## Step E7 — End to end with the controller
+## Step E8 — End to end with the controller
 
 With the reworked controller (Track F), or by hand with `curl` before that:
 walk the deposit flow screen by screen, then check the fail-closed cases from
 `API_Design.md` §8: stop the bin station mid-session and check the controller
-cancels; remove the reference and check `verify` is refused; stop the
-controller and check the screen goes to `OFFLINE`.
+cancels; remove the reference and check `verify` is refused; move the model file
+away, restart, and check `health` reports `model: false` and `verify` is
+refused; stop the controller and check the screen goes to `OFFLINE`.
 
 ---
 
@@ -270,5 +319,6 @@ controller and check the screen goes to `OFFLINE`.
   `ruff check firmware/station/` and the unit tests green in CI.
 - The six endpoints answer exactly as `API_Design.md` §11, including every
   error code, and the kiosk page's server listens on `127.0.0.1` only.
-- The bench scores from E4 and the scanner check from E5 are recorded in the PR.
+- The bench scores from E4, the model's times and error rates from E5 and the
+  scanner check from E6 are recorded in the PR.
 - No secret, no Wi-Fi password and no real bench value is in the repository.
