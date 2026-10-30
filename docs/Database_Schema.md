@@ -95,7 +95,8 @@ Recommended `status` values: `OK`, `FULL` (`fill_percent` ≥
 `devices.fill_threshold_percent`).
 
 `fault_code` values: `ACTUATOR_JAM`, `ACTUATOR_TIMEOUT`, `ACTUATOR_RETRACT_FAILED`,
-`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`, `SCANNER_UNAVAILABLE`. The device
+`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`, `MODEL_UNAVAILABLE`,
+`SCANNER_UNAVAILABLE`. The device
 decides these; the server only stores them. A bin's current panel state and fault
 are those of its latest row.
 
@@ -122,6 +123,10 @@ are those of its latest row.
 
 `status` values: `OPEN`, `ACCEPTED`, `COMPLETED`, `REJECTED`, `FAILED`, `EXPIRED`,
 `CANCELLED`.
+
+`verification_method` values: `cam_diff` (no item seen) and `ewaste_model` (the
+e-waste model ran). `verification_score` is the score of that step
+(`API_Design.md` §11.5).
 
 Only `OPEN` sessions are moved to `EXPIRED` by the timeout sweep. An `ACCEPTED`
 session means the item may already be in the bin, so it waits for the device's
