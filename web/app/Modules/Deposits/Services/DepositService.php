@@ -19,7 +19,6 @@ use App\Support\Device\DeviceErrorCode;
 use App\Support\ReferenceCode;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -346,15 +345,14 @@ class DepositService
     {
         $rule = $this->ruleFor($session);
 
-        // A transaction code is random; on the rare duplicate, draw another
-        // (ReferenceCode). session_id cannot clash: the session is locked.
-        $transaction = retry(3, fn () => Transaction::create([
+        // session_id cannot clash: the session is locked. Only the random code can.
+        $transaction = ReferenceCode::insertWithRetry(fn () => Transaction::create([
             'transaction_code' => ReferenceCode::transaction(),
             'session_id' => $session->id,
             'reward_rule_id' => $rule->id,
             'points_awarded' => $rule->pointsFor((float) $session->net_weight_g),
             'status' => Transaction::STATUS_COMPLETED,
-        ]), when: fn (\Throwable $e) => $e instanceof UniqueConstraintViolationException);
+        ]));
 
         $transaction->setRelation('session', $session);
         $this->points->creditDeposit($transaction);

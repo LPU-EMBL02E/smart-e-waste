@@ -5,6 +5,10 @@ namespace App\Modules\Rewards\Services;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\Redemption;
 use App\Modules\Rewards\Models\Reward;
+use App\Modules\Rewards\Support\RedemptionRefused;
+use App\Support\ReferenceCode;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Redeeming, fulfilling and cancelling rewards. API_Design.md §7.6,
@@ -16,7 +20,11 @@ use App\Modules\Rewards\Models\Reward;
  *   - stock is decremented with a guarded `WHERE stock_quantity >= ?` and the
  *     affected row count is checked, so stock can never go negative.
  *
- * TODO: all method bodies.
+ * Only PointsService writes point_ledger; this service calls it inside its own
+ * transaction (System_Plan.md §4, boundary rule 1). A refusal is a
+ * RedemptionRefused thrown inside the transaction, so it changes nothing.
+ *
+ * TODO: fulfil() and cancel().
  */
 class RedemptionService
 {
@@ -33,12 +41,66 @@ class RedemptionService
      *      TOTAL cost, status = PENDING.
      *   5. PointsService writes the REDEEM row with a negative delta.
      *
-     * A refusal changes nothing and the page redirects back with a message.
+     * A refusal throws RedemptionRefused inside the transaction, so it changes
+     * nothing; the page redirects back with its message. The balance and the
+     * stock are checked here, never in validation, where the check would race.
      */
     public function redeem(User $user, Reward $reward, int $quantity): Redemption
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        return DB::transaction(function () use ($user, $reward, $quantity) {
+            // The lock is the first read, so the balance below is current and a
+            // second redemption by this user waits for this one (Section 4.1).
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $balance = $this->points->balanceFor($user);
+
+            // Re-read after the lock: the price and is_active as they are now.
+            $reward = Reward::whereKey($reward->id)->firstOrFail();
+
+            if (! $reward->is_active) {
+                throw RedemptionRefused::rewardUnavailable();
+            }
+
+            $cost = $reward->points_cost * $quantity;
+
+            if ($balance < $cost) {
+                throw RedemptionRefused::insufficientBalance($balance, $cost);
+            }
+
+            $taken = Reward::whereKey($reward->id)
+                ->where('stock_quantity', '>=', $quantity)
+                ->decrement('stock_quantity', $quantity);
+
+            if ($taken === 0) {
+                throw RedemptionRefused::outOfStock();
+            }
+
+            $redemption = ReferenceCode::insertWithRetry(fn () => Redemption::create([
+                'redemption_code' => ReferenceCode::redemption(),
+                'user_id' => $user->id,
+                'reward_id' => $reward->id,
+                'quantity' => $quantity,
+                'points_cost' => $cost,
+                'status' => Redemption::STATUS_PENDING,
+            ]));
+
+            $this->points->debitRedemption($redemption);
+
+            return $redemption->setRelation('reward', $reward);
+        });
+    }
+
+    /**
+     * A user's own redemptions, newest first, with the reward eager-loaded
+     * (API_Design.md §7.1: a user sees only their own).
+     *
+     * @return LengthAwarePaginator<int, Redemption>
+     */
+    public function listFor(User $user): LengthAwarePaginator
+    {
+        return Redemption::where('user_id', $user->id)
+            ->with('reward')
+            ->latest('id')
+            ->paginate();
     }
 
     /**

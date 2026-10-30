@@ -4,6 +4,7 @@ namespace App\Modules\Rewards\Http\Controllers;
 
 use App\Modules\Rewards\Http\Requests\StoreRedemptionRequest;
 use App\Modules\Rewards\Services\RedemptionService;
+use App\Modules\Rewards\Support\RedemptionRefused;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,8 +21,6 @@ use Illuminate\View\View;
  *
  * A refusal — not enough points, or out of stock — redirects back with a
  * message and changes nothing.
- *
- * TODO: all method bodies.
  */
 class RedemptionController
 {
@@ -29,12 +28,27 @@ class RedemptionController
 
     public function store(StoreRedemptionRequest $request): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        try {
+            $redemption = $this->redemptions->redeem(
+                $request->user(),
+                $request->reward(),
+                (int) $request->validated('quantity'),
+            );
+        } catch (RedemptionRefused $refused) {
+            return back()->withInput()->withErrors(['redemption' => $refused->getMessage()]);
+        }
+
+        return redirect()->route('redemptions.index')->with(
+            'status',
+            "Redeemed {$redemption->reward->name}. Your code is {$redemption->redemption_code}.",
+        );
     }
 
     /** Scoped to $request->user(): a user sees only their own (§7.1). */
     public function index(Request $request): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('rewards.redemptions.index', [
+            'redemptions' => $this->redemptions->listFor($request->user()),
+        ]);
     }
 }
