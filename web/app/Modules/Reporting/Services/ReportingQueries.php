@@ -102,19 +102,6 @@ class ReportingQueries
     }
 
     /**
-     * ACCEPTED sessions that have waited longer than the review threshold for
-     * their `complete` call, for /admin/sessions/review.
-     *
-     * These are never expired silently, because the item may already be in the
-     * bin (System_Plan.md §5.3 rule 6).
-     */
-    public function sessionsAwaitingReview(): Collection
-    {
-        // TODO
-        throw new \LogicException('Not implemented.');
-    }
-
-    /**
      * TODO(team): API_Design.md §10 question 2 — the plan names a reports page
      * and scheduled reports but does not say what they contain. Decide the
      * contents against the project guidelines (Step 13 test tables, Step 15

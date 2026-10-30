@@ -342,6 +342,21 @@ class DepositService
     }
 
     /**
+     * ACCEPTED sessions past the review threshold, oldest first, for
+     * /admin/sessions/review, with the user and the bin eager-loaded.
+     * API_Design.md §7.4; System_Plan.md §5.3 rule 6.
+     *
+     * @return LengthAwarePaginator<int, DepositSession>
+     */
+    public function sessionsAwaitingReview(): LengthAwarePaginator
+    {
+        return DepositSession::awaitingReview()
+            ->with(['user', 'device'])
+            ->oldest()
+            ->paginate();
+    }
+
+    /**
      * One transaction with what its page shows: the session's weight,
      * verification and actuator values, who deposited at which bin, and who
      * voided it.
