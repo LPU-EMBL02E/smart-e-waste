@@ -6,6 +6,7 @@ use App\Modules\Deposits\Models\DepositSession;
 use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\PointLedgerEntry;
+use App\Modules\Rewards\Models\Redemption;
 use App\Modules\Rewards\Models\RewardRule;
 use App\Modules\Rewards\Services\PointsService;
 use App\Modules\Rewards\Support\LedgerEntryType;
@@ -15,8 +16,8 @@ use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 /**
- * The ledger methods of the deposit path. System_Plan.md §5.7 rules 5 and 7,
- * API_Design.md §5.4 step 5, Database_Schema.md §9.
+ * PointsService, the one writer of point_ledger. System_Plan.md §5.7 rules 5
+ * and 7, §6.1; API_Design.md §5.4 step 5, §7.3, §7.6; Database_Schema.md §9.
  */
 class PointsServiceTest extends TestCase
 {
@@ -91,6 +92,84 @@ class PointsServiceTest extends TestCase
         } catch (UniqueConstraintViolationException) {
             $this->assertSame(1, PointLedgerEntry::count());
         }
+    }
+
+    public function test_it_counts_earn_minus_transaction_reversals_as_points_earned(): void
+    {
+        $this->credit($this->earn(30));
+        $voided = $this->earn(18);
+        $this->credit($voided);
+        $this->points->reverseTransaction($voided, 'Not e-waste');
+
+        $this->assertSame(30, $this->points->pointsEarnedBy($this->student));
+    }
+
+    public function test_it_ignores_redemptions_in_points_earned(): void
+    {
+        $this->credit($this->earn(100));
+        $redemption = Redemption::factory()->for($this->student)->create(['points_cost' => 60]);
+        $this->points->debitRedemption($redemption);
+        $this->points->reverseRedemption($redemption, 'Out of stock at the desk');
+        $this->points->debitRedemption(Redemption::factory()->for($this->student)->create(['points_cost' => 40]));
+
+        $this->assertSame(100, $this->points->pointsEarnedBy($this->student));
+        $this->assertSame(60, $this->points->balanceFor($this->student));
+    }
+
+    public function test_it_debits_the_total_cost_of_a_redemption(): void
+    {
+        $redemption = Redemption::factory()->for($this->student)->create(['quantity' => 3, 'points_cost' => 150]);
+
+        $entry = $this->points->debitRedemption($redemption);
+
+        $this->assertSame(LedgerEntryType::Redeem, $entry->entry_type);
+        $this->assertSame(-150, $entry->points_delta);
+        $this->assertSame($redemption->id, $entry->redemption_id);
+        $this->assertNull($entry->transaction_id);
+        $this->assertSame($this->student->id, $entry->user_id);
+    }
+
+    public function test_it_reverses_a_transaction_with_the_opposite_delta(): void
+    {
+        $transaction = $this->earn(18);
+        $this->credit($transaction);
+        $reason = str_repeat('Heavy non-e-waste item. ', 20);
+
+        $entry = $this->points->reverseTransaction($transaction, $reason);
+
+        $this->assertSame(LedgerEntryType::Reversal, $entry->entry_type);
+        $this->assertSame(-18, $entry->points_delta);
+        $this->assertSame($transaction->id, $entry->transaction_id);
+        $this->assertSame($this->student->id, $entry->user_id);
+        // A 500-character void reason is cut to fit the 255-character column.
+        $this->assertSame(255, mb_strlen($entry->description));
+        $this->assertStringStartsWith('Heavy non-e-waste item.', $entry->description);
+        $this->assertSame(0, $this->points->balanceFor($this->student));
+    }
+
+    public function test_it_refuses_a_second_reversal_of_the_same_transaction(): void
+    {
+        $transaction = $this->earn(18);
+        $this->points->reverseTransaction($transaction, 'First');
+
+        $this->expectException(UniqueConstraintViolationException::class);
+
+        $this->points->reverseTransaction($transaction, 'Second');
+    }
+
+    public function test_it_gives_the_points_back_when_a_redemption_is_reversed(): void
+    {
+        $this->credit($this->earn(100));
+        $redemption = Redemption::factory()->for($this->student)->create(['points_cost' => 60]);
+        $this->points->debitRedemption($redemption);
+
+        $entry = $this->points->reverseRedemption($redemption, 'Student changed their mind');
+
+        $this->assertSame(LedgerEntryType::Reversal, $entry->entry_type);
+        $this->assertSame(60, $entry->points_delta);
+        $this->assertSame($redemption->id, $entry->redemption_id);
+        $this->assertSame('Student changed their mind', $entry->description);
+        $this->assertSame(100, $this->points->balanceFor($this->student));
     }
 
     private function earn(int $points, bool $voided = false): Transaction

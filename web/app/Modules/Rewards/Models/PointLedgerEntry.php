@@ -6,6 +6,7 @@ use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Support\LedgerEntryType;
 use Database\Factories\Rewards\PointLedgerEntryFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -53,6 +54,25 @@ class PointLedgerEntry extends Model
             'created_at' => 'datetime',
         ];
     }
+
+    // ------------------------------------------------------------------ scopes
+
+    /**
+     * The rows that count as points EARNED: EARN rows, and the REVERSAL rows
+     * that link to a transaction (voids). REDEEM rows and redemption reversals
+     * are left out, so redeeming never lowers a leaderboard rank
+     * (Database_Schema.md §9, API_Design.md §7.3).
+     *
+     * The one definition of the rule: PointsService::pointsEarnedBy() and the
+     * leaderboards both use it.
+     */
+    public function scopeCountsAsEarned(Builder $query): Builder
+    {
+        return $query->whereNotNull('transaction_id')
+            ->whereIn('entry_type', [LedgerEntryType::Earn, LedgerEntryType::Reversal]);
+    }
+
+    // ---------------------------------------------------------------- relations
 
     public function user(): BelongsTo
     {
