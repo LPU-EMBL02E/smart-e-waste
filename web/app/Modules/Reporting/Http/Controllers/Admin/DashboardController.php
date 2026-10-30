@@ -23,7 +23,8 @@ use Illuminate\View\View;
  *
  * Times in the JSON are ISO 8601 in UTC; the script converts them for display.
  *
- * TODO: all method bodies.
+ * The page is rendered from the same array the route returns, so it is
+ * complete without JavaScript and the script only refreshes it.
  */
 class DashboardController
 {
@@ -31,12 +32,11 @@ class DashboardController
 
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('reporting.admin.dashboard', ['summary' => $this->reporting->dashboardSummary()]);
     }
 
     public function summary(): JsonResponse
     {
-        // TODO: return new JsonResponse($this->reporting->dashboardSummary())
-        throw new \LogicException('Not implemented.');
+        return new JsonResponse($this->reporting->dashboardSummary());
     }
 }

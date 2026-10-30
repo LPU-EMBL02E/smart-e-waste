@@ -2,7 +2,7 @@
 
 namespace App\Modules\Deposits\Http\Controllers\Admin;
 
-use App\Modules\Reporting\Services\ReportingQueries;
+use App\Modules\Deposits\Services\DepositService;
 use Illuminate\View\View;
 
 /**
@@ -22,15 +22,13 @@ use Illuminate\View\View;
  * able to do: credit it manually, mark it failed, or leave it to the firmware's
  * retry. Note that an ADJUSTMENT ledger entry type is already reserved for a
  * manual correction (Database_Schema.md §9).
- *
- * TODO: method body.
  */
 class SessionReviewController
 {
-    public function __construct(private ReportingQueries $reporting) {}
+    public function __construct(private DepositService $deposits) {}
 
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('deposits.admin.sessions.review', ['sessions' => $this->deposits->sessionsAwaitingReview()]);
     }
 }

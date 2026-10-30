@@ -63,6 +63,12 @@ return [
     // /admin/dashboard/summary. API_Design.md P34.
     'dashboard_poll_seconds' => (int) env('EWASTE_DASHBOARD_POLL_SECONDS', 10),
 
+    // How many of the newest transactions /home lists under the balance; the
+    // full history is /transactions. API_Design.md §7.3 says "recent"; the
+    // number was chosen by the web owner (web/docs/TRACK-D-REPORTING-AND-HISTORY.md,
+    // question 1).
+    'home_recent_transactions' => 5,
+
     /*
     |--------------------------------------------------------------------------
     | Hardware limits

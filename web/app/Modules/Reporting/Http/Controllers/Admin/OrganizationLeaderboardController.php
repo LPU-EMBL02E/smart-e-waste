@@ -14,8 +14,6 @@ use Illuminate\View\View;
  *
  * An organization's score is the total points earned by the students currently
  * in it, so moving a student between organizations moves their points too.
- *
- * TODO: method body.
  */
 class OrganizationLeaderboardController
 {
@@ -23,6 +21,6 @@ class OrganizationLeaderboardController
 
     public function __invoke(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('reporting.admin.organization-leaderboard', ['organizations' => $this->reporting->organizationLeaderboard()]);
     }
 }
