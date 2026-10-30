@@ -242,7 +242,8 @@ Tests (`tests/test_check.py`):
 
 **Training is not part of this step,** and nothing from it goes in
 `firmware/station/` except the exported model file's path in the settings.
-Train on a dev machine on pictures taken in the bin (`System_Plan.md` §8.3).
+Train on a dev machine on pictures taken in the bin (`System_Plan.md` §8.3);
+the data, training and measuring are in [EWASTE-MODEL.md](EWASTE-MODEL.md).
 `TODO(team)`: the network, the pictures, where they are kept, and the error
 rates to reach.
 
