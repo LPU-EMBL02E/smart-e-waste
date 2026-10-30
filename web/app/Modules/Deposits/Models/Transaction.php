@@ -79,10 +79,14 @@ class Transaction extends Model
 
     // ------------------------------------------------------------------ scopes
 
-    /** Not voided: the deposits that count toward total collected weight. */
+    /**
+     * Not voided: the deposits that count toward total collected weight and
+     * the dashboard's "today". Qualified, because the dashboard joins
+     * deposit_sessions, which has its own status column.
+     */
     public function scopeCompleted(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_COMPLETED);
+        return $query->where($query->qualifyColumn('status'), self::STATUS_COMPLETED);
     }
 
     // ----------------------------------------------------------------- helpers
