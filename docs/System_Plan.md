@@ -870,8 +870,10 @@ screen on its own.
 station keeps to the Pi's version policy.
 
 **Repository layout.** One Git repository with a folder for each
-program: `web/` for the Laravel app, `firmware/controller/`, `station/`,
-`tools/simulator/` and `docs/`.
+program: `web/` for the Laravel app, `firmware/controller/` for the controller,
+`firmware/station/` for the bin station, `tools/simulator/` and `docs/`. The bin
+station sits under `firmware/` with the controller because the two are built,
+tested and changed together, through the API in `API_Design.md` §11.
 
 ---
 
