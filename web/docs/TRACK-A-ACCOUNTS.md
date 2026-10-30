@@ -256,7 +256,7 @@ Tests: `test_it_shows_the_qr_token_to_its_owner`,
 
 ## Step A8 — Landing pages (coordinate with their owners)
 
-`/home` belongs to Rewards and `/admin` to Reporting. Until Tracks B and C fill
+`/home` belongs to Rewards and `/admin` to Reporting. Until Track D fills
 them, each shows the signed-in user's name, role and links to the working
 account pages. Agree the file owner with the Rewards and Reporting writers
 first ([TEAM-WORKFLOW.md](TEAM-WORKFLOW.md), "One writer per file").
