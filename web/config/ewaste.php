@@ -76,7 +76,9 @@ return [
     // TODO(team): no value is set in the plan or the schema. Measure it once the
     // actuator is chosen, then set EWASTE_HARDWARE_MAX_WEIGHT_G. While this is
     // null the rule form skips the check.
-    'hardware_max_weight_g' => env('EWASTE_HARDWARE_MAX_WEIGHT_G') !== null
+    // filled(), not !== null: .env.example ships the key empty, and an empty
+    // string must mean "not set", never a 0 g limit.
+    'hardware_max_weight_g' => filled(env('EWASTE_HARDWARE_MAX_WEIGHT_G'))
         ? (float) env('EWASTE_HARDWARE_MAX_WEIGHT_G')
         : null,
 

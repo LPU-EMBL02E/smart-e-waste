@@ -5,6 +5,7 @@ namespace App\Modules\Deposits\Models;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\RewardRule;
+use Database\Factories\Deposits\TransactionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,11 @@ class Transaction extends Model
         'points_awarded',
         'status',
     ];
+
+    protected static function newFactory(): TransactionFactory
+    {
+        return TransactionFactory::new();
+    }
 
     protected function casts(): array
     {

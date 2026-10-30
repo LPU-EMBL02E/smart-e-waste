@@ -3,6 +3,8 @@
 namespace App\Modules\Rewards\Services;
 
 use App\Modules\Rewards\Models\RewardRule;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Versioning the points rule. API_Design.md §7.6 ("Save a points rule"),
@@ -11,7 +13,7 @@ use App\Modules\Rewards\Models\RewardRule;
  * A rule is never edited. Saving closes the current one and inserts a new one,
  * so past transactions keep the rule they were priced with.
  *
- * TODO: all method bodies.
+ * The only writer of `reward_rules` (System_Plan.md §4).
  */
 class RewardRuleService
 {
@@ -32,8 +34,31 @@ class RewardRuleService
      */
     public function save(array $attributes): RewardRule
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        return DB::transaction(function () use ($attributes) {
+            // One timestamp for both ends, so there is neither a gap nor an
+            // overlap. The lock is the first read: a second admin saving at the
+            // same moment waits, then closes the rule this one inserted.
+            $now = now();
+
+            RewardRule::inEffectAt($now)->lockForUpdate()->first()
+                ?->update(['effective_to' => $now]);
+
+            return RewardRule::create([
+                ...$attributes,
+                'effective_from' => $now,
+                'effective_to' => null,
+            ]);
+        });
+    }
+
+    /**
+     * Every rule, newest first, for the points-rate page.
+     *
+     * @return LengthAwarePaginator<int, RewardRule>
+     */
+    public function history(): LengthAwarePaginator
+    {
+        return RewardRule::latest('effective_from')->latest('id')->paginate();
     }
 
     /**
@@ -43,7 +68,6 @@ class RewardRuleService
      */
     public function current(): ?RewardRule
     {
-        // TODO: RewardRule::inEffectAt(now())->first()
-        throw new \LogicException('Not implemented.');
+        return RewardRule::inEffectAt(now())->first();
     }
 }

@@ -18,8 +18,6 @@ use Illuminate\View\View;
  * The bin refuses every deposit with NO_REWARD_RULE until the first rule exists,
  * so this page is one of the two things an admin must do before first use
  * (the other is registering the bin).
- *
- * TODO: all method bodies.
  */
 class PointsRateController
 {
@@ -27,11 +25,17 @@ class PointsRateController
 
     public function show(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('rewards.admin.points-rate.show', [
+            'current' => $this->rules->current(),
+            'rules' => $this->rules->history(),
+        ]);
     }
 
     public function store(StoreRewardRuleRequest $request): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        $this->rules->save($request->validated());
+
+        return redirect()->route('admin.points-rate.show')
+            ->with('status', 'The new rule is in effect from now.');
     }
 }

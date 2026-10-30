@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
+use Database\Factories\Identity\UserQrCredentialFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,11 @@ class UserQrCredential extends Model
     protected $hidden = [
         'token',
     ];
+
+    protected static function newFactory(): UserQrCredentialFactory
+    {
+        return UserQrCredentialFactory::new();
+    }
 
     protected function casts(): array
     {

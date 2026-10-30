@@ -3,6 +3,7 @@
 namespace App\Modules\Rewards\Models;
 
 use App\Modules\Deposits\Models\Transaction;
+use Database\Factories\Rewards\RewardRuleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,11 @@ class RewardRule extends Model
         'effective_from',
         'effective_to',
     ];
+
+    protected static function newFactory(): RewardRuleFactory
+    {
+        return RewardRuleFactory::new();
+    }
 
     protected function casts(): array
     {

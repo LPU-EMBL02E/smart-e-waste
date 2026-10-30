@@ -19,6 +19,6 @@ class TimeController
 {
     public function __invoke(): JsonResponse
     {
-        return new JsonResponse(['time' => time()]);
+        return new JsonResponse(['time' => now()->getTimestamp()]);
     }
 }

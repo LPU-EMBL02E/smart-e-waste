@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
+use Database\Factories\Identity\OrganizationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,6 +23,11 @@ class Organization extends Model
         'description',
         'is_active',
     ];
+
+    protected static function newFactory(): OrganizationFactory
+    {
+        return OrganizationFactory::new();
+    }
 
     protected function casts(): array
     {

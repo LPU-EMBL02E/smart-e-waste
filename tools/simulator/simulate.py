@@ -22,8 +22,9 @@ API_Design.md §5, signed per §3.2. Standard library only.
     python3 simulate.py ... scenario bad-signature
     python3 simulate.py ... scenario expired-session --timeout-wait 95
 
-    # one telemetry reading
+    # one telemetry reading, optionally with the panel open or a fault
     python3 simulate.py ... telemetry --distance 412.5
+    python3 simulate.py ... telemetry --distance 412.5 --fault ACTUATOR_JAM
 
 Exit code is 0 when the run did what the scenario expected, 1 otherwise, so it
 can be used in CI once the app runs.
@@ -41,6 +42,16 @@ import urllib.request
 from sign import API_PREFIX, headers
 
 TIMEOUT_SECONDS = 10
+
+# bin_telemetry.fault_code values, Database_Schema.md §5.
+FAULT_CODES = [
+    "ACTUATOR_JAM",
+    "ACTUATOR_TIMEOUT",
+    "ACTUATOR_RETRACT_FAILED",
+    "STATION_UNREACHABLE",
+    "CAMERA_UNAVAILABLE",
+    "SCANNER_UNAVAILABLE",
+]
 
 
 class Client:
@@ -140,8 +151,23 @@ class Client:
     def config(self) -> tuple[int, dict]:
         return self.request("GET", "/config")
 
-    def telemetry(self, distance_mm: float) -> tuple[int, dict]:
-        return self.request("POST", "/telemetry", {"distance_mm": distance_mm})
+    def telemetry(
+        self,
+        distance_mm: float,
+        panel_open: bool = False,
+        fault_code: str | None = None,
+    ) -> tuple[int, dict]:
+        # panel_open and fault_code are required in every reading; fault_code is
+        # null when the bin has no fault (API_Design.md P42).
+        return self.request(
+            "POST",
+            "/telemetry",
+            {
+                "distance_mm": distance_mm,
+                "panel_open": panel_open,
+                "fault_code": fault_code,
+            },
+        )
 
     def open_session(
         self, qr_token: str, firmware: str = "sim-1.0.0", **kwargs
@@ -387,6 +413,12 @@ def main() -> int:
 
     telemetry = sub.add_parser("telemetry", help="send one distance reading")
     telemetry.add_argument("--distance", type=float, required=True, help="millimetres")
+    telemetry.add_argument(
+        "--panel-open", action="store_true", help="report the service panel open"
+    )
+    telemetry.add_argument(
+        "--fault", choices=FAULT_CODES, help="report a fault (default: none)"
+    )
 
     sub.add_parser("config", help="fetch the bin config")
 
@@ -409,7 +441,7 @@ def main() -> int:
 
     if args.command == "telemetry":
         client.sync_clock()
-        status, _ = client.telemetry(args.distance)
+        status, _ = client.telemetry(args.distance, args.panel_open, args.fault)
         return 0 if status == 201 else 1
 
     if args.command == "config":
