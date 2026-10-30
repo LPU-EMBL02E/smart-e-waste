@@ -7,6 +7,7 @@ use App\Modules\Deposits\Models\DepositSession;
 use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Deposits\Support\FailureCode;
 use App\Modules\Deposits\Support\SessionStatus;
+use App\Modules\Deposits\Support\TransactionNotVoidable;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Devices\Services\BinService;
 use App\Modules\Identity\Models\User;
@@ -18,8 +19,8 @@ use App\Support\Device\DeviceApiException;
 use App\Support\Device\DeviceErrorCode;
 use App\Support\ReferenceCode;
 use Closure;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -40,8 +41,6 @@ use Illuminate\Support\Facades\DB;
  *     stay, so the transaction returns the error and it is thrown only once the
  *     transaction has committed.
  *   - Events go out after the commit.
- *
- * TODO: void() (admin transaction voids; not the deposit path).
  */
 class DepositService
 {
@@ -274,8 +273,97 @@ class DepositService
      */
     public function void(Transaction $transaction, User $admin, string $reason): Transaction
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        return DB::transaction(function () use ($transaction, $admin, $reason) {
+            // Lock first, never trusting the route-bound copy: two admins
+            // voiding at once must not write two reversals (API_Design.md §7.6).
+            $transaction = Transaction::whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+
+            if (! $transaction->canBeVoided()) {
+                throw TransactionNotVoidable::notCompleted($transaction->status);
+            }
+
+            $transaction->forceFill([
+                'status' => Transaction::STATUS_VOIDED,
+                'void_reason' => $reason,
+                'voided_by' => $admin->id,
+                'voided_at' => now(),
+            ])->save();
+
+            $this->points->reverseTransaction($transaction, $reason);
+
+            return $transaction;
+        });
+    }
+
+    /**
+     * Total collected weight: the sum of net_weight_g over sessions whose
+     * transaction is COMPLETED, so voided deposits drop out (API_Design.md
+     * §7.4, System_Plan.md §5.6). Summed in the database.
+     */
+    public function totalCollectedWeightGrams(): float
+    {
+        return (float) DepositSession::whereHas('transaction', fn (Builder $query) => $query->completed())
+            ->sum('net_weight_g');
+    }
+
+    /**
+     * Every transaction, newest first, for /admin/transactions, with the
+     * session's user and device eager-loaded.
+     *
+     * @return LengthAwarePaginator<int, Transaction>
+     */
+    public function listTransactions(): LengthAwarePaginator
+    {
+        return Transaction::with(['session.user', 'session.device'])->latest('id')->paginate();
+    }
+
+    /**
+     * A user's own transactions, newest first, for /transactions and the recent
+     * list on /home, with the session eager-loaded for its weight. Voided ones
+     * are included, with their status, so a student can see why a balance
+     * changed (API_Design.md §7.3).
+     *
+     * `transactions` has no user column, so this joins through
+     * deposit_sessions.user_id, the way PointsService::pointsEarnedToday() does.
+     * The caller passes the user from the request, never an id from input
+     * (§7.1).
+     *
+     * @return LengthAwarePaginator<int, Transaction>
+     */
+    public function transactionsFor(User $user, ?int $perPage = null): LengthAwarePaginator
+    {
+        return Transaction::query()
+            ->select('transactions.*')
+            ->join('deposit_sessions', 'deposit_sessions.id', '=', 'transactions.session_id')
+            ->where('deposit_sessions.user_id', $user->id)
+            ->with('session')
+            ->latest('transactions.id')
+            ->paginate($perPage);
+    }
+
+    /**
+     * ACCEPTED sessions past the review threshold, oldest first, for
+     * /admin/sessions/review, with the user and the bin eager-loaded.
+     * API_Design.md §7.4; System_Plan.md §5.3 rule 6.
+     *
+     * @return LengthAwarePaginator<int, DepositSession>
+     */
+    public function sessionsAwaitingReview(): LengthAwarePaginator
+    {
+        return DepositSession::awaitingReview()
+            ->with(['user', 'device'])
+            ->oldest()
+            ->paginate();
+    }
+
+    /**
+     * One transaction with what its page shows: the session's weight,
+     * verification and actuator values, who deposited at which bin, and who
+     * voided it.
+     */
+    public function forReview(Transaction $transaction): Transaction
+    {
+        return $transaction->load(['session.user', 'session.device', 'voidedBy']);
     }
 
     /**
@@ -346,15 +434,14 @@ class DepositService
     {
         $rule = $this->ruleFor($session);
 
-        // A transaction code is random; on the rare duplicate, draw another
-        // (ReferenceCode). session_id cannot clash: the session is locked.
-        $transaction = retry(3, fn () => Transaction::create([
+        // session_id cannot clash: the session is locked. Only the random code can.
+        $transaction = ReferenceCode::insertWithRetry(fn () => Transaction::create([
             'transaction_code' => ReferenceCode::transaction(),
             'session_id' => $session->id,
             'reward_rule_id' => $rule->id,
             'points_awarded' => $rule->pointsFor((float) $session->net_weight_g),
             'status' => Transaction::STATUS_COMPLETED,
-        ]), when: fn (\Throwable $e) => $e instanceof UniqueConstraintViolationException);
+        ]));
 
         $transaction->setRelation('session', $session);
         $this->points->creditDeposit($transaction);

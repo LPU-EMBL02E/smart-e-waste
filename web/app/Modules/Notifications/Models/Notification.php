@@ -4,6 +4,7 @@ namespace App\Modules\Notifications\Models;
 
 use App\Modules\Identity\Models\User;
 use App\Modules\Notifications\Support\NotificationType;
+use Database\Factories\Notifications\NotificationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,11 @@ class Notification extends Model
         'message',
     ];
 
+    protected static function newFactory(): NotificationFactory
+    {
+        return NotificationFactory::new();
+    }
+
     protected function casts(): array
     {
         return [
@@ -52,5 +58,16 @@ class Notification extends Model
     public function isRead(): bool
     {
         return $this->read_at !== null;
+    }
+
+    /**
+     * Sets read_at the first time only (API_Design.md §7.3). Reading an
+     * already-read notification again changes nothing.
+     */
+    public function markAsRead(): void
+    {
+        if (! $this->isRead()) {
+            $this->forceFill(['read_at' => now()])->save();
+        }
     }
 }

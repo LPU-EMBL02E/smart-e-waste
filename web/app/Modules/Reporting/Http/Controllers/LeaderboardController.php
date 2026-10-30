@@ -10,8 +10,6 @@ use Illuminate\View\View;
  *
  * Ranked by POINTS EARNED, not by current balance, so redeeming a reward never
  * lowers a rank (System_Plan.md §5.6). Includes every user, admins included.
- *
- * TODO: method body.
  */
 class LeaderboardController
 {
@@ -19,6 +17,6 @@ class LeaderboardController
 
     public function __invoke(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('reporting.leaderboard', ['users' => $this->reporting->userLeaderboard()]);
     }
 }

@@ -5,7 +5,9 @@ namespace App\Modules\Deposits\Models;
 use App\Modules\Deposits\Support\SessionStatus;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Identity\Models\User;
+use Carbon\CarbonInterface;
 use Database\Factories\Deposits\DepositSessionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -80,6 +82,20 @@ class DepositSession extends Model
         return $this->hasOne(Transaction::class, 'session_id');
     }
 
+    // ------------------------------------------------------------------ scopes
+
+    /**
+     * ACCEPTED sessions that have waited longer than the review threshold for
+     * their `complete` call: the rule of isAwaitingReview(), in the query. The
+     * review page lists them and the dashboard counts them. The status filter
+     * uses the (status, expires_at) index.
+     */
+    public function scopeAwaitingReview(Builder $query): Builder
+    {
+        return $query->where($query->qualifyColumn('status'), SessionStatus::Accepted)
+            ->where($query->qualifyColumn('created_at'), '<', self::reviewCutoff());
+    }
+
     // ----------------------------------------------------------------- helpers
 
     public function hasExpired(): bool
@@ -95,6 +111,12 @@ class DepositSession extends Model
     public function isAwaitingReview(): bool
     {
         return $this->status === SessionStatus::Accepted
-            && $this->created_at->addMinutes(config('ewaste.review_threshold_minutes'))->isPast();
+            && $this->created_at->lt(self::reviewCutoff());
+    }
+
+    /** Sessions opened before this have waited past the review threshold. */
+    private static function reviewCutoff(): CarbonInterface
+    {
+        return now()->subMinutes(config('ewaste.review_threshold_minutes'));
     }
 }

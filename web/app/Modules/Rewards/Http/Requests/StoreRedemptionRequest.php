@@ -2,6 +2,7 @@
 
 namespace App\Modules\Rewards\Http\Requests;
 
+use App\Modules\Rewards\Models\Reward;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,5 +25,11 @@ class StoreRedemptionRequest extends FormRequest
             ],
             'quantity' => ['required', 'integer', 'min:1'],
         ];
+    }
+
+    /** The reward being redeemed. RedemptionService re-reads it under its lock. */
+    public function reward(): Reward
+    {
+        return Reward::findOrFail($this->validated('reward_id'));
     }
 }

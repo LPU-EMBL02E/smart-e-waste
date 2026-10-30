@@ -3,6 +3,7 @@
 namespace App\Modules\Rewards\Models;
 
 use App\Modules\Identity\Models\User;
+use Database\Factories\Rewards\RedemptionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,11 @@ class Redemption extends Model
         'points_cost',
         'status',
     ];
+
+    protected static function newFactory(): RedemptionFactory
+    {
+        return RedemptionFactory::new();
+    }
 
     protected function casts(): array
     {

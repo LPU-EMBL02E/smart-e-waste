@@ -3,6 +3,8 @@
 namespace App\Modules\Rewards\Http\Controllers;
 
 use App\Modules\Rewards\Models\Reward;
+use App\Modules\Rewards\Services\PointsService;
+use App\Modules\Rewards\Services\RewardService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -16,17 +18,28 @@ use Illuminate\View\View;
  * it, but affording it is still re-checked inside RedemptionService under a row
  * lock — the page is a hint, not the gate.
  *
- * TODO: all method bodies.
+ * An inactive reward is 404, the same as its absence from the catalogue
+ * (owner decision for Track C, question 2).
  */
 class RewardController
 {
+    public function __construct(
+        private RewardService $rewards,
+        private PointsService $points,
+    ) {}
+
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('rewards.rewards.index', ['rewards' => $this->rewards->catalogue()]);
     }
 
     public function show(Request $request, Reward $reward): View
     {
-        throw new \LogicException('Not implemented.');
+        abort_unless($reward->is_active, 404);
+
+        return view('rewards.rewards.show', [
+            'reward' => $reward,
+            'balance' => $this->points->balanceFor($request->user()),
+        ]);
     }
 }

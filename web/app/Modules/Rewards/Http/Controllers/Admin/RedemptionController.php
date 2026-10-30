@@ -2,10 +2,11 @@
 
 namespace App\Modules\Rewards\Http\Controllers\Admin;
 
+use App\Modules\Rewards\Http\Requests\Admin\CancelRedemptionRequest;
 use App\Modules\Rewards\Models\Redemption;
 use App\Modules\Rewards\Services\RedemptionService;
+use App\Modules\Rewards\Support\RedemptionRefused;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -20,7 +21,8 @@ use Illuminate\View\View;
  * redemption cannot be cancelled, because the student already has the item
  * (System_Plan.md §6.1).
  *
- * TODO: all method bodies.
+ * A refusal — the redemption is no longer PENDING — redirects back with the
+ * message and changes nothing.
  */
 class RedemptionController
 {
@@ -28,16 +30,28 @@ class RedemptionController
 
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('rewards.admin.redemptions.index', ['redemptions' => $this->redemptions->list()]);
     }
 
     public function fulfil(Redemption $redemption): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        try {
+            $this->redemptions->fulfil($redemption);
+        } catch (RedemptionRefused $refused) {
+            return back()->withErrors(['redemption' => $refused->getMessage()]);
+        }
+
+        return back()->with('status', "{$redemption->redemption_code} marked fulfilled.");
     }
 
-    public function cancel(Request $request, Redemption $redemption): RedirectResponse
+    public function cancel(CancelRedemptionRequest $request, Redemption $redemption): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        try {
+            $this->redemptions->cancel($redemption, $request->validated('cancel_reason'));
+        } catch (RedemptionRefused $refused) {
+            return back()->withErrors(['redemption' => $refused->getMessage()]);
+        }
+
+        return back()->with('status', "{$redemption->redemption_code} cancelled. The points and stock are back.");
     }
 }

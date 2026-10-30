@@ -5,6 +5,7 @@ namespace App\Modules\Deposits\Http\Controllers\Admin;
 use App\Modules\Deposits\Http\Requests\Admin\VoidTransactionRequest;
 use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Deposits\Services\DepositService;
+use App\Modules\Deposits\Support\TransactionNotVoidable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -26,7 +27,8 @@ use Illuminate\View\View;
  * time — which is what makes the testing tables in the guidelines (Step 13)
  * possible to fill from real data.
  *
- * TODO: all method bodies.
+ * A refused void — the transaction is no longer COMPLETED — redirects back with
+ * the message and changes nothing.
  */
 class TransactionController
 {
@@ -34,12 +36,15 @@ class TransactionController
 
     public function index(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('deposits.admin.transactions.index', [
+            'transactions' => $this->deposits->listTransactions(),
+            'totalWeightGrams' => $this->deposits->totalCollectedWeightGrams(),
+        ]);
     }
 
     public function show(Transaction $transaction): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('deposits.admin.transactions.show', ['transaction' => $this->deposits->forReview($transaction)]);
     }
 
     /**
@@ -49,6 +54,12 @@ class TransactionController
      */
     public function void(VoidTransactionRequest $request, Transaction $transaction): RedirectResponse
     {
-        throw new \LogicException('Not implemented.');
+        try {
+            $this->deposits->void($transaction, $request->user(), $request->validated('void_reason'));
+        } catch (TransactionNotVoidable $refused) {
+            return back()->withErrors(['transaction' => $refused->getMessage()]);
+        }
+
+        return back()->with('status', "{$transaction->transaction_code} voided. Its points were reversed.");
     }
 }

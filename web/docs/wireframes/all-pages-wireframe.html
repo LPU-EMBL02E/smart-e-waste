@@ -1,0 +1,1435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Pages Wireframe</title>
+<!--
+  Wireframes of every web page and workflow in WEB-PAGES-AND-WORKFLOWS.pdf, using
+  the same page IDs (G, S, A, E, K). Written from API_Design.md §7 and §11,
+  System_Plan.md §4–§8 and Database_Schema.md, styled with DESIGN.md tokens.
+  Example values only show shape; no point value or rule is set here.
+  The small script at the end only builds the shared shells and the phone toggle.
+-->
+<style>
+  :root {
+    --paper: #ffffff; --ink: #000000; --lavender: #c4b5fd; --lavender-strong: #a78bfa;
+    --lavender-wash: #f5f1ff; --muted: #595463; --success: #166534; --warning: #92400e;
+    --danger: #b91c1c; --canvas: #ececf0;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; font: 16px/1.5 var(--font); color: var(--ink); background: var(--canvas); }
+  a { color: var(--ink); }
+  code { font-family: var(--mono); font-size: 0.85em; }
+  .skip { position: absolute; left: -999px; top: 8px; background: var(--paper); border: 2px solid var(--ink); padding: 8px 12px; z-index: 10; }
+  .skip:focus { left: 8px; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+  /* ---------- document chrome ---------- */
+  .doc-head { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 16px 24px; position: sticky; top: 0; z-index: 5;
+              display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+  .doc-head h1 { font-size: 1.25rem; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
+  .doc-head p { margin: 0; font-size: 0.875rem; color: var(--muted); }
+  .toggles { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.875rem; font-weight: 600; }
+  .toggles label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; }
+  .toggles input { width: 18px; height: 18px; accent-color: var(--lavender-strong); }
+  .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; }
+  .index { position: sticky; top: 74px; max-height: calc(100vh - 74px); overflow: auto; padding: 16px; background: var(--paper);
+           border-right: 2px solid var(--ink); font-size: 0.875rem; }
+  .index h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 4px; color: var(--muted); }
+  .index h2:first-child { margin-top: 0; }
+  .index ul { list-style: none; margin: 0; padding: 0; }
+  .index a { display: flex; gap: 8px; text-decoration: none; padding: 3px 6px; border-radius: 4px; }
+  .index a:hover { background: var(--lavender-wash); }
+  .index b { min-width: 2.4em; font-variant-numeric: tabular-nums; }
+  main.doc { padding: 24px 32px 96px; min-width: 0; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .index { position: static; max-height: none; border-right: 0; border-bottom: 2px solid var(--ink); }
+    .index ul { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+    main.doc { padding: 16px; }
+    .doc-head { position: static; }
+  }
+  .group-title { font-size: 1.5rem; font-weight: 800; margin: 48px 0 8px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); letter-spacing: -0.02em; }
+  .group-title:first-of-type { margin-top: 8px; }
+  .group-intro { max-width: 70ch; margin: 0 0 16px; color: var(--muted); }
+  .intro { background: var(--paper); border: 2px solid var(--ink); border-radius: 4px; padding: 16px 20px; max-width: 980px; }
+  .intro h2 { margin: 0 0 8px; font-size: 1.25rem; }
+  .intro ul { margin: 0; padding-left: 20px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 0.875rem; }
+
+  .screen { margin: 0 0 40px; scroll-margin-top: 90px; }
+  .screen-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 8px; }
+  .screen-head .sid { font-weight: 800; background: var(--lavender); border: 2px solid var(--ink); border-radius: 4px; padding: 0 8px; }
+  .screen-head h3 { margin: 0; font-size: 1.25rem; }
+  .screen-head .route { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+  .screen-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+  body.no-notes .screen-body { grid-template-columns: minmax(0, 1fr); }
+  body.no-notes .notes { display: none; }
+  @media (max-width: 1200px) { .screen-body { grid-template-columns: minmax(0, 1fr); } }
+  .frames { display: grid; gap: 16px; min-width: 0; }
+  .notes { background: var(--paper); border: 2px solid var(--ink); border-radius: 4px; padding: 12px 14px; font-size: 0.85rem; }
+  .notes h4 { margin: 0 0 6px; font-size: 0.9rem; }
+  .notes ol, .notes ul { margin: 0 0 8px; padding-left: 20px; }
+  .notes li { margin-bottom: 4px; }
+  .notes .src { color: var(--muted); font-size: 0.8rem; margin: 0; }
+  .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; border: 1px solid; border-radius: 3px; padding: 0 4px; line-height: 1.5; vertical-align: 1px; }
+  .tag.p { color: var(--warning); }
+  .tag.q { color: var(--danger); }
+
+  /* ---------- browser frame ---------- */
+  .frame { background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; overflow: hidden; container-type: inline-size; max-width: 100%; }
+  body.phone .frame:not(.kiosk) { width: 390px; }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 2px solid var(--ink); background: #f7f7f9; }
+  .chrome .dots { display: flex; gap: 4px; }
+  .chrome .dots i { width: 9px; height: 9px; border: 1.5px solid var(--ink); border-radius: 50%; display: block; }
+  .chrome .url { flex: 1; font-family: var(--mono); font-size: 0.75rem; border: 1.5px solid var(--ink); border-radius: 4px; padding: 1px 8px; background: var(--paper);
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chrome .state { font-size: 0.72rem; font-weight: 700; border: 1.5px solid var(--ink); border-radius: 3px; padding: 0 6px; background: var(--lavender-wash); white-space: nowrap; }
+
+  /* ---------- inside a page ---------- */
+  .pg { font-size: 15px; }
+  .pg h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 16px; line-height: 1.2; }
+  .pg h2 { font-size: 1.15rem; font-weight: 700; margin: 24px 0 8px; }
+  .pg p { margin: 0 0 12px; max-width: 65ch; }
+  .pg .help { color: var(--muted); font-size: 0.875rem; }
+  .brand { font-weight: 800; letter-spacing: -0.01em; text-decoration: none; }
+
+  .shell-guest { min-height: 100%; }
+  .shell-guest header { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-bottom: 2px solid var(--ink); gap: 12px; flex-wrap: wrap; }
+  .shell-guest header nav { display: flex; gap: 16px; font-weight: 600; font-size: 0.9rem; }
+  .shell-guest .gmain { padding: 32px 24px 40px; display: flex; justify-content: center; }
+  .shell-guest .gcard { width: 100%; max-width: 30rem; }
+
+  .shell-student header { padding: 10px 24px; border-bottom: 2px solid var(--ink); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+  .snav { display: flex; flex-wrap: wrap; gap: 4px; font-size: 0.875rem; font-weight: 600; }
+  .snav a, .anav a { text-decoration: none; padding: 6px 10px; border-radius: 4px; border: 2px solid transparent; display: inline-block; }
+  .snav a[aria-current], .anav a[aria-current] { background: var(--lavender-wash); border-color: var(--ink); }
+  .snav .logout { margin-left: auto; }
+  .smain { padding: 24px; max-width: 64rem; }
+
+  .shell-admin { display: grid; grid-template-columns: 210px minmax(0, 1fr); }
+  .shell-admin aside { border-right: 2px solid var(--ink); padding: 14px 10px; font-size: 0.85rem; background: var(--paper); }
+  .shell-admin aside .brand { display: block; padding: 0 8px 10px; }
+  .anav .ag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 10px 8px 2px; font-weight: 700; }
+  .anav a { display: block; padding: 4px 8px; font-weight: 600; }
+  .amain { padding: 24px; min-width: 0; }
+  @container (max-width: 700px) {
+    .shell-admin { grid-template-columns: 1fr; }
+    .shell-admin aside { border-right: 0; border-bottom: 2px solid var(--ink); }
+    .anav { display: flex; flex-wrap: wrap; gap: 2px; }
+    .anav .ag { width: 100%; margin: 6px 4px 0; }
+    .anav a { display: inline-block; }
+    .smain, .amain { padding: 16px; }
+    .shell-guest .gmain { padding: 24px 16px; }
+    .pg h1 { font-size: 1.5rem; }
+    .snav .logout { margin-left: 0; }
+  }
+
+  /* controls */
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; border: 2px solid var(--ink); border-radius: 4px;
+         background: var(--paper); font: 600 1rem/1.3 var(--font); color: var(--ink); text-decoration: none; cursor: pointer; text-align: center; }
+  .btn.primary { background: var(--lavender); box-shadow: 3px 3px 0 var(--ink); }
+  @media (hover: hover) and (pointer: fine) { .btn.primary:hover { background: var(--lavender-strong); } .btn:not(.primary):not([disabled]):hover { background: var(--lavender-wash); } }
+  .btn.primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.danger { color: var(--danger); border-color: var(--danger); }
+  .btn[disabled] { color: var(--muted); border-color: var(--muted); box-shadow: none; background: var(--paper); cursor: not-allowed; }
+  .btn.sm { min-height: 36px; padding: 4px 10px; font-size: 0.875rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0; }
+  .field { margin-bottom: 18px; }
+  .field label, .field .lbl { display: block; font-weight: 600; margin-bottom: 6px; }
+  .field .opt { font-weight: 400; color: var(--muted); font-size: 0.875rem; }
+  .input { min-height: 44px; border: 2px solid var(--ink); border-radius: 4px; padding: 9px 12px; background: var(--paper); color: var(--muted); }
+  .input.filled { color: var(--ink); }
+  .input.select::after { content: "▾"; float: right; color: var(--ink); }
+  .input.area { min-height: 84px; }
+  .input.bad { border-color: var(--danger); }
+  .ferr { color: var(--danger); font-size: 0.875rem; margin-top: 4px; font-weight: 600; }
+  .fhelp { color: var(--muted); font-size: 0.875rem; margin-top: 4px; }
+  .check { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 44px; }
+  .check i { width: 20px; height: 20px; border: 2px solid var(--ink); border-radius: 3px; display: inline-block; flex: none; }
+  .check i.on { background: var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+  @container (max-width: 600px) { .row2, .row3 { grid-template-columns: 1fr; } }
+  .narrow { max-width: 36rem; }
+
+  .flash { border: 2px solid var(--ink); border-left-width: 8px; border-radius: 4px; padding: 10px 14px; margin: 0 0 16px; font-weight: 600; background: var(--paper); }
+  .flash.ok { border-color: var(--success); color: var(--success); }
+  .flash.warn { border-color: var(--warning); color: var(--warning); }
+  .flash.bad { border-color: var(--danger); color: var(--danger); }
+  .flash ul { margin: 6px 0 0; padding-left: 20px; font-weight: 400; }
+
+  .focal { background: var(--lavender); border: 2px solid var(--ink); border-radius: 4px; box-shadow: 4px 4px 0 var(--ink); padding: 20px 24px; margin: 0 4px 8px 0; }
+  .focal .k { font-weight: 600; }
+  .focal .v { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .home-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+  @container (max-width: 640px) { .home-top { grid-template-columns: 1fr; } .focal .v { font-size: 2.5rem; } }
+  .stack { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+
+  .panel { border: 2px solid var(--ink); border-radius: 4px; padding: 16px 20px; margin-bottom: 16px; }
+  .panel h2 { margin-top: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @container (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+  dl.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+  dl.kv dt { font-weight: 600; }
+  dl.kv dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .shell-admin aside .short { padding: 0 8px; color: var(--muted); font-size: 0.8rem; }
+
+  .tscroll { overflow-x: auto; border: 2px solid var(--ink); border-radius: 4px; margin-bottom: 8px; }
+  table.t { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+  table.t th, table.t td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ink); white-space: nowrap; vertical-align: top; }
+  table.t th { background: var(--lavender-wash); font-weight: 700; }
+  table.t tr:last-child td { border-bottom: 0; }
+  table.t .num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.t .wrap { white-space: normal; min-width: 14em; }
+  .pager { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.875rem; margin: 8px 0 0; }
+  .pager span.cur { border: 2px solid var(--ink); background: var(--lavender-wash); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: 700; }
+  .pager a { border: 2px solid var(--ink); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; text-decoration: none; padding: 0 8px; }
+
+  .badge { display: inline-block; font-size: 0.8rem; font-weight: 700; border: 1px solid currentColor; border-radius: 4px; padding: 1px 8px; background: var(--paper); white-space: nowrap; }
+  .badge.ok { color: var(--success); } .badge.warn { color: var(--warning); } .badge.bad { color: var(--danger); } .badge.n { color: var(--ink); }
+
+  .meter { display: inline-block; width: 90px; height: 14px; border: 2px solid var(--ink); border-radius: 2px; vertical-align: -2px; margin-right: 6px; background: var(--paper); position: relative; }
+  .meter b { position: absolute; inset: 0 auto 0 0; background: var(--lavender-strong); border-right: 2px solid var(--ink); }
+  .meter.full b { background: repeating-linear-gradient(45deg, var(--ink) 0 3px, var(--lavender-strong) 3px 7px); }
+
+  .band { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--ink); border-radius: 4px; margin-bottom: 16px; }
+  .band > div { padding: 12px 16px; border-right: 1px solid var(--ink); }
+  .band > div:last-child { border-right: 0; }
+  .band .k { font-size: 0.85rem; color: var(--muted); }
+  .band .v { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  @container (max-width: 600px) { .band { grid-template-columns: 1fr; } .band > div { border-right: 0; border-bottom: 1px solid var(--ink); } .band > div:last-child { border-bottom: 0; } }
+  .attn { border: 2px solid var(--warning); border-left-width: 8px; border-radius: 4px; padding: 10px 14px; margin-bottom: 16px; }
+  .attn h2 { margin: 0 0 6px; font-size: 1rem; color: var(--warning); }
+  .attn ul { margin: 0; padding-left: 20px; }
+  .updated { font-size: 0.85rem; color: var(--muted); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .rcard { border: 2px solid var(--ink); border-radius: 4px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .rcard .img { height: 80px; border: 1.5px dashed var(--muted); border-radius: 3px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.8rem; }
+  .rcard .cost { font-weight: 800; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+
+  .qr { width: 180px; height: 180px; padding: 14px; background: var(--paper); border: 2px solid var(--ink); }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .secret { font-family: var(--mono); font-size: 0.95rem; word-break: break-all; border: 2px solid var(--ink); border-radius: 4px; padding: 12px; background: var(--lavender-wash); }
+  .ph { border: 1.5px dashed var(--muted); border-radius: 4px; padding: 24px; color: var(--muted); text-align: center; }
+  .notif { border-bottom: 1px solid var(--ink); padding: 12px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: start; }
+  .notif.unread .title { font-weight: 800; }
+  .notif .meta { font-size: 0.8rem; color: var(--muted); }
+  .c { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--paper);
+       font-size: 0.7rem; font-weight: 800; vertical-align: 2px; margin: 0 2px; flex: none; }
+  body.no-notes .c { display: none; }
+
+  /* kiosk */
+  .frame.kiosk { width: 100%; max-width: 640px; }
+  .kpg { aspect-ratio: 1024 / 600; background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 10px; position: relative; }
+  .kpg .big { font-size: 2.1rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+  .kpg .mid { font-size: 1.1rem; }
+  .kpg .num { font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kpg .led { position: absolute; top: 12px; right: 14px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .kpg .led i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); display: inline-block; }
+  .kpg .cancel { position: absolute; bottom: 14px; right: 14px; }
+  .kgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .kgrid .frame { max-width: none; }
+  .kgrid h4 { margin: 0 0 6px; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to wireframes</a>
+
+<header class="doc-head">
+  <div>
+    <h1>Smart E-Waste — all pages wireframe</h1>
+    <p>Every web page (G, S, A, E) and the bin's touchscreen (K). Companion to <code>web/docs/WEB-PAGES-AND-WORKFLOWS.pdf</code>. Example values only.</p>
+  </div>
+  <div class="toggles" role="group" aria-label="View options">
+    <label><input type="checkbox" id="t-phone"> Phone width (390 px)</label>
+    <label><input type="checkbox" id="t-notes" checked> Show notes</label>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="index" aria-label="Pages">
+  <h2>Start</h2>
+  <ul><li><a href="#about"><b>—</b> About this file</a></li><li><a href="#flows"><b>—</b> Workflow paths</a></li></ul>
+  <h2>Guest and account</h2>
+  <ul>
+    <li><a href="#G1"><b>G1</b> Log in</a></li><li><a href="#G2"><b>G2</b> Register</a></li>
+    <li><a href="#G3"><b>G3</b> Forgot password</a></li><li><a href="#G4"><b>G4</b> Set or reset password</a></li>
+    <li><a href="#G5"><b>G5</b> Confirm your email</a></li>
+  </ul>
+  <h2>Signed in</h2>
+  <ul>
+    <li><a href="#S2"><b>S2</b> Home</a></li><li><a href="#S3"><b>S3</b> Profile and QR</a></li>
+    <li><a href="#S4"><b>S4</b> Deposit history</a></li><li><a href="#S5"><b>S5</b> Leaderboard</a></li>
+    <li><a href="#S6"><b>S6</b> Rewards</a></li><li><a href="#S7"><b>S7</b> Reward detail</a></li>
+    <li><a href="#S8"><b>S8</b> My redemptions</a></li><li><a href="#S9"><b>S9</b> Notifications</a></li>
+  </ul>
+  <h2>Admin</h2>
+  <ul>
+    <li><a href="#A1"><b>A1</b> Dashboard</a></li><li><a href="#A2"><b>A2</b> Org leaderboard</a></li>
+    <li><a href="#A3"><b>A3</b> Reports</a></li><li><a href="#A4"><b>A4</b> Users</a></li>
+    <li><a href="#A5"><b>A5</b> New user</a></li><li><a href="#A6"><b>A6</b> Edit user</a></li>
+    <li><a href="#A7"><b>A7</b> Organizations</a></li><li><a href="#A8"><b>A8</b> New organization</a></li>
+    <li><a href="#A9"><b>A9</b> Edit organization</a></li><li><a href="#A10"><b>A10</b> Transactions</a></li>
+    <li><a href="#A11"><b>A11</b> Transaction detail</a></li><li><a href="#A12"><b>A12</b> Session review</a></li>
+    <li><a href="#A13"><b>A13</b> Bins</a></li><li><a href="#A14"><b>A14</b> Register bin</a></li>
+    <li><a href="#A15"><b>A15</b> Bin detail</a></li><li><a href="#A16"><b>A16</b> Edit bin</a></li>
+    <li><a href="#A17"><b>A17</b> Bin secret</a></li><li><a href="#A18"><b>A18</b> Rewards</a></li>
+    <li><a href="#A19"><b>A19</b> New reward</a></li><li><a href="#A20"><b>A20</b> Edit reward</a></li>
+    <li><a href="#A21"><b>A21</b> Redemptions</a></li><li><a href="#A22"><b>A22</b> Points rate</a></li>
+  </ul>
+  <h2>System</h2>
+  <ul><li><a href="#E"><b>E1–5</b> Error pages</a></li></ul>
+  <h2>Bin touchscreen</h2>
+  <ul><li><a href="#K"><b>K1–9</b> Kiosk screens</a></li></ul>
+</nav>
+
+<main class="doc" id="doc">
+
+<section class="intro" id="about">
+  <h2>About this file</h2>
+  <ul>
+    <li>One wireframe per page, plus the important states (errors, empty, refused, failed refresh). Links inside the frames jump to the target page, so you can click through each workflow.</li>
+    <li>Styled with the tokens in <code>web/docs/DESIGN.md</code>: white surfaces, black outlines, lavender for the main action and the focal panel.</li>
+    <li>Numbered dots <span class="c">1</span> match the notes beside each frame. Turn notes off for a clean view; turn on <b>Phone width</b> to see every page at 390 px.</li>
+    <li><span class="tag p">P28</span> = proposal in <code>API_Design.md</code> §9, not yet confirmed. <span class="tag q">Open</span> = no answer in the docs yet. All paths are <span class="tag p">P28</span>.</li>
+    <li>Names, numbers and codes are made up. No point value, rate or cap is set by the plan.</li>
+  </ul>
+  <div class="legend">
+    <span><span class="badge ok">Completed</span> server-confirmed success</span>
+    <span><span class="badge warn">Pending</span> waiting or needs attention</span>
+    <span><span class="badge bad">Voided</span> failure or reversal</span>
+    <span><span class="badge n">Read</span> neutral</span>
+  </div>
+</section>
+
+<section class="screen" id="flows" style="margin-top:24px">
+  <div class="screen-head"><h3>Workflow paths (click through)</h3></div>
+  <div class="intro" style="max-width:none">
+    <ul>
+      <li><b>W1 Register:</b> <a href="#G2">G2</a> → <a href="#G5">G5</a> → email link → <a href="#S2">S2</a></li>
+      <li><b>W2 Sign in:</b> <a href="#G1">G1</a> → <a href="#S2">S2</a> (student) or <a href="#A1">A1</a> (admin) · Log out from any shell → <a href="#G1">G1</a></li>
+      <li><b>W3 Admin creates accounts:</b> <a href="#A5">A5</a> or <a href="#A4">A4</a> import → Send email → <a href="#G4">G4</a> → <a href="#G1">G1</a> · fallback <a href="#A6">A6</a> Set a password</li>
+      <li><b>W4 Forgot password:</b> <a href="#G1">G1</a> → <a href="#G3">G3</a> → email → <a href="#G4">G4</a> → <a href="#G1">G1</a></li>
+      <li><b>W5 Deposit:</b> <a href="#S3">S3</a> QR → bin <a href="#K">K1 → K2 → K3 → K4 → K5</a> → <a href="#S2">S2</a> / <a href="#S4">S4</a> / <a href="#S9">S9</a></li>
+      <li><b>W6 Redeem:</b> <a href="#S6">S6</a> → <a href="#S7">S7</a> → <a href="#S8">S8</a> … admin <a href="#A21">A21</a> Mark fulfilled → student <a href="#S9">S9</a></li>
+      <li><b>W7 New QR:</b> <a href="#S3">S3</a> Make a new QR code</li>
+      <li><b>W8 First setup:</b> seed admin → <a href="#G3">G3</a>/<a href="#G4">G4</a> → <a href="#A8">A8</a> → <a href="#A14">A14</a> → <a href="#A17">A17</a> → <a href="#A22">A22</a></li>
+      <li><b>W9 Monitor bins:</b> <a href="#A1">A1</a> → <a href="#S9">S9</a> alerts → <a href="#A15">A15</a> → <a href="#A16">A16</a></li>
+      <li><b>W10 Void:</b> <a href="#A10">A10</a> → <a href="#A11">A11</a> · <b>W11 Points rate:</b> <a href="#A22">A22</a> · <b>W12 Rewards:</b> <a href="#A18">A18</a> → <a href="#A19">A19</a>/<a href="#A20">A20</a></li>
+      <li><b>W13 Deactivate:</b> <a href="#A6">A6</a>, <a href="#A9">A9</a> · <b>W14 New bin secret:</b> <a href="#A15">A15</a> → <a href="#A17">A17</a> · <b>W15 Stuck sessions:</b> <a href="#A1">A1</a> → <a href="#A12">A12</a> · <b>W16 Standings:</b> <a href="#S5">S5</a>, <a href="#A2">A2</a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- =============================================================== GUEST -->
+<h2 class="group-title">Guest and account pages</h2>
+<p class="group-intro">Guest shell. One quiet form per page with a lavender main action. Module: Identity. API §7.2.</p>
+
+<section class="screen" id="G1">
+  <div class="screen-head"><span class="sid">G1</span><h3>Log in</h3><span class="route">GET/POST /login · login</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/login" data-shell="guest">
+        <h1>Log in</h1>
+        <div class="field"><label>Email</label><div class="input">you@school.edu.ph</div></div>
+        <div class="field"><label>Password</label><div class="input">••••••••</div></div>
+        <div class="actions"><span class="btn primary">Log in</span> <span class="c">1</span></div>
+        <p><a href="#G3">Forgot your password?</a> <span class="c">2</span></p>
+        <p>New student? <a href="#G2">Create an account</a></p>
+      </div>
+      <div class="frame" data-url="/login" data-shell="guest" data-state="Failed sign-in">
+        <h1>Log in</h1>
+        <div class="flash bad">These details don't match an account we can sign in. <span class="c">3</span></div>
+        <div class="field"><label>Email</label><div class="input filled bad">juan.delacruz@school.edu.ph</div></div>
+        <div class="field"><label>Password</label><div class="input">&nbsp;</div></div>
+        <div class="actions"><span class="btn primary">Log in</span></div>
+      </div>
+      <div class="frame" data-url="/login" data-shell="guest" data-state="Too many attempts">
+        <h1>Log in</h1>
+        <div class="flash warn">Too many attempts. Try again in 42 seconds. <span class="c">4</span></div>
+        <div class="field"><label>Email</label><div class="input filled">juan.delacruz@school.edu.ph</div></div>
+        <div class="field"><label>Password</label><div class="input">&nbsp;</div></div>
+        <div class="actions"><span class="btn primary">Log in</span></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Success: session regenerated, <code>last_login_at</code> set; admin → <a href="#A1">A1</a>, student → <a href="#S2">S2</a>, unconfirmed → <a href="#G5">G5</a> <span class="tag p">P29</span>.</li>
+      <li>Same login for both roles. No role picker.</li>
+      <li>One message for wrong password, no password (not activated) and inactive account <span class="tag p">P29</span>. Email kept, password cleared.</li>
+      <li>5 tries a minute per email + IP <span class="tag p">P29</span>.</li>
+    </ol><p class="src">API §7.2 · TRACK-A A3</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="G2">
+  <div class="screen-head"><span class="sid">G2</span><h3>Register</h3><span class="route">GET/POST /register · register</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/register" data-shell="guest" data-nav="register">
+        <h1>Create your account</h1>
+        <p class="help">For students. You'll confirm your email before you can use your account.</p>
+        <div class="row2">
+          <div class="field"><label>First name</label><div class="input">Juan</div></div>
+          <div class="field"><label>Last name</label><div class="input">Dela Cruz</div></div>
+        </div>
+        <div class="field"><label>Student number</label><div class="input">2024-00123</div></div>
+        <div class="field"><label>School email</label><div class="input">you@school.edu.ph</div></div>
+        <div class="field"><label>Organization <span class="c">1</span></label><div class="input select">Choose your college</div></div>
+        <div class="row2">
+          <div class="field"><label>Password</label><div class="input">&nbsp;</div><div class="fhelp">At least 8 characters.</div></div>
+          <div class="field"><label>Confirm password</label><div class="input">&nbsp;</div></div>
+        </div>
+        <div class="actions"><span class="btn primary">Create account</span> <span class="c">2</span></div>
+        <p>Already have an account? <a href="#G1">Log in</a></p>
+      </div>
+      <div class="frame" data-url="/register" data-shell="guest" data-nav="register" data-state="Validation errors">
+        <h1>Create your account</h1>
+        <div class="flash bad">Fix 2 problems to continue: <span class="c">3</span>
+          <ul><li><a href="#G2">Student number is already registered.</a></li><li><a href="#G2">Passwords don't match.</a></li></ul></div>
+        <div class="field"><label>Student number</label><div class="input filled bad">2024-00123</div><div class="ferr">This student number is already registered.</div></div>
+        <div class="row2">
+          <div class="field"><label>Password</label><div class="input bad">&nbsp;</div><div class="ferr">Passwords don't match.</div></div>
+          <div class="field"><label>Confirm password</label><div class="input bad">&nbsp;</div></div>
+        </div>
+        <p class="help">…other fields keep what you typed.</p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Only organizations whose <code>is_active</code> is true.</li>
+      <li>Creates a <b>student</b> (never admin), active, email not confirmed, plus the QR credential, in one transaction. Signs in → <a href="#G5">G5</a>. Confirmation email after commit.</li>
+      <li>Error summary linked to fields. Old input kept, passwords never refilled. Student number required <span class="tag p">P46</span>; 5 posts a minute per IP, then <a href="#E">E4</a>.</li>
+    </ol><p class="src">API §7.2, §7.6 Register · System Plan §4</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="G3">
+  <div class="screen-head"><span class="sid">G3</span><h3>Forgot password</h3><span class="route">GET/POST /forgot-password · password.request / password.email</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/forgot-password" data-shell="guest">
+        <h1>Forgot your password?</h1>
+        <p>Enter your email and we'll send you a link to set a new password.</p>
+        <div class="field"><label>Email</label><div class="input">you@school.edu.ph</div></div>
+        <div class="actions"><span class="btn primary">Email me a link</span></div>
+        <p><a href="#G1">Back to log in</a></p>
+      </div>
+      <div class="frame" data-url="/forgot-password" data-shell="guest" data-state="After submit">
+        <h1>Forgot your password?</h1>
+        <div class="flash ok">If that email belongs to an account, we've sent a link to it. The link works for 60 minutes. <span class="c">1</span></div>
+        <p><a href="#G1">Back to log in</a></p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Same message for any email, known or not <span class="tag p">P30</span>. Inactive accounts get no link. A new link makes the older ones unusable.</li>
+    </ol><p>Also how an admin-created student gets a fresh set-password link (<b>W3</b>).</p><p class="src">API §7.2 · ACCOUNT-MANAGEMENT</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="G4">
+  <div class="screen-head"><span class="sid">G4</span><h3>Set or reset password</h3><span class="route">GET /reset-password/{token} · POST /reset-password</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/reset-password/9f2c…?email=juan…" data-shell="guest">
+        <h1>Set your password</h1>
+        <div class="field"><label>Email</label><div class="input filled">juan.delacruz@school.edu.ph</div></div>
+        <div class="field"><label>New password</label><div class="input">&nbsp;</div><div class="fhelp">At least 8 characters.</div></div>
+        <div class="field"><label>Confirm new password</label><div class="input">&nbsp;</div></div>
+        <div class="actions"><span class="btn primary">Save password</span> <span class="c">1</span></div>
+      </div>
+      <div class="frame" data-url="/reset-password/9f2c…" data-shell="guest" data-state="Link no longer valid">
+        <h1>Set your password</h1>
+        <div class="flash bad">This link is no longer valid. It may have expired or a newer link was sent. <span class="c">2</span></div>
+        <div class="actions"><a class="btn primary" href="#G3">Send me a new link</a></div>
+      </div>
+      <div class="frame" data-url="/login" data-shell="guest" data-state="After saving → G1">
+        <h1>Log in</h1>
+        <div class="flash ok">Your password has been saved. Log in with it now.</div>
+        <div class="field"><label>Email</label><div class="input">you@school.edu.ph</div></div>
+        <div class="field"><label>Password</label><div class="input">&nbsp;</div></div>
+        <div class="actions"><span class="btn primary">Log in</span></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>One form for both emails (set your password / forgot password). Keep the route name <code>password.reset</code>. Saving activates an admin-created account and ends the account's other sessions.</li>
+      <li>Expired (60 min), used or superseded links, and inactive accounts, all land here.</li>
+    </ol><p class="src">API §7.2 · ACCOUNT-MANAGEMENT</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="G5">
+  <div class="screen-head"><span class="sid">G5</span><h3>Confirm your email</h3><span class="route">GET /email/verify · verification.notice · POST /email/verification-notification</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/email/verify" data-shell="guest" data-nav="signedout">
+        <h1>Confirm your email</h1>
+        <p>We sent a link to <b>juan.delacruz@school.edu.ph</b>. Open it to finish setting up your account. <span class="c">1</span></p>
+        <p class="help">Can't find it? Check your spam folder. The link works for 60 minutes.</p>
+        <div class="actions"><span class="btn primary">Send the link again</span> <span class="c">2</span> <span class="btn">Log out</span></div>
+      </div>
+      <div class="frame" data-url="/email/verify" data-shell="guest" data-nav="signedout" data-state="Send failed at registration">
+        <h1>Confirm your email</h1>
+        <div class="flash warn">Your account was created, but we couldn't send the email. Use "Send the link again" in a moment.</div>
+        <div class="actions"><span class="btn primary">Send the link again</span> <span class="btn">Log out</span></div>
+      </div>
+      <div class="frame" data-url="/email/verify" data-shell="guest" data-nav="signedout" data-state="After resend">
+        <h1>Confirm your email</h1>
+        <div class="flash ok">A new link is on its way to juan.delacruz@school.edu.ph.</div>
+        <div class="actions"><span class="btn primary">Send the link again</span> <span class="btn">Log out</span></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>The only page an unconfirmed user can open; every other signed-in page redirects here, including the QR page <span class="tag p">P48</span>. The link (<code>/email/verify/{id}/{hash}</code>) sets <code>email_verified_at</code> → <a href="#S2">S2</a>. Bad or expired link → <a href="#E">E1</a>.</li>
+      <li>6 resends a minute <span class="tag p">P46</span>.</li>
+    </ol><p class="src">API §7.2, §7.3 · TRACK-A A4</p></aside>
+  </div>
+</section>
+
+<!-- =============================================================== SIGNED IN -->
+<h2 class="group-title">Signed-in pages (students and admins)</h2>
+<p class="group-intro">Student shell. Open to every confirmed user, admins included <span class="tag p">P31</span>. <code>GET /</code> (S1) only redirects: admin → A1, student → S2.</p>
+
+<section class="screen" id="S2">
+  <div class="screen-head"><span class="sid">S2</span><h3>Home</h3><span class="route">GET /home · home · Rewards</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/home" data-shell="student" data-active="S2">
+        <h1>Hi, Juan</h1>
+        <div class="home-top">
+          <div class="focal"><div class="k">Available points <span class="c">1</span></div><div class="v">240 pts</div></div>
+          <div class="stack"><a class="btn primary" href="#S3">View QR code</a><a href="#S6">Browse rewards</a></div>
+        </div>
+        <h2>Recent transactions <span class="c">2</span></h2>
+        <div class="tscroll" role="region" aria-label="Recent transactions" tabindex="0"><table class="t">
+          <tr><th>Date (Asia/Manila)</th><th class="num">Weight</th><th class="num">Points</th><th>Status</th></tr>
+          <tr><td>29 Oct 2026, 2:14pm</td><td class="num">184.6 g</td><td class="num">18 pts</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>28 Oct 2026, 9:02am</td><td class="num">412.0 g</td><td class="num">41 pts</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>27 Oct 2026, 4:40pm</td><td class="num">96.3 g</td><td class="num">9 pts</td><td><span class="badge bad">Voided</span></td></tr>
+        </table></div>
+        <p><a href="#S4">See all transactions</a></p>
+      </div>
+      <div class="frame" data-url="/home" data-shell="student" data-active="S2" data-state="New student, no deposits">
+        <h1>Hi, Maria</h1>
+        <div class="home-top">
+          <div class="focal"><div class="k">Available points</div><div class="v">0 pts</div></div>
+          <div class="stack"><a class="btn primary" href="#S3">View QR code</a><a href="#S6">Browse rewards</a></div>
+        </div>
+        <h2>Recent transactions</h2>
+        <p><b>No deposits yet.</b> Show your QR code at the bin to earn points.</p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Balance = <code>SUM(points_delta)</code>. The page's focal panel. Can be negative after a void (show "−12 pts").</li>
+      <li>Latest few rows of <a href="#S4">S4</a>; how many is not set <span class="tag q">Open</span> (5 suggested). Only server-confirmed deposits appear.</li>
+    </ol><p class="src">API §7.3 · DESIGN §5 Student home</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S3">
+  <div class="screen-head"><span class="sid">S3</span><h3>Profile and QR code</h3><span class="route">GET /profile · POST /profile/qr</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/profile" data-shell="student" data-active="S3">
+        <div class="flash ok">Your QR code has been replaced. Your old code no longer works. <span class="c">3</span></div>
+        <h1>Profile</h1>
+        <div class="grid2">
+          <div>
+            <h2 style="margin-top:0">Your QR code <span class="c">1</span></h2>
+            <div class="qr" aria-label="QR code for your account" role="img">
+              <svg viewBox="0 0 21 21" shape-rendering="crispEdges" aria-hidden="true"><path fill="#000" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2zM8 0h1v1H8zM10 1h2v1h-2zM9 3h1v2H9zM11 4h2v1h-2zM8 6h1v1H8zM10 6h1v1h-1zM12 6h1v1h-1zM0 8h2v1H0zM3 8h1v2H3zM5 9h3v1H5zM9 8h3v1H9zM13 8h1v2h-1zM15 8h2v1h-2zM18 8h3v1h-3zM1 10h1v2H1zM6 11h2v1H6zM9 10h1v3H9zM11 11h2v1h-2zM14 10h1v1h-1zM16 10h1v3h-1zM19 10h1v2h-1zM0 12h1v1H0zM3 12h2v1H3zM12 12h1v2h-1zM14 12h1v1h-1zM18 13h3v1h-3zM8 14h1v2H8zM10 14h1v1h-1zM13 15h2v1h-2zM17 15h1v2h-1zM19 15h2v1h-2zM9 17h2v1H9zM12 17h1v2h-1zM14 18h2v1h-2zM8 19h1v2H8zM10 20h2v1h-2zM15 20h1v1h-1zM18 18h1v1h-1zM20 19h1v2h-1z"/></svg>
+            </div>
+            <p class="help" style="margin-top:8px">Hold this code up to the scanner on the bin. It identifies you for one deposit; it can't spend points.<br>Last changed 12 Oct 2026, 10:05am.</p>
+            <span class="btn">Make a new QR code</span> <span class="c">2</span>
+            <p class="help" style="margin-top:6px">Your old code stops working at once. Use this if your code was shared or photographed.</p>
+          </div>
+          <div>
+            <h2 style="margin-top:0">Your details <span class="c">4</span></h2>
+            <dl class="kv"><dt>Name</dt><dd>Juan Dela Cruz</dd><dt>Email</dt><dd>juan.delacruz@school.edu.ph</dd><dt>Student number</dt><dd>2024-00123</dd><dt>Role</dt><dd>Student</dd><dt>Member since</dt><dd>3 Oct 2026</dd></dl>
+            <h2>Organization</h2>
+            <dl class="kv"><dt>Name</dt><dd>College of Engineering</dd><dt>Code</dt><dd>COE</dd><dt>About</dt><dd style="white-space:normal">Engineering programs, main campus.</dd></dl>
+            <p class="help" style="margin-top:12px">To change your details, contact an admin. To change your password, use <a href="#G3">Forgot password</a>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li><code>user_qr_credentials.token</code> rendered on the server as SVG <span class="tag p">P32</span>, black on white with its quiet zone. Never recolour, crop or overlay. Shown only after email confirmation <span class="tag p">P48</span>.</li>
+      <li><code>POST /profile/qr</code> — overwrites the token (40 random letters/digits <span class="tag p">P35</span>). Secondary button; consequence written beside it.</li>
+      <li>Flash after the redirect back.</li>
+      <li>Read-only. Self-editing is deferred <span class="tag q">Open</span> (API §10 Q3). Admins show "No organization (admin account)".</li>
+    </ol><p class="src">API §7.3 · System Plan §5.5 · DESIGN §7</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S4">
+  <div class="screen-head"><span class="sid">S4</span><h3>Deposit history</h3><span class="route">GET /transactions · transactions.index · Deposits</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/transactions" data-shell="student" data-active="S4">
+        <h1>Deposit history</h1>
+        <div class="tscroll" role="region" aria-label="Your deposits" tabindex="0"><table class="t">
+          <tr><th>Date (Asia/Manila)</th><th>Code</th><th>Bin</th><th class="num">Weight</th><th class="num">Points</th><th>Status</th></tr>
+          <tr><td>29 Oct 2026, 2:14pm</td><td>TXN-20261029-K7Q2XA</td><td>Bin 1</td><td class="num">184.6 g</td><td class="num">18 pts</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>28 Oct 2026, 9:02am</td><td>TXN-20261028-M3PZ8B</td><td>Bin 1</td><td class="num">412.0 g</td><td class="num">41 pts</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>27 Oct 2026, 4:40pm</td><td>TXN-20261027-R9WD1C</td><td>Bin 1</td><td class="num">96.3 g</td><td class="num">9 pts</td><td><span class="badge bad">Voided</span> <span class="help">points reversed 28 Oct</span> <span class="c">1</span></td></tr>
+        </table></div>
+        <div class="pager" aria-label="Pages"><span class="cur" aria-current="page">1</span><a href="#S4">2</a><a href="#S4">3</a><a href="#S4">Next</a></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Status is <code>COMPLETED</code> or <code>VOIDED</code>. A voided deposit's points were taken back by a REVERSAL row.</li>
+    </ol><ul><li>Own rows only, paginated, newest first. Code format <span class="tag p">P25</span>.</li>
+      <li>Listing sessions that earned nothing (rejected, failed, cancelled, expired) is not decided <span class="tag q">Open</span>; shown: transactions only.</li></ul><p class="src">API §7.3 · Schema §6, §8</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S5">
+  <div class="screen-head"><span class="sid">S5</span><h3>Leaderboard</h3><span class="route">GET /leaderboard · leaderboard · Reporting</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/leaderboard" data-shell="student" data-active="S5">
+        <h1>Leaderboard</h1>
+        <p class="help">Ranked by points earned from deposits. Redeeming rewards does not lower your rank. <span class="c">1</span></p>
+        <div class="tscroll" role="region" aria-label="Leaderboard" tabindex="0"><table class="t">
+          <tr><th class="num">Rank</th><th>Name</th><th>Organization</th><th class="num">Points earned</th></tr>
+          <tr><td class="num">1</td><td>Maria Santos</td><td>College of Computer Studies</td><td class="num">1,284 pts</td></tr>
+          <tr><td class="num">2</td><td>Paolo Reyes</td><td>College of Engineering</td><td class="num">1,102 pts</td></tr>
+          <tr><td class="num">3</td><td><b>Juan Dela Cruz (you)</b></td><td>College of Engineering</td><td class="num">958 pts</td></tr>
+          <tr><td class="num">4</td><td>Ana Lim <span class="c">2</span></td><td class="help">— (admin)</td><td class="num">402 pts</td></tr>
+        </table></div>
+        <div class="pager"><span class="cur">1</span><a href="#S5">2</a><a href="#S5">Next</a></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Points earned = EARN rows − REVERSALs linked to a transaction. Never the spendable balance.</li>
+      <li>Everyone ranks, admins too; they have no organization.</li>
+    </ol><p>Marking "(you)" is a suggested display.</p><p class="src">API §7.3 · System Plan §5.6</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S6">
+  <div class="screen-head"><span class="sid">S6</span><h3>Rewards</h3><span class="route">GET /rewards · rewards.index · Rewards</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/rewards" data-shell="student" data-active="S6">
+        <h1>Rewards</h1>
+        <p>You have <b>240 pts</b> to spend. <span class="c">1</span></p>
+        <div class="cards">
+          <div class="rcard"><div class="img">image (optional)</div><b>Reusable tumbler</b><span class="help">Stainless, 500 ml.</span><span class="cost">150 pts</span><span class="help">12 left</span><a href="#S7">View reward</a></div>
+          <div class="rcard"><div class="img">image (optional)</div><b>Canteen meal voucher</b><span class="help">One meal at the main canteen.</span><span class="cost">80 pts</span><span class="help">40 left</span><a href="#S7">View reward</a></div>
+          <div class="rcard"><div class="img">image (optional)</div><b>School lanyard</b><span class="help">Woven, with ID clip.</span><span class="cost">60 pts</span><span class="help"><b>Out of stock</b></span><a href="#S7">View reward</a></div>
+        </div>
+        <div class="pager"><span class="cur">1</span></div>
+      </div>
+      <div class="frame" data-url="/rewards" data-shell="student" data-active="S6" data-state="Empty">
+        <h1>Rewards</h1>
+        <p><b>No rewards are available right now.</b> Check back later.</p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Balance shown for context (suggested).</li>
+    </ol><ul><li>Only rewards whose <code>is_active</code> is true. Cost next to the name. Explicit "View reward" link; the card itself is not a button.</li></ul><p class="src">API §7.3 · DESIGN §6</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S7">
+  <div class="screen-head"><span class="sid">S7</span><h3>Reward detail and redeem</h3><span class="route">GET /rewards/{reward} · POST /redemptions</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/rewards/2" data-shell="student" data-active="S6">
+        <p><a href="#S6">← All rewards</a></p>
+        <h1>Canteen meal voucher</h1>
+        <div class="grid2">
+          <div><p>One meal at the main canteen. Collect it from the admin office after redeeming.</p>
+            <dl class="kv"><dt>Cost</dt><dd>80 pts each</dd><dt>In stock</dt><dd>40</dd><dt>Your points</dt><dd>240 pts</dd></dl></div>
+          <div class="panel">
+            <h2>Redeem</h2>
+            <div class="field"><label>Quantity</label><div class="input filled">2</div><div class="fhelp">Whole number, 1 or more.</div></div>
+            <p><b>Total: 160 pts</b> <span class="c">1</span></p>
+            <span class="btn primary">Redeem reward</span> <span class="c">2</span>
+          </div>
+        </div>
+      </div>
+      <div class="frame" data-url="/rewards/2" data-shell="student" data-active="S6" data-state="Refused by the server">
+        <div class="flash bad">You need 320 pts for 4 of these. You have 240 pts. Nothing was redeemed. <span class="c">3</span></div>
+        <h1>Canteen meal voucher</h1>
+        <div class="panel narrow"><div class="field"><label>Quantity</label><div class="input filled bad">4</div></div><span class="btn primary">Redeem reward</span></div>
+      </div>
+      <div class="frame" data-url="/rewards/3" data-shell="student" data-active="S6" data-state="Unavailable">
+        <h1>School lanyard</h1>
+        <dl class="kv"><dt>Cost</dt><dd>60 pts each</dd><dt>In stock</dt><dd>0</dd></dl>
+        <div class="actions"><button class="btn" disabled>Redeem reward</button><span class="help">Out of stock. <span class="c">4</span></span></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>The page shows cost × quantity from the server's cost; the server recomputes.</li>
+      <li>RedemptionService: lock user → sum ledger → check → decrement stock (<code>WHERE stock_quantity &gt;= ?</code>) → redemption <code>PENDING</code> + REDEEM row. Success → <a href="#S8">S8</a> with a flash (destination suggested <span class="tag q">Open</span>).</li>
+      <li>Refusals: not enough points, not enough stock, reward inactive. Nothing changes.</li>
+      <li>Disabled control with the reason beside it, never a fake enabled button.</li>
+    </ol><p class="src">API §7.6 Redeem · System Plan §6.1</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S8">
+  <div class="screen-head"><span class="sid">S8</span><h3>My redemptions</h3><span class="route">GET /redemptions · redemptions.index · Rewards</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/redemptions" data-shell="student" data-active="S8">
+        <div class="flash ok">Redeemed 2 × Canteen meal voucher for 160 pts. Collect it from the admin office once it's marked fulfilled.</div>
+        <h1>My redemptions</h1>
+        <div class="tscroll" role="region" aria-label="Your redemptions" tabindex="0"><table class="t">
+          <tr><th>Date (Asia/Manila)</th><th>Code</th><th>Reward</th><th class="num">Qty</th><th class="num">Points</th><th>Status</th></tr>
+          <tr><td>29 Oct 2026, 3:01pm</td><td>RDM-20261029-T4VN2Q</td><td>Canteen meal voucher</td><td class="num">2</td><td class="num">160 pts</td><td><span class="badge warn">Pending</span> <span class="c">1</span></td></tr>
+          <tr><td>20 Oct 2026, 11:30am</td><td>RDM-20261020-H8KC5P</td><td>Reusable tumbler</td><td class="num">1</td><td class="num">150 pts</td><td><span class="badge ok">Fulfilled</span> <span class="help">21 Oct</span></td></tr>
+          <tr><td>15 Oct 2026, 1:12pm</td><td>RDM-20261015-Z2LM7D</td><td>School lanyard</td><td class="num">1</td><td class="num">60 pts</td><td><span class="badge bad">Cancelled</span> <span class="help">points returned</span></td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>States: Pending (waiting for an admin at <a href="#A21">A21</a>), Fulfilled (with date), Cancelled (stock and points returned).</li>
+    </ol><p class="src">API §7.3 · Schema §11</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="S9">
+  <div class="screen-head"><span class="sid">S9</span><h3>Notifications</h3><span class="route">GET /notifications · POST /notifications/{notification}/read</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/notifications" data-shell="student" data-active="S9">
+        <h1>Notifications</h1>
+        <div class="notif unread"><div><div class="title">Deposit completed <span class="badge warn">Unread</span></div><div>You earned 18 pts for 184.6 g at Bin 1.</div><div class="meta">29 Oct 2026, 2:14pm</div></div><span class="btn sm">Mark as read</span></div>
+        <div class="notif unread"><div><div class="title">Reward ready <span class="badge warn">Unread</span></div><div>Your Reusable tumbler (RDM-20261020-H8KC5P) has been handed over.</div><div class="meta">21 Oct 2026, 9:15am</div></div><span class="btn sm">Mark as read</span> </div>
+        <div class="notif"><div><div class="title">Deposit completed <span class="badge n">Read</span></div><div>You earned 41 pts for 412.0 g at Bin 1.</div><div class="meta">28 Oct 2026, 9:02am</div></div><span></span></div>
+        <div class="pager"><span class="cur">1</span></div>
+      </div>
+      <div class="frame" data-url="/notifications" data-shell="student" data-active="S9" data-who="admin" data-state="Admin's view">
+        <h1>Notifications</h1>
+        <div class="notif unread"><div><div class="title">Bin 1 is full <span class="badge warn">Unread</span> <span class="c">1</span></div><div>Fill level reached 91.2 % (threshold 90 %). Empty the bin.</div><div class="meta">29 Oct 2026, 4:48pm · <a href="#A15">Open Bin 1</a></div></div><span class="btn sm">Mark as read</span></div>
+        <div class="notif unread"><div><div class="title">Bin 1 reported a fault <span class="badge warn">Unread</span></div><div>Actuator jam (ACTUATOR_JAM). The bin has stopped taking deposits.</div><div class="meta">29 Oct 2026, 1:20pm · <a href="#A15">Open Bin 1</a></div></div><span class="btn sm">Mark as read</span></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Types <span class="tag p">P40</span>: <code>DEPOSIT_COMPLETED</code>, <code>REDEMPTION_FULFILLED</code> to the user; <code>BIN_FULL</code>, <code>BIN_FAULT</code> <span class="tag p">P43</span> one row per admin. An open service panel raises none.</li>
+    </ol><ul><li>Unread vs read by text label and weight, not colour alone. Mark as read sets <code>read_at</code>, redirects back.</li>
+      <li>Admins use the same page. A bin link in the message is suggested.</li>
+      <li>An unread count in the nav is not designed <span class="tag q">Open</span>.</li></ul><p class="src">API §7.3, §7.7</p></aside>
+  </div>
+</section>
+
+<!-- =============================================================== ADMIN -->
+<h2 class="group-title">Admin pages</h2>
+<p class="group-intro">Admin shell under <code>/admin</code>: <code>auth</code>, <code>verified</code>, admin role. Students get <a href="#E">E1 (403)</a>. Operational status first; flat tables; no delete actions <span class="tag p">P33</span>.</p>
+
+<section class="screen" id="A1">
+  <div class="screen-head"><span class="sid">A1</span><h3>Dashboard</h3><span class="route">GET /admin · GET /admin/dashboard/summary (JSON, every 10 s)</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin" data-shell="admin" data-active="A1">
+        <h1>Dashboard</h1>
+        <div class="attn" role="status"><h2>Needs attention <span class="c">1</span></h2><ul>
+          <li><a href="#A21">3 redemptions waiting to be fulfilled</a></li>
+          <li><a href="#A15">Bin 1 is full (91.2 %)</a></li>
+          <li><a href="#A12">0 sessions awaiting review</a></li></ul></div>
+        <h2>Bins <span class="c">2</span></h2>
+        <div class="tscroll" role="region" aria-label="Bins" tabindex="0"><table class="t">
+          <tr><th>Bin</th><th>Fill level</th><th>Status</th><th>Service panel</th><th>Fault</th><th>Last seen (Asia/Manila)</th></tr>
+          <tr><td><a href="#A15">Bin 1</a></td><td><span class="meter full"><b style="width:91%"></b></span>91.2 %</td><td><span class="badge bad">Full</span></td><td>Closed</td><td>None</td><td>4:48:12pm</td></tr>
+        </table></div>
+        <h2>Today <span class="c">3</span></h2>
+        <div class="band"><div><div class="k">Deposits</div><div class="v">12</div></div><div><div class="k">Weight collected</div><div class="v">2,210.4 g</div></div><div><div class="k">Points awarded</div><div class="v">221 pts</div></div></div>
+        <p class="updated" aria-live="polite">Updated 4:48:20pm (Asia/Manila) <span class="c">4</span></p>
+      </div>
+      <div class="frame" data-url="/admin" data-shell="admin" data-active="A1" data-state="Refresh failed / bin states">
+        <h1>Dashboard</h1>
+        <div class="flash warn" role="status">Could not refresh. Showing the last known data from 4:48:20pm (Asia/Manila). <span class="c">5</span></div>
+        <div class="tscroll" role="region" aria-label="Bins" tabindex="0"><table class="t">
+          <tr><th>Bin</th><th>Fill level</th><th>Status</th><th>Service panel</th><th>Fault</th><th>Last seen</th></tr>
+          <tr><td>Bin 1</td><td><span class="meter"><b style="width:17%"></b></span>17.5 %</td><td><span class="badge ok">OK</span></td><td><span class="badge warn">Open</span></td><td><span class="badge bad">Actuator jam</span> <code>ACTUATOR_JAM</code></td><td>1:20:04pm</td></tr>
+          <tr><td>Bin 2</td><td>No reading <span class="c">6</span></td><td>—</td><td>—</td><td>—</td><td>Never</td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Work first: <code>pending_redemptions</code> → <a href="#A21">A21</a>, <code>sessions_awaiting_review</code> → <a href="#A12">A12</a>, full/faulted bins.</li>
+      <li><code>bins[]</code>: every non-retired bin with its latest reading. Meter has a black edge; the server decides OK/Full.</li>
+      <li>Since midnight Asia/Manila; COMPLETED transactions only.</li>
+      <li>The one script polls every 10 s <span class="tag p">P34</span>, updates in place, no animation. Polite live region for failure/recovery only.</li>
+      <li>Keep last numbers, say "last known", never zeros, never claim the bin is offline.</li>
+      <li>Null reading → "No reading", never 0 %.</li>
+    </ol><p class="src">API §7.4, §7.5 · DESIGN §7, §9</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A2">
+  <div class="screen-head"><span class="sid">A2</span><h3>Organization leaderboard</h3><span class="route">GET /admin/leaderboard/organizations</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/leaderboard/organizations" data-shell="admin" data-active="A2">
+        <h1>Organization leaderboard</h1>
+        <p class="help">Total points earned by the students currently in each organization. Admins are not counted. <span class="c">1</span></p>
+        <div class="tscroll" role="region" aria-label="Organization leaderboard" tabindex="0"><table class="t">
+          <tr><th class="num">Rank</th><th>Organization</th><th>Code</th><th class="num">Points earned</th></tr>
+          <tr><td class="num">1</td><td>College of Engineering</td><td>COE</td><td class="num">8,420 pts</td></tr>
+          <tr><td class="num">2</td><td>College of Computer Studies</td><td>CCS</td><td class="num">7,915 pts</td></tr>
+          <tr><td class="num">3</td><td>College of Business</td><td>CBA</td><td class="num">3,006 pts</td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Filter <code>role = 'student'</code> before grouping, so no blank group. Same metric as <a href="#S5">S5</a>.</li></ol><p class="src">API §7.4 · System Plan §5.6</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A3">
+  <div class="screen-head"><span class="sid">A3</span><h3>Reports</h3><span class="route">GET /admin/reports · admin.reports</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/reports" data-shell="admin" data-active="A3">
+        <h1>Reports</h1>
+        <div class="ph">Report contents not decided yet. <span class="c">1</span><br>Reserved for the reports and scheduled reports named in the plan.</div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li><span class="tag q">Open</span> API §10 Q2. Don't design fields until the team decides what the guidelines require.</li></ol><p class="src">API §7.4, §10</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A4">
+  <div class="screen-head"><span class="sid">A4</span><h3>Users</h3><span class="route">GET /admin/users · POST /admin/users/import · POST /admin/users/{user}/password-link</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/users" data-shell="admin" data-active="A4">
+        <div class="flash ok">Set-password email sent to paolo.reyes@school.edu.ph.</div>
+        <div class="actions" style="justify-content:space-between;margin-top:0"><h1 style="margin:0">Users</h1><a class="btn primary" href="#A5">New user</a></div>
+        <div class="tscroll" role="region" aria-label="Users" tabindex="0"><table class="t">
+          <tr><th>Name</th><th>Email</th><th>Student no.</th><th>Role</th><th>Organization</th><th>Status</th><th>Activated <span class="c">1</span></th><th>Last login</th><th>Actions</th></tr>
+          <tr><td><a href="#A6">Juan Dela Cruz</a></td><td>juan.delacruz@…</td><td>2024-00123</td><td>Student</td><td>COE</td><td><span class="badge ok">Active</span></td><td>Yes</td><td>29 Oct, 1:58pm</td><td></td></tr>
+          <tr><td><a href="#A6">Paolo Reyes</a></td><td>paolo.reyes@…</td><td>2024-00456</td><td>Student</td><td>COE</td><td><span class="badge ok">Active</span></td><td><span class="badge warn">Not activated</span></td><td>Never</td><td><span class="btn sm">Resend set-password email</span> <span class="c">2</span></td></tr>
+          <tr><td><a href="#A6">Liza Tan</a></td><td>liza.tan@…</td><td>2023-00987</td><td>Student</td><td>CBA</td><td><span class="badge n">Inactive</span></td><td>Yes</td><td>2 Oct, 8:40am</td><td></td></tr>
+          <tr><td><a href="#A6">Ana Lim</a></td><td>ana.lim@…</td><td>—</td><td>Admin</td><td>—</td><td><span class="badge ok">Active</span></td><td>Yes</td><td>29 Oct, 4:30pm</td><td></td></tr>
+        </table></div>
+        <div class="pager"><span class="cur">1</span><a href="#A4">2</a><a href="#A4">Next</a></div>
+        <div class="panel" style="margin-top:24px">
+          <h2>Import students from CSV <span class="c">3</span></h2>
+          <p class="help">Columns, with a header row: <code>student_number, first_name, last_name, email, organization_code</code>. Every row becomes a student. If any row has a problem, nothing is imported. No emails are sent; send set-password emails from the list afterwards.</p>
+          <div class="field"><label>CSV file</label><div class="input">Choose file… no file chosen</div></div>
+          <span class="btn primary">Import</span>
+        </div>
+      </div>
+      <div class="frame" data-url="/admin/users" data-shell="admin" data-active="A4" data-state="Import refused">
+        <h1>Users</h1>
+        <div class="flash bad">Nothing was imported. Fix these rows and upload the file again: <span class="c">4</span>
+          <ul><li>Row 4: email "ana@@school" is not a valid email.</li><li>Row 9: organization code "CEA" does not match an active organization.</li><li>Row 12: student number 2024-00123 is already registered.</li></ul></div>
+      </div>
+      <div class="frame" data-url="/admin/users" data-shell="admin" data-active="A4" data-state="Import succeeded">
+        <h1>Users</h1>
+        <div class="flash ok">Imported 48 students. They can't log in until they set a password: send each one a set-password email from the list.</div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Activated = a password is set. Keep it apart from Active/Inactive (CONTEXT.md).</li>
+      <li><code>POST …/password-link</code>: sends now; older links stop working. On failure: "The email could not be sent. Set a password on the user's edit page instead."</li>
+      <li>CSV rules <span class="tag p">P36</span>; imported accounts count as confirmed <span class="tag p">P47</span>. Mail limit is 100/day, so big imports are invited over days. Bulk send is deferred <span class="tag q">Open</span>.</li>
+      <li>All or nothing, with row numbers.</li>
+    </ol><p class="src">API §7.4, §7.6 · ACCOUNT-MANAGEMENT · System Plan §7.2</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A5">
+  <div class="screen-head"><span class="sid">A5</span><h3>New user</h3><span class="route">GET /admin/users/create · POST /admin/users</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/users/create" data-shell="admin" data-active="A4">
+        <p><a href="#A4">← Users</a></p>
+        <h1>New user</h1>
+        <div class="narrow">
+          <div class="row2"><div class="field"><label>First name</label><div class="input">&nbsp;</div></div><div class="field"><label>Last name</label><div class="input">&nbsp;</div></div></div>
+          <div class="field"><label>Email</label><div class="input">&nbsp;</div></div>
+          <div class="field"><label>Student number <span class="opt">(optional)</span></label><div class="input">&nbsp;</div></div>
+          <div class="field"><span class="lbl">Role</span><div class="check"><i class="on" style="border-radius:50%"></i> Student</div><div class="check"><i style="border-radius:50%"></i> Admin</div></div>
+          <div class="field"><label>Organization <span class="c">1</span></label><div class="input select">Choose an organization</div><div class="fhelp">Required for a student. Leave empty for an admin.</div></div>
+          <div class="field"><span class="lbl">Status</span><div class="check"><i class="on" style="border-radius:50%"></i> Active</div><div class="check"><i style="border-radius:50%"></i> Inactive</div></div>
+          <p class="help">We'll email the user a link to set their password. <span class="c">2</span></p>
+          <div class="actions"><span class="btn primary">Create user</span><a href="#A4">Cancel</a></div>
+        </div>
+      </div>
+      <div class="frame" data-url="/admin/users" data-shell="admin" data-active="A4" data-state="Created, email failed">
+        <div class="flash warn">Paolo Reyes was created, but the set-password email was not sent. Resend it from the list, or <a href="#A6">set a password</a> for them. <span class="c">3</span></div>
+        <h1>Users</h1>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Active organizations only.</li>
+      <li>One transaction: user (password NULL, email counted as confirmed <span class="tag p">P47</span>) + QR credential. Email sent during the request.</li>
+      <li>A failed send never undoes the user.</li>
+    </ol><p class="src">API §7.6 Create or edit a user</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A6">
+  <div class="screen-head"><span class="sid">A6</span><h3>Edit user</h3><span class="route">GET /admin/users/{user}/edit · PUT /admin/users/{user} · PUT …/password · POST …/password-link</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/users/42/edit" data-shell="admin" data-active="A4">
+        <p><a href="#A4">← Users</a></p>
+        <h1>Paolo Reyes</h1>
+        <dl class="kv" style="margin-bottom:16px"><dt>Activated</dt><dd><span class="badge warn">Not activated</span></dd><dt>Email confirmed</dt><dd>3 Oct 2026 (created by an admin)</dd><dt>Last login</dt><dd>Never</dd></dl>
+        <div class="panel narrow">
+          <h2>Details <span class="c">1</span></h2>
+          <div class="row2"><div class="field"><label>First name</label><div class="input filled">Paolo</div></div><div class="field"><label>Last name</label><div class="input filled">Reyes</div></div></div>
+          <div class="field"><label>Email</label><div class="input filled">paolo.reyes@school.edu.ph</div></div>
+          <div class="field"><label>Student number <span class="opt">(optional)</span></label><div class="input filled">2024-00456</div></div>
+          <div class="row3"><div class="field"><label>Role</label><div class="input select filled">Student</div></div><div class="field"><label>Organization</label><div class="input select filled">COE</div></div><div class="field"><label>Status</label><div class="input select filled">Active</div></div></div>
+          <span class="btn primary">Save changes</span>
+        </div>
+        <div class="panel narrow">
+          <h2>Set-password email <span class="c">2</span></h2>
+          <p>Sends a link to set a password. Any earlier link stops working.</p>
+          <span class="btn">Send set-password email</span>
+        </div>
+        <div class="panel narrow">
+          <h2>Set a password <span class="c">3</span></h2>
+          <p class="help">Use this only when email can't be sent. Tell the user the password in person; they can change it later with Forgot password.</p>
+          <div class="row2"><div class="field"><label>New password</label><div class="input">&nbsp;</div><div class="fhelp">At least 8 characters.</div></div><div class="field"><label>Confirm password</label><div class="input">&nbsp;</div></div></div>
+          <span class="btn">Set password</span>
+        </div>
+      </div>
+      <div class="frame" data-url="/admin/users/1/edit" data-shell="admin" data-active="A4" data-state="Last admin protected">
+        <h1>Ana Lim</h1>
+        <div class="flash bad">You can't make this account inactive or a student. At least one other active admin with a password must remain. <span class="c">4</span></div>
+        <div class="panel narrow"><div class="row2"><div class="field"><label>Role</label><div class="input select filled">Admin</div></div><div class="field"><label>Status</label><div class="input select filled bad">Inactive</div><div class="ferr">The last active admin can't be made inactive.</div></div></div></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li><code>PUT /admin/users/{user}</code>. A student can't be newly put in an inactive organization; an existing membership may stay. Inactive → signed out on next request, QR refused at the bin. Email/role change ends other sessions and revokes links.</li>
+      <li><code>POST …/password-link</code>; available for any account.</li>
+      <li><code>PUT …/password</code> <span class="tag p">P41</span>. Ends the user's other sessions.</li>
+      <li>Includes an admin editing themself; also guards against two admins doing it at once.</li>
+    </ol><p class="src">API §7.4, §7.6 · ACCOUNT-MANAGEMENT</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A7">
+  <div class="screen-head"><span class="sid">A7</span><h3>Organizations</h3><span class="route">GET /admin/organizations</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/organizations" data-shell="admin" data-active="A7">
+        <div class="actions" style="justify-content:space-between;margin-top:0"><h1 style="margin:0">Organizations</h1><a class="btn primary" href="#A8">New organization</a></div>
+        <div class="tscroll" role="region" aria-label="Organizations" tabindex="0"><table class="t">
+          <tr><th>Name</th><th>Code</th><th>Description</th><th>Status</th></tr>
+          <tr><td><a href="#A9">College of Engineering</a></td><td>COE</td><td class="wrap">Engineering programs, main campus.</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td><a href="#A9">College of Computer Studies</a></td><td>CCS</td><td class="wrap">—</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td><a href="#A9">College of Arts (old)</a></td><td>CAS-OLD</td><td class="wrap">Merged in 2025.</td><td><span class="badge n">Inactive</span> <span class="c">1</span></td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Inactive: hidden from <a href="#G2">G2</a> and new assignments (incl. CSV); existing students keep access. No delete <span class="tag p">P33</span>.</li></ol><p class="src">API §7.4 · CONTEXT.md</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A8">
+  <div class="screen-head"><span class="sid">A8</span><h3>New organization</h3><span class="route">GET /admin/organizations/create · POST /admin/organizations</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/organizations/create" data-shell="admin" data-active="A7">
+        <p><a href="#A7">← Organizations</a></p>
+        <h1>New organization</h1>
+        <div class="narrow">
+          <div class="field"><label>Name</label><div class="input">&nbsp;</div><div class="fhelp">Up to 150 characters.</div></div>
+          <div class="field"><label>Code <span class="c">1</span></label><div class="input">&nbsp;</div><div class="fhelp">Short and unique, e.g. COE. Used in CSV imports.</div></div>
+          <div class="field"><label>Description <span class="opt">(optional)</span></label><div class="input area">&nbsp;</div></div>
+          <div class="check"><i class="on"></i> Active — students can choose it</div>
+          <div class="actions"><span class="btn primary">Create organization</span><a href="#A7">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Code unique, ≤ 50. Matches <code>organization_code</code> in the CSV.</li></ol><p class="src">API §7.6 Create or edit an organization</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A9">
+  <div class="screen-head"><span class="sid">A9</span><h3>Edit organization</h3><span class="route">GET /admin/organizations/{organization}/edit · PUT /admin/organizations/{organization}</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/organizations/3/edit" data-shell="admin" data-active="A7">
+        <p><a href="#A7">← Organizations</a></p>
+        <h1>College of Arts (old)</h1>
+        <div class="narrow">
+          <div class="field"><label>Name</label><div class="input filled">College of Arts (old)</div></div>
+          <div class="field"><label>Code</label><div class="input filled">CAS-OLD</div></div>
+          <div class="field"><label>Description <span class="opt">(optional)</span></label><div class="input area filled">Merged in 2025.</div></div>
+          <div class="check"><i></i> Active — students can choose it</div>
+          <p class="help">When inactive, its current students keep their accounts and access. New students can't join it. <span class="c">1</span></p>
+          <div class="actions"><span class="btn primary">Save changes</span><a href="#A7">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Consequence written beside the control (DESIGN §6). No confirm dialog needed.</li></ol><p class="src">ACCOUNT-MANAGEMENT Inactive organizations</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A10">
+  <div class="screen-head"><span class="sid">A10</span><h3>Transactions</h3><span class="route">GET /admin/transactions · admin.transactions.index</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/transactions" data-shell="admin" data-active="A10">
+        <h1>Transactions</h1>
+        <div class="focal" style="max-width:24rem"><div class="k">Total collected weight <span class="c">1</span></div><div class="v" style="font-size:2.2rem">58,940.2 g</div><div class="k" style="font-weight:400">58.94 kg · voided deposits excluded</div></div>
+        <div class="tscroll" role="region" aria-label="Transactions" tabindex="0" style="margin-top:16px"><table class="t">
+          <tr><th>Date (Asia/Manila)</th><th>Code</th><th>User</th><th>Organization</th><th>Bin</th><th class="num">Weight</th><th class="num">Points</th><th>Status</th></tr>
+          <tr><td>29 Oct, 2:14pm</td><td><a href="#A11">TXN-20261029-K7Q2XA</a></td><td>Juan Dela Cruz</td><td>COE</td><td>Bin 1</td><td class="num">184.6 g</td><td class="num">18</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>29 Oct, 1:51pm</td><td><a href="#A11">TXN-20261029-B2XR9M</a></td><td>Maria Santos</td><td>CCS</td><td>Bin 1</td><td class="num">1,240.0 g</td><td class="num">124</td><td><span class="badge ok">Completed</span></td></tr>
+          <tr><td>27 Oct, 4:40pm</td><td><a href="#A11">TXN-20261027-R9WD1C</a></td><td>Juan Dela Cruz</td><td>COE</td><td>Bin 1</td><td class="num">96.3 g</td><td class="num">9</td><td><span class="badge bad">Voided</span></td></tr>
+        </table></div>
+        <div class="pager"><span class="cur">1</span><a href="#A10">2</a><a href="#A10">3</a><a href="#A10">Next</a></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Sum of <code>net_weight_g</code> over deposits whose transaction is COMPLETED (Guidelines: "Total collected weight").</li></ol><ul><li>Filters/search are not designed <span class="tag q">Open</span>.</li></ul><p class="src">API §7.4 · System Plan §5.6</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A11">
+  <div class="screen-head"><span class="sid">A11</span><h3>Transaction detail and void</h3><span class="route">GET /admin/transactions/{transaction} · POST …/void</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/transactions/1042" data-shell="admin" data-active="A10">
+        <p><a href="#A10">← Transactions</a></p>
+        <h1>TXN-20261029-K7Q2XA <span class="badge ok" style="font-size:1rem;vertical-align:4px">Completed</span></h1>
+        <div class="grid2">
+          <div class="panel"><h2>Transaction</h2><dl class="kv"><dt>Completed</dt><dd>29 Oct 2026, 2:14:31pm</dd><dt>Points awarded</dt><dd>18 pts</dd><dt>Rule used</dt><dd>Launch rate · 0.1 pts/g</dd></dl></div>
+          <div class="panel"><h2>Session <span class="c">1</span></h2><dl class="kv"><dt>Student</dt><dd>Juan Dela Cruz (COE)</dd><dt>Bin</dt><dd><a href="#A15">Bin 1</a></dd><dt>Opened</dt><dd>2:13:52pm</dd><dt>Closed</dt><dd>2:14:31pm</dd><dt>Session id</dt><dd><code>b3f1c2d4-…</code></dd></dl></div>
+          <div class="panel"><h2>Weight</h2><dl class="kv"><dt>Net weight</dt><dd>184.6 g</dd><dt>Stable</dt><dd>Yes</dd><dt>Samples</dt><dd>20</dd></dl></div>
+          <div class="panel"><h2>Camera check and actuator</h2><dl class="kv"><dt>Method</dt><dd><code>cam_diff</code></dd><dt>Passed</dt><dd>Yes</dd><dt>Score</dt><dd>0.8700</dd><dt>Actuator OK</dt><dd>Yes</dd><dt>Cycle</dt><dd>3,200 ms</dd></dl></div>
+        </div>
+        <div class="panel narrow" style="border-color:var(--danger)">
+          <h2>Void this transaction <span class="c">2</span></h2>
+          <p>Juan Dela Cruz loses 18 pts. Their balance may go below zero. This can't be undone.</p>
+          <div class="field"><label>Reason</label><div class="input area">&nbsp;</div><div class="fhelp">Required. Up to 500 characters.</div></div>
+          <span class="btn danger">Void transaction</span>
+        </div>
+      </div>
+      <div class="frame" data-url="/admin/transactions/1040" data-shell="admin" data-active="A10" data-state="Already voided">
+        <div class="flash ok">Transaction voided. 9 pts were reversed.</div>
+        <h1>TXN-20261027-R9WD1C <span class="badge bad" style="font-size:1rem;vertical-align:4px">Voided</span></h1>
+        <div class="panel"><h2>Void</h2><dl class="kv"><dt>Reason</dt><dd style="white-space:normal">Item was a brick wrapped in a phone case.</dd><dt>Voided by</dt><dd>Ana Lim</dd><dt>Voided at</dt><dd>28 Oct 2026, 10:12am</dd></dl></div>
+        <p class="help">No void form: a transaction can be voided once. <span class="c">3</span></p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Everything the bin reported, so the admin can judge the deposit (weight, camera score, actuator).</li>
+      <li>Only while COMPLETED. Lock → VOIDED + reason/by/at → <code>PointsService</code> REVERSAL. Still counts toward that day's cap; excluded from collected weight.</li>
+      <li>Unique <code>(transaction_id, entry_type)</code> stops a second reversal.</li>
+    </ol><p class="src">API §7.6 Void · System Plan §5.7, §6.1</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A12">
+  <div class="screen-head"><span class="sid">A12</span><h3>Session review</h3><span class="route">GET /admin/sessions/review · admin.sessions.review</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/sessions/review" data-shell="admin" data-active="A12">
+        <h1>Session review</h1>
+        <p>Deposits the bin accepted but never confirmed within 10 minutes. The item may already be in the bin. <span class="c">1</span></p>
+        <div class="tscroll" role="region" aria-label="Sessions awaiting review" tabindex="0"><table class="t">
+          <tr><th>Session</th><th>Student</th><th>Bin</th><th>Opened (Asia/Manila)</th><th>Waiting for</th><th class="num">Weight</th><th class="num">Camera score</th></tr>
+          <tr><td><code>9a0e…41c2</code></td><td>Maria Santos</td><td>Bin 1</td><td>29 Oct, 11:02am</td><td>5 h 46 min</td><td class="num">310.2 g</td><td class="num">0.6120</td></tr>
+        </table></div>
+        <p class="help">No actions yet. <span class="c">2</span></p>
+      </div>
+      <div class="frame" data-url="/admin/sessions/review" data-shell="admin" data-active="A12" data-state="Empty">
+        <h1>Session review</h1>
+        <p><b>No sessions are waiting for review.</b></p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li><code>ACCEPTED</code> sessions older than the review threshold (10 min, config). Never expired silently. A late <code>complete</code> still credits and removes the row.</li>
+      <li>What an admin may do is <span class="tag q">Open</span> (API §10 Q1). Read-only until decided.</li>
+    </ol><p class="src">API §4.1, §7.4 · System Plan §5.3 rule 6</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A13">
+  <div class="screen-head"><span class="sid">A13</span><h3>Bins</h3><span class="route">GET /admin/bins · admin.bins.index</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/bins" data-shell="admin" data-active="A13">
+        <div class="actions" style="justify-content:space-between;margin-top:0"><h1 style="margin:0">Bins</h1><a class="btn primary" href="#A14">Register a bin</a></div>
+        <div class="tscroll" role="region" aria-label="Bins" tabindex="0"><table class="t">
+          <tr><th>Name</th><th>Device code</th><th>Location</th><th>Status</th><th>Fill level</th><th>Panel</th><th>Fault</th><th>Last seen</th><th>Firmware</th></tr>
+          <tr><td><a href="#A15">Bin 1</a></td><td>BIN-01</td><td>Main lobby</td><td><span class="badge ok">Active</span></td><td><span class="meter"><b style="width:17%"></b></span>17.5 % <span class="badge ok">OK</span></td><td>Closed</td><td>None</td><td>29 Oct, 4:48pm</td><td>1.0.3</td></tr>
+          <tr><td><a href="#A15">Test bench</a></td><td>BIN-DEV</td><td>Lab 3</td><td><span class="badge n">Inactive</span> <span class="c">1</span></td><td>No reading</td><td>—</td><td>—</td><td>Never</td><td>—</td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Status <code>active</code> / <code>inactive</code> / <code>retired</code>. Only active bins can call the device API (<code>DEVICE_INACTIVE</code>). Retired bins leave the dashboard.</li></ol><p class="src">API §7.4 · Schema §4</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A14">
+  <div class="screen-head"><span class="sid">A14</span><h3>Register bin</h3><span class="route">GET /admin/bins/create · POST /admin/bins</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/bins/create" data-shell="admin" data-active="A13">
+        <p><a href="#A13">← Bins</a></p>
+        <h1>Register a bin</h1>
+        <div class="narrow">
+          <div class="row2"><div class="field"><label>Device code</label><div class="input">BIN-01</div><div class="fhelp">Unique. The bin sends it with every request.</div></div><div class="field"><label>Name</label><div class="input">Bin 1</div></div></div>
+          <div class="field"><label>Location <span class="opt">(optional)</span></label><div class="input">&nbsp;</div></div>
+          <div class="row2"><div class="field"><label>Empty distance (mm) <span class="c">1</span></label><div class="input">&nbsp;</div><div class="fhelp">Ultrasonic reading with the bin empty. Above 0.</div></div><div class="field"><label>Fill threshold (%)</label><div class="input filled">90</div><div class="fhelp">0–100. The bin counts as full at or above this.</div></div></div>
+          <h2>Load cell calibration <span class="opt" style="font-weight:400">(optional)</span> <span class="c">2</span></h2>
+          <div class="row2"><div class="field"><label>Offset</label><div class="input">&nbsp;</div></div><div class="field"><label>Scale factor</label><div class="input">&nbsp;</div></div></div>
+          <div class="field"><label>Status</label><div class="input select filled">Active</div></div>
+          <p class="help">Registering creates the bin's secret. You'll see it once on the next page.</p>
+          <div class="actions"><a class="btn primary" href="#A17">Register bin</a><a href="#A13">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Fill % = (empty − distance) ÷ empty × 100, computed by the server.</li>
+      <li>Saving new values sets <code>calibrated_at</code>. Sent to the bin by <code>GET /device/config</code>.</li>
+    </ol><p class="src">API §5.2, §7.6 Register or edit a bin</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A15">
+  <div class="screen-head"><span class="sid">A15</span><h3>Bin detail</h3><span class="route">GET /admin/bins/{device} · POST /admin/bins/{device}/secret</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/bins/1" data-shell="admin" data-active="A13">
+        <p><a href="#A13">← Bins</a></p>
+        <div class="actions" style="justify-content:space-between;margin-top:0"><h1 style="margin:0">Bin 1</h1><a class="btn" href="#A16">Edit bin</a></div>
+        <div class="grid2">
+          <div class="panel"><h2>Now <span class="c">1</span></h2><dl class="kv">
+            <dt>Fill level</dt><dd><span class="meter"><b style="width:17%"></b></span>17.5 % <span class="badge ok">OK</span></dd>
+            <dt>Service panel</dt><dd>Closed</dd>
+            <dt>Fault</dt><dd><span class="badge bad">Actuator jam</span><br><span class="help" style="white-space:normal">The pusher stalled. The bin stays out of service until the service panel is opened and closed.</span></dd>
+            <dt>Last seen</dt><dd>29 Oct 2026, 4:48:12pm</dd><dt>Firmware</dt><dd>1.0.3</dd></dl></div>
+          <div class="panel"><h2>Setup</h2><dl class="kv">
+            <dt>Device code</dt><dd>BIN-01</dd><dt>Location</dt><dd>Main lobby</dd><dt>Status</dt><dd><span class="badge ok">Active</span></dd>
+            <dt>Empty distance</dt><dd>500.00 mm</dd><dt>Fill threshold</dt><dd>90 %</dd>
+            <dt>Calibration</dt><dd>offset 8412.5, scale 21.45<br><span class="help">calibrated 20 Oct 2026</span></dd></dl></div>
+        </div>
+        <h2>Fill history <span class="c">2</span></h2>
+        <div class="tscroll" role="region" aria-label="Fill history" tabindex="0"><table class="t">
+          <tr><th>Time (Asia/Manila)</th><th class="num">Distance</th><th class="num">Fill</th><th>Status</th><th>Panel</th><th>Fault</th></tr>
+          <tr><td>29 Oct, 4:48:12pm</td><td class="num">412.5 mm</td><td class="num">17.5 %</td><td>OK</td><td>Closed</td><td><code>ACTUATOR_JAM</code></td></tr>
+          <tr><td>29 Oct, 1:20:04pm</td><td class="num">413.0 mm</td><td class="num">17.4 %</td><td>OK</td><td>Closed</td><td><code>ACTUATOR_JAM</code></td></tr>
+          <tr><td>29 Oct, 1:05:40pm</td><td class="num">418.2 mm</td><td class="num">16.4 %</td><td>OK</td><td>Open</td><td>—</td></tr>
+        </table></div>
+        <div class="pager"><span class="cur">1</span><a href="#A15">2</a><a href="#A15">Next</a></div>
+        <div class="panel narrow" style="margin-top:24px">
+          <h2>Device secret <span class="c">3</span></h2>
+          <p>Issue a new secret if the old one was lost or exposed. The old secret stops working at once; the bin can't take deposits until you enter the new one in its setup portal.</p>
+          <a class="btn danger" href="#A17">Issue a new secret</a>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>From the latest <code>bin_telemetry</code> row. Fault codes: <code>ACTUATOR_JAM</code>, <code>ACTUATOR_TIMEOUT</code>, <code>ACTUATOR_RETRACT_FAILED</code> (latched until the panel is cycled), <code>STATION_UNREACHABLE</code>, <code>CAMERA_UNAVAILABLE</code>, <code>SCANNER_UNAVAILABLE</code> (clear themselves). The bin decides; the page only shows.</li>
+      <li>Paginated readings, newest first.</li>
+      <li><code>POST …/secret</code> → <a href="#A17">A17</a>. Placement on this page is suggested.</li>
+    </ol><p class="src">API §5.3, §7.4 · Schema §5 · System Plan §8.2</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A16">
+  <div class="screen-head"><span class="sid">A16</span><h3>Edit bin</h3><span class="route">GET /admin/bins/{device}/edit · PUT /admin/bins/{device}</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/bins/1/edit" data-shell="admin" data-active="A13">
+        <p><a href="#A15">← Bin 1</a></p>
+        <h1>Edit Bin 1</h1>
+        <div class="narrow">
+          <div class="row2"><div class="field"><label>Device code</label><div class="input filled">BIN-01</div></div><div class="field"><label>Name</label><div class="input filled">Bin 1</div></div></div>
+          <div class="field"><label>Location <span class="opt">(optional)</span></label><div class="input filled">Main lobby</div></div>
+          <div class="row2"><div class="field"><label>Empty distance (mm)</label><div class="input filled">500.00</div></div><div class="field"><label>Fill threshold (%)</label><div class="input filled">90</div></div></div>
+          <h2>Load cell calibration</h2>
+          <p class="help">Last calibrated 20 Oct 2026. Saving new values updates this date. The bin uses them after its next config fetch. <span class="c">1</span></p>
+          <div class="row2"><div class="field"><label>Offset</label><div class="input filled">8412.5</div></div><div class="field"><label>Scale factor</label><div class="input filled">21.45</div></div></div>
+          <div class="field"><label>Status <span class="c">2</span></label><div class="input select filled">Active</div><div class="fhelp">Inactive or retired bins can't take deposits. Retired bins leave the dashboard.</div></div>
+          <div class="actions"><span class="btn primary">Save changes</span><a href="#A15">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Bin fetches <code>GET /device/config</code> at boot and with each telemetry send <span class="tag p">P16</span>.</li>
+      <li>No delete; switch off with status <span class="tag p">P33</span>. The secret is not on this form.</li>
+    </ol><p class="src">API §7.6 · Schema §4</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A17">
+  <div class="screen-head"><span class="sid">A17</span><h3>Bin secret (shown once)</h3><span class="route">Response to POST /admin/bins or POST /admin/bins/{device}/secret</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/bins/1/secret" data-shell="admin" data-active="A13">
+        <div class="flash ok">Bin 1 is registered.</div>
+        <h1>Copy the bin's secret now</h1>
+        <p><b>This is the only time it is shown.</b> Enter it in the bin's setup portal together with the device code. <span class="c">1</span></p>
+        <dl class="kv" style="margin-bottom:12px"><dt>Device code</dt><dd>BIN-01</dd></dl>
+        <div class="secret" aria-label="Device secret">3f9a0c1e7b2d48a6f5e01c9b7d3a2e8f4c6b0a1d9e7f3c5b2a8d6e4f1c0b9a7e</div>
+        <p class="help" style="margin-top:8px">If you lose it, issue a new secret from the bin's page. The old one stops working.</p>
+        <div class="actions"><a class="btn primary" href="#A15">Done — go to the bin</a></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>64 hex characters from 32 random bytes <span class="tag p">P39</span>. Stored encrypted with <code>APP_KEY</code>. Never shown again, never in a URL, never refilled. The example here is made up.</li></ol><p class="src">API §7.6 · System Plan §8 · AGENTS §2.10</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A18">
+  <div class="screen-head"><span class="sid">A18</span><h3>Rewards (admin)</h3><span class="route">GET /admin/rewards · admin.rewards.index</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/rewards" data-shell="admin" data-active="A18">
+        <div class="actions" style="justify-content:space-between;margin-top:0"><h1 style="margin:0">Rewards</h1><a class="btn primary" href="#A19">New reward</a></div>
+        <div class="tscroll" role="region" aria-label="Rewards" tabindex="0"><table class="t">
+          <tr><th>Name</th><th class="num">Points cost</th><th class="num">Stock</th><th>Status</th></tr>
+          <tr><td><a href="#A20">Reusable tumbler</a></td><td class="num">150</td><td class="num">12</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td><a href="#A20">Canteen meal voucher</a></td><td class="num">80</td><td class="num">40</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td><a href="#A20">School lanyard</a></td><td class="num">60</td><td class="num">0</td><td><span class="badge ok">Active</span></td></tr>
+          <tr><td><a href="#A20">Old notebook</a></td><td class="num">50</td><td class="num">3</td><td><span class="badge n">Inactive</span></td></tr>
+        </table></div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ul><li>Inactive rewards are hidden from <a href="#S6">S6</a>. No delete <span class="tag p">P33</span>.</li></ul><p class="src">API §7.4 · Guidelines "Reward management"</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A19">
+  <div class="screen-head"><span class="sid">A19</span><h3>New reward</h3><span class="route">GET /admin/rewards/create · POST /admin/rewards</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/rewards/create" data-shell="admin" data-active="A18">
+        <p><a href="#A18">← Rewards</a></p>
+        <h1>New reward</h1>
+        <div class="narrow">
+          <div class="field"><label>Name</label><div class="input">&nbsp;</div></div>
+          <div class="field"><label>Description <span class="opt">(optional)</span></label><div class="input area">&nbsp;</div></div>
+          <div class="row2"><div class="field"><label>Points cost <span class="c">1</span></label><div class="input">&nbsp;</div><div class="fhelp">Whole number, 1 or more.</div></div><div class="field"><label>Stock</label><div class="input">&nbsp;</div><div class="fhelp">Whole number, 0 or more.</div></div></div>
+          <div class="check"><i class="on"></i> Active — students can see and redeem it</div>
+          <p class="help">Pricing tip: decide how many grams should earn the cheapest reward. Its cost is those grams × the current points per gram.</p>
+          <div class="actions"><span class="btn primary">Create reward</span><a href="#A18">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Point values need instructor approval (Step 9). Example values only.</li></ol><p class="src">API §7.6 · System Plan §5.7</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A20">
+  <div class="screen-head"><span class="sid">A20</span><h3>Edit reward</h3><span class="route">GET /admin/rewards/{reward}/edit · PUT /admin/rewards/{reward}</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/rewards/1/edit" data-shell="admin" data-active="A18">
+        <p><a href="#A18">← Rewards</a></p>
+        <h1>Edit Reusable tumbler</h1>
+        <div class="narrow">
+          <div class="field"><label>Name</label><div class="input filled">Reusable tumbler</div></div>
+          <div class="field"><label>Description <span class="opt">(optional)</span></label><div class="input area filled">Stainless, 500 ml.</div></div>
+          <div class="row2"><div class="field"><label>Points cost</label><div class="input filled">150</div><div class="fhelp">Changing the price doesn't change past redemptions. <span class="c">1</span></div></div><div class="field"><label>Stock</label><div class="input filled">12</div></div></div>
+          <div class="check"><i class="on"></i> Active — students can see and redeem it</div>
+          <div class="actions"><span class="btn primary">Save changes</span><a href="#A18">Cancel</a></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol><li>Each redemption stores its own cost.</li></ol><p class="src">API §7.6 · System Plan §5.7</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A21">
+  <div class="screen-head"><span class="sid">A21</span><h3>Redemptions (admin)</h3><span class="route">GET /admin/redemptions · POST …/{redemption}/fulfil · POST …/{redemption}/cancel</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/redemptions" data-shell="admin" data-active="A21">
+        <div class="flash ok">RDM-20261020-H8KC5P marked fulfilled. Juan Dela Cruz has been notified.</div>
+        <h1>Redemptions</h1>
+        <div class="tscroll" role="region" aria-label="Redemptions" tabindex="0"><table class="t">
+          <tr><th>Date (Asia/Manila)</th><th>Code</th><th>Student</th><th>Org</th><th>Reward</th><th class="num">Qty</th><th class="num">Points</th><th>Status</th><th>Actions <span class="c">1</span></th></tr>
+          <tr><td>29 Oct, 3:01pm</td><td>RDM-20261029-T4VN2Q</td><td>Juan Dela Cruz</td><td>COE</td><td>Canteen meal voucher</td><td class="num">2</td><td class="num">160</td><td><span class="badge warn">Pending</span></td><td><span class="btn primary sm">Mark fulfilled</span> <span class="btn danger sm">Cancel</span></td></tr>
+          <tr><td>28 Oct, 10:20am</td><td>RDM-20261028-P1QW6E</td><td>Maria Santos</td><td>CCS</td><td>Reusable tumbler</td><td class="num">1</td><td class="num">150</td><td><span class="badge warn">Pending</span></td><td><span class="btn primary sm">Mark fulfilled</span> <span class="btn danger sm">Cancel</span></td></tr>
+          <tr><td>20 Oct, 11:30am</td><td>RDM-20261020-H8KC5P</td><td>Juan Dela Cruz</td><td>COE</td><td>Reusable tumbler</td><td class="num">1</td><td class="num">150</td><td><span class="badge ok">Fulfilled</span></td><td class="help">21 Oct</td></tr>
+          <tr><td>15 Oct, 1:12pm</td><td>RDM-20261015-Z2LM7D</td><td>Juan Dela Cruz</td><td>COE</td><td>School lanyard</td><td class="num">1</td><td class="num">60</td><td><span class="badge bad">Cancelled</span></td><td></td></tr>
+        </table></div>
+        <p class="help">Cancel returns the points and the stock. A fulfilled redemption can't be cancelled. <span class="c">2</span></p>
+      </div>
+      <div class="frame" data-url="/admin/redemptions" data-shell="admin" data-active="A21" data-state="Lost a race">
+        <div class="flash warn">RDM-20261028-P1QW6E was already cancelled by another admin. Nothing changed. <span class="c">3</span></div>
+        <h1>Redemptions</h1>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>Each button is its own small POST form on a PENDING row. Pending first is suggested.</li>
+      <li>Fulfil → FULFILLED + <code>fulfilled_at</code>, then <code>RedemptionFulfilled</code> → student <a href="#S9">S9</a>. Cancel → CANCELLED, stock back, REVERSAL row.</li>
+      <li>Both lock the row and check it is still PENDING.</li>
+    </ol><p class="src">API §7.6 Fulfil or cancel · System Plan §6.1</p></aside>
+  </div>
+</section>
+
+<section class="screen" id="A22">
+  <div class="screen-head"><span class="sid">A22</span><h3>Points rate</h3><span class="route">GET /admin/points-rate · POST /admin/points-rate</span></div>
+  <div class="screen-body">
+    <div class="frames">
+      <div class="frame" data-url="/admin/points-rate" data-shell="admin" data-active="A22">
+        <h1>Points rate</h1>
+        <div class="panel"><h2>Current rule <span class="c">1</span></h2><dl class="kv">
+          <dt>Name</dt><dd>Launch rate</dd><dt>Points per gram</dt><dd>0.1000</dd><dt>Minimum weight</dt><dd>10.00 g</dd><dt>Maximum weight</dt><dd>2,000.00 g</dd><dt>Daily cap</dt><dd>300 pts per student</dd><dt>In effect since</dt><dd>3 Oct 2026, 8:00am</dd></dl></div>
+        <div class="panel narrow">
+          <h2>Save a new rule <span class="c">2</span></h2>
+          <div class="field"><label>Name</label><div class="input">&nbsp;</div></div>
+          <div class="row2"><div class="field"><label>Points per gram</label><div class="input">&nbsp;</div><div class="fhelp">Above 0.</div></div><div class="field"><label>Minimum weight (g)</label><div class="input">&nbsp;</div><div class="fhelp">At least 1 ÷ points per gram, so a deposit never earns 0.</div></div></div>
+          <div class="row2"><div class="field"><label>Maximum weight (g) <span class="opt">(optional)</span></label><div class="input">&nbsp;</div><div class="fhelp">Above the minimum, up to the bin's hardware limit. Empty = no limit.</div></div><div class="field"><label>Daily points cap <span class="opt">(optional)</span></label><div class="input">&nbsp;</div><div class="fhelp">Whole number, 1 or more. Empty = no cap.</div></div></div>
+          <p class="help">The new rule starts now and the current one ends. Deposits already in progress keep the rule they started under. <span class="c">3</span></p>
+          <span class="btn primary">Save new rule</span>
+        </div>
+        <h2>Past rules</h2>
+        <div class="tscroll" role="region" aria-label="Past rules" tabindex="0"><table class="t">
+          <tr><th>Name</th><th class="num">Pts/g</th><th class="num">Min</th><th class="num">Max</th><th class="num">Daily cap</th><th>From</th><th>To</th></tr>
+          <tr><td>Pilot</td><td class="num">0.0500</td><td class="num">20.00 g</td><td class="num">1,500.00 g</td><td class="num">—</td><td>20 Sep 2026</td><td>3 Oct 2026</td></tr>
+        </table></div>
+      </div>
+      <div class="frame" data-url="/admin/points-rate" data-shell="admin" data-active="A22" data-state="No rule yet (first setup)">
+        <h1>Points rate</h1>
+        <div class="flash bad">No points rule is in effect. The bin refuses every deposit until you save one. <span class="c">4</span></div>
+        <p class="help">…then the "Save a new rule" form as above.</p>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ol>
+      <li>The rule where <code>effective_from ≤ now</code> and <code>effective_to</code> is NULL. Example values only; real ones need instructor approval.</li>
+      <li>Hardware limit is a config setting <span class="tag p">P37</span>; its value is <span class="tag q">Open</span>.</li>
+      <li>One transaction: close current (<code>effective_to = now</code>), insert new. No future-dated rules <span class="tag p">P38</span>.</li>
+      <li>Sessions are refused with <code>NO_REWARD_RULE</code>.</li>
+    </ol><p class="src">API §7.6 Save a points rule · System Plan §5.7</p></aside>
+  </div>
+</section>
+
+<!-- =============================================================== ERRORS -->
+<h2 class="group-title">System and error pages</h2>
+<p class="group-intro">Guest shell, one sentence and a way back. Device routes never get these; they always answer JSON.</p>
+
+<section class="screen" id="E">
+  <div class="screen-head"><span class="sid">E1–E5</span><h3>Error pages</h3><span class="route">403 · 404 · 419 · 429 · 500/503</span></div>
+  <div class="screen-body">
+    <div class="frames" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+      <div class="frame" data-url="/admin" data-shell="guest" data-nav="none" data-state="E1 · 403">
+        <h1>You don't have access to this page</h1><p>This page is for admins.</p><a class="btn primary" href="#S2">Go to your home page</a>
+      </div>
+      <div class="frame" data-url="/email/verify/7/ab12…" data-shell="guest" data-nav="none" data-state="E1 · 403 (email link)">
+        <h1>This confirmation link doesn't work</h1><p>It may have expired. Send yourself a new one.</p><a class="btn primary" href="#G5">Send a new link</a>
+      </div>
+      <div class="frame" data-url="/admin/transactions/99999" data-shell="guest" data-nav="none" data-state="E2 · 404">
+        <h1>Page not found</h1><p>We couldn't find that page or record.</p><a class="btn primary" href="#S2">Go to your home page</a>
+      </div>
+      <div class="frame" data-url="/redemptions" data-shell="guest" data-nav="none" data-state="E3 · 419">
+        <h1>This page expired</h1><p>The form was open too long. Go back, reload the page and try again. Nothing was saved.</p><a class="btn primary" href="#G1">Log in again</a>
+      </div>
+      <div class="frame" data-url="/register" data-shell="guest" data-nav="none" data-state="E4 · 429">
+        <h1>Too many tries</h1><p>Wait a minute, then try again.</p><a class="btn" href="#G2">Back</a>
+      </div>
+      <div class="frame" data-url="/home" data-shell="guest" data-nav="none" data-state="E5 · 500 / 503">
+        <h1>Something on our side failed</h1><p>Your last action may not have been saved. Try again in a moment.</p><a class="btn primary" href="#S2">Try again</a>
+      </div>
+    </div>
+    <aside class="notes"><h4>Notes</h4><ul>
+      <li>403: a student on <code>/admin</code>; a bad or expired email link.</li>
+      <li>419: CSRF token expired. 429: register (5/min) and resend (6/min) limits; login shows its own limit on <a href="#G1">G1</a>.</li>
+      <li>Never show a success state on an error.</li>
+    </ul><p class="src">API §7.1, §7.2 · DESIGN §8</p></aside>
+  </div>
+</section>
+
+<!-- =============================================================== KIOSK -->
+<h2 class="group-title">The bin's touchscreen (not the web app)</h2>
+<p class="group-intro">Served by the bin station on <code>localhost</code>, shown full-screen on the 7" 1024×600 touchscreen. The controller sets the screen with <code>PUT /station/v1/screen</code>; this page never talks to Laravel. Everything here is <span class="tag p">P44</span>. Shown so the deposit workflow (W5) is complete; DESIGN.md does not govern it.</p>
+
+<section class="screen" id="K">
+  <div class="screen-head"><span class="sid">K1–K9</span><h3>Kiosk screens</h3><span class="route">IDLE · WELCOME · WEIGHING · ACCEPTED · DONE · PENDING · PROBLEM · BIN_FULL · OFFLINE</span></div>
+  <div class="screen-body">
+    <div class="kgrid">
+      <div><h4>K1 · IDLE — ready</h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#22c55e"></i>Green</span><div class="big">Scan your QR code to start</div><div class="mid">Open your profile on the website and hold the code to the scanner.</div></div></div></div>
+      <div><h4>K2 · WELCOME — <code>name</code></h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#f59e0b"></i>Amber</span><div class="big">Hi, Juan</div><div class="mid">Place your item on the platform.</div><span class="btn cancel">Cancel</span></div></div></div>
+      <div><h4>K3 · WEIGHING</h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#f59e0b"></i>Amber</span><div class="big">Checking your item…</div><div class="mid">Keep your hands off the platform.</div><span class="btn cancel">Cancel</span></div></div></div>
+      <div><h4>K4 · ACCEPTED — <code>weight_g</code>, <code>points</code></h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#f59e0b"></i>Amber</span><div class="mid">Accepted · 184.6 g</div><div class="num">+18 pts</div><div class="mid">Moving your item into the bin…</div></div></div></div>
+      <div><h4>K5 · DONE — <code>points</code>, <code>balance</code></h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#22c55e"></i>Green</span><div class="big">Thank you!</div><div class="num">+18 pts</div><div class="mid">Your balance: 240 pts</div></div></div></div>
+      <div><h4>K6 · PENDING</h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#f59e0b"></i>Amber</span><div class="big">Your points are on their way</div><div class="mid">We couldn't reach the server. Your item is in the bin and your points will be added soon.</div></div></div></div>
+      <div><h4>K7 · PROBLEM — <code>message</code></h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#ef4444"></i>Red</span><div class="big">We couldn't take this item</div><div class="mid">This item is too heavy for the bin. Please take it to the admin office.</div></div></div></div>
+      <div><h4>K8 · BIN_FULL</h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#ef4444"></i>Red</span><div class="big">This bin is full</div><div class="mid">Staff have been told. Please come back later.</div></div></div></div>
+      <div><h4>K9 · OFFLINE</h4><div class="frame kiosk"><div class="kpg"><span class="led"><i style="background:#ef4444"></i>Red</span><div class="big">Out of service</div><div class="mid">This bin can't take deposits right now.</div></div></div></div>
+    </div>
+    <aside class="notes"><h4>Deposit sequence</h4><ol>
+      <li>K1: controller ready, scanner armed.</li>
+      <li>Scan → <code>POST /device/sessions</code> → K2 (or K7/K8 on refusal).</li>
+      <li>Stable weight + camera check → K3.</li>
+      <li><code>deposit</code> accepted → K4; rejected → K7.</li>
+      <li>Actuator, then <code>complete</code> → K5; unreachable → K6 and retry before the next deposit.</li>
+      <li>Cancel touch or 90 s timeout → session ends, back to K1.</li>
+    </ol>
+    <p>K7 messages are plain words, never codes. A full list is in the PDF, Appendix A.</p>
+    <p class="src">API §5, §11 · System Plan §8.2–8.3</p></aside>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+  // Builds the guest/student/admin shells and the browser chrome around each
+  // frame, so the pages above only hold their own content. No data is fetched.
+  (function () {
+    var STUDENT = [["S2", "Home"], ["S6", "Rewards"], ["S8", "My redemptions"], ["S4", "History"],
+      ["S5", "Leaderboard"], ["S9", "Notifications"], ["S3", "Profile"]];
+    var ADMIN = [["Overview", [["A1", "Dashboard"], ["S9", "Notifications"]]],
+      ["Bins", [["A13", "Bins"], ["A12", "Session review"]]],
+      ["Deposits", [["A10", "Transactions"]]],
+      ["Rewards", [["A21", "Redemptions"], ["A18", "Rewards"], ["A22", "Points rate"]]],
+      ["People", [["A4", "Users"], ["A7", "Organizations"]]],
+      ["Reports", [["A2", "Organization leaderboard"], ["A3", "Reports"]]],
+      ["My account", [["S2", "Student view"], ["G1", "Log out"]]]];
+
+    function link(id, label, active) {
+      return '<a href="#' + id + '"' + (id === active ? ' aria-current="page"' : "") + ">" + label + "</a>";
+    }
+
+    document.querySelectorAll(".frame[data-shell]").forEach(function (frame) {
+      var shell = frame.dataset.shell, active = frame.dataset.active, content = frame.innerHTML, html;
+      if (shell === "guest") {
+        var nav = frame.dataset.nav === "none" ? "" : frame.dataset.nav === "signedout"
+          ? '<nav aria-label="Account"><a href="#G1">Log out</a></nav>'
+          : '<nav aria-label="Guest"><a href="#G1">Log in</a><a href="#G2">Register</a></nav>';
+        html = '<div class="pg shell-guest"><header><a class="brand" href="#G1">Smart E-Waste</a>' + nav +
+          '</header><div class="gmain"><div class="gcard">' + content + "</div></div></div>";
+      } else if (shell === "student") {
+        var items = STUDENT.map(function (n) { return link(n[0], n[1], active); }).join("");
+        if (frame.dataset.who === "admin") items += '<a href="#A1">Admin</a>';
+        html = '<div class="pg shell-student"><header><a class="brand" href="#S2">Smart E-Waste</a>' +
+          '<nav class="snav" aria-label="Main">' + items + '<a class="logout" href="#G1">Log out</a></nav></header>' +
+          '<div class="smain">' + content + "</div></div>";
+      } else {
+        // State frames repeat a page already drawn in full, so they show a short nav.
+        var groups = frame.dataset.state ? '<p class="short">Admin navigation, as in the first frame.</p>' :
+          ADMIN.map(function (g) {
+            return '<div class="ag">' + g[0] + "</div>" + g[1].map(function (n) { return link(n[0], n[1], active); }).join("");
+          }).join("");
+        html = '<div class="pg shell-admin"><aside><a class="brand" href="#A1">Smart E-Waste · Admin</a>' +
+          '<nav class="anav" aria-label="Admin">' + groups + '</nav></aside><div class="amain">' + content + "</div></div>";
+      }
+      var state = frame.dataset.state ? '<span class="state">State: ' + frame.dataset.state + "</span>" : "";
+      frame.innerHTML = '<div class="chrome" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span>' +
+        '<span class="url">ewaste.example.edu' + (frame.dataset.url || "") + "</span>" + state + "</div>" + html;
+    });
+
+    function bind(id, cls, invert) {
+      var box = document.getElementById(id);
+      var apply = function () { document.body.classList.toggle(cls, invert ? !box.checked : box.checked); };
+      box.addEventListener("change", apply);
+      apply();
+    }
+    bind("t-phone", "phone", false);
+    bind("t-notes", "no-notes", true);
+  })();
+</script>
+</body>
+</html>

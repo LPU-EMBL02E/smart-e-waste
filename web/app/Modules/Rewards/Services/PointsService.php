@@ -19,13 +19,12 @@ use App\Modules\Rewards\Support\LedgerEntryType;
  * The ledger is append-only. Nothing is ever edited or deleted: a correction is
  * a REVERSAL row, and a balance is always SUM(points_delta)
  * (System_Plan.md §5.7 rule 7).
- *
- * TODO: pointsEarnedBy, debitRedemption, reverseTransaction and
- * reverseRedemption (redemptions, voids and leaderboards; not the deposit path).
- * The rules they must follow are in their docblocks.
  */
 class PointsService
 {
+    /** point_ledger.description is VARCHAR(255) (Database_Schema.md §9). */
+    private const DESCRIPTION_MAX_LENGTH = 255;
+
     /**
      * A user's balance: SUM(point_ledger.points_delta).
      *
@@ -48,9 +47,9 @@ class PointsService
      */
     public function pointsEarnedBy(User $user): int
     {
-        // TODO: sum points_delta where entry_type IN (EARN, REVERSAL)
-        //       AND transaction_id IS NOT NULL
-        throw new \LogicException('Not implemented.');
+        return (int) PointLedgerEntry::where('user_id', $user->id)
+            ->countsAsEarned()
+            ->sum('points_delta');
     }
 
     /**
@@ -116,8 +115,13 @@ class PointsService
      */
     public function debitRedemption(Redemption $redemption): PointLedgerEntry
     {
-        // TODO: insert REDEEM, -$redemption->points_cost
-        throw new \LogicException('Not implemented.');
+        return PointLedgerEntry::create([
+            'user_id' => $redemption->user_id,
+            'redemption_id' => $redemption->id,
+            'entry_type' => LedgerEntryType::Redeem,
+            'points_delta' => -$redemption->points_cost,
+            'description' => "Redemption {$redemption->redemption_code}",
+        ]);
     }
 
     /**
@@ -127,8 +131,13 @@ class PointsService
      */
     public function reverseTransaction(Transaction $transaction, string $reason): PointLedgerEntry
     {
-        // TODO: insert REVERSAL, -$transaction->points_awarded, description $reason
-        throw new \LogicException('Not implemented.');
+        return PointLedgerEntry::create([
+            'user_id' => $transaction->session->user_id,
+            'transaction_id' => $transaction->id,
+            'entry_type' => LedgerEntryType::Reversal,
+            'points_delta' => -$transaction->points_awarded,
+            'description' => $this->description($reason),
+        ]);
     }
 
     /**
@@ -137,8 +146,13 @@ class PointsService
      */
     public function reverseRedemption(Redemption $redemption, string $reason): PointLedgerEntry
     {
-        // TODO: insert REVERSAL, +$redemption->points_cost, description $reason
-        throw new \LogicException('Not implemented.');
+        return PointLedgerEntry::create([
+            'user_id' => $redemption->user_id,
+            'redemption_id' => $redemption->id,
+            'entry_type' => LedgerEntryType::Reversal,
+            'points_delta' => $redemption->points_cost,
+            'description' => $this->description($reason),
+        ]);
     }
 
     /**
@@ -151,5 +165,17 @@ class PointsService
     public function ruleInEffectAt(\DateTimeInterface $at): ?RewardRule
     {
         return RewardRule::inEffectAt($at)->first();
+    }
+
+    /**
+     * A reason as a ledger description. A void reason may be up to 500
+     * characters (API_Design.md §7.6) and keeps its full text on the
+     * transaction row; the ledger copy is cut to fit its column.
+     */
+    private function description(string $reason): string
+    {
+        return mb_strlen($reason) <= self::DESCRIPTION_MAX_LENGTH
+            ? $reason
+            : mb_substr($reason, 0, self::DESCRIPTION_MAX_LENGTH - 1).'…';
     }
 }
