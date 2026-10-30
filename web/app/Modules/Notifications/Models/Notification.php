@@ -4,6 +4,7 @@ namespace App\Modules\Notifications\Models;
 
 use App\Modules\Identity\Models\User;
 use App\Modules\Notifications\Support\NotificationType;
+use Database\Factories\Notifications\NotificationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,11 @@ class Notification extends Model
         'title',
         'message',
     ];
+
+    protected static function newFactory(): NotificationFactory
+    {
+        return NotificationFactory::new();
+    }
 
     protected function casts(): array
     {
