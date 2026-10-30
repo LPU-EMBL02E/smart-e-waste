@@ -59,4 +59,15 @@ class Notification extends Model
     {
         return $this->read_at !== null;
     }
+
+    /**
+     * Sets read_at the first time only (API_Design.md §7.3). Reading an
+     * already-read notification again changes nothing.
+     */
+    public function markAsRead(): void
+    {
+        if (! $this->isRead()) {
+            $this->forceFill(['read_at' => now()])->save();
+        }
+    }
 }
