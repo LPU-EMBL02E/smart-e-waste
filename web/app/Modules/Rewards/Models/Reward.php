@@ -22,6 +22,15 @@ class Reward extends Model
 {
     use HasFactory;
 
+    /**
+     * The column defaults from Database_Schema.md §10, so a new reward's form
+     * starts from them.
+     */
+    protected $attributes = [
+        'stock_quantity' => 0,
+        'is_active' => true,
+    ];
+
     protected $fillable = [
         'name',
         'description',
