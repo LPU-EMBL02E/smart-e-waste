@@ -3,6 +3,7 @@
 namespace App\Modules\Rewards\Services;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Rewards\Events\RedemptionFulfilled;
 use App\Modules\Rewards\Models\Redemption;
 use App\Modules\Rewards\Models\Reward;
 use App\Modules\Rewards\Support\RedemptionRefused;
@@ -23,8 +24,6 @@ use Illuminate\Support\Facades\DB;
  * Only PointsService writes point_ledger; this service calls it inside its own
  * transaction (System_Plan.md §4, boundary rule 1). A refusal is a
  * RedemptionRefused thrown inside the transaction, so it changes nothing.
- *
- * TODO: fulfil() and cancel().
  */
 class RedemptionService
 {
@@ -104,26 +103,80 @@ class RedemptionService
     }
 
     /**
-     * Mark a redemption fulfilled. Only while PENDING. Sets status and
-     * fulfilled_at, then dispatches RedemptionFulfilled, whose listener writes
-     * the student's notification.
+     * Mark a redemption fulfilled: the admin handed the reward over.
+     * API_Design.md §7.6 ("Fulfil or cancel a redemption"), P24.
+     *
+     * Only while PENDING. Sets status and fulfilled_at, then dispatches
+     * RedemptionFulfilled AFTER the commit; its listener writes the student's
+     * notification.
      */
     public function fulfil(Redemption $redemption): Redemption
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        $fulfilled = DB::transaction(function () use ($redemption) {
+            $redemption = $this->lockPending($redemption);
+
+            $redemption->forceFill([
+                'status' => Redemption::STATUS_FULFILLED,
+                'fulfilled_at' => now(),
+            ])->save();
+
+            return $redemption;
+        });
+
+        RedemptionFulfilled::dispatch($fulfilled);
+
+        return $fulfilled;
     }
 
     /**
-     * Cancel a PENDING redemption. One database transaction: status becomes
-     * CANCELLED, the stock is returned, and PointsService writes a REVERSAL row
-     * giving the points back.
+     * Cancel a PENDING redemption. API_Design.md §7.6, P24.
      *
-     * A FULFILLED redemption cannot be cancelled (System_Plan.md §6.1).
+     * One database transaction: status becomes CANCELLED, the stock is returned,
+     * and PointsService writes a REVERSAL row giving the points back, with the
+     * admin's reason as its description. A FULFILLED redemption cannot be
+     * cancelled: the student already has the item (System_Plan.md §6.1).
+     * Nothing is dispatched; docs/ defines no notification for a cancel.
      */
     public function cancel(Redemption $redemption, string $reason): Redemption
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        return DB::transaction(function () use ($redemption, $reason) {
+            $redemption = $this->lockPending($redemption);
+
+            $redemption->update(['status' => Redemption::STATUS_CANCELLED]);
+
+            Reward::whereKey($redemption->reward_id)->increment('stock_quantity', $redemption->quantity);
+
+            $this->points->reverseRedemption($redemption, $reason);
+
+            return $redemption;
+        });
+    }
+
+    /**
+     * Every redemption, newest first, for the admin list, with the student and
+     * the reward eager-loaded.
+     *
+     * @return LengthAwarePaginator<int, Redemption>
+     */
+    public function list(): LengthAwarePaginator
+    {
+        return Redemption::with(['user', 'reward'])->latest('id')->paginate();
+    }
+
+    /**
+     * Re-reads the redemption with a row lock as the first read of the
+     * transaction, never trusting the route-bound copy, and refuses unless it is
+     * still PENDING. This is what stops one redemption being both fulfilled and
+     * cancelled (P24).
+     */
+    private function lockPending(Redemption $redemption): Redemption
+    {
+        $locked = Redemption::whereKey($redemption->id)->lockForUpdate()->firstOrFail();
+
+        if (! $locked->isPending()) {
+            throw RedemptionRefused::notPending($locked->status);
+        }
+
+        return $locked;
     }
 }
