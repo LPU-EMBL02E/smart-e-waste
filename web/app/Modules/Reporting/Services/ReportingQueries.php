@@ -69,17 +69,6 @@ class ReportingQueries
     }
 
     /**
-     * Total collected weight: the sum of net_weight_g over deposits whose
-     * transaction is COMPLETED. Voided deposits are excluded
-     * (System_Plan.md §5.6).
-     */
-    public function totalCollectedWeightGrams(): float
-    {
-        // TODO
-        throw new \LogicException('Not implemented.');
-    }
-
-    /**
      * ACCEPTED sessions that have waited longer than the review threshold for
      * their `complete` call, for /admin/sessions/review.
      *

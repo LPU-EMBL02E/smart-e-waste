@@ -7,6 +7,7 @@ use App\Modules\Deposits\Models\DepositSession;
 use App\Modules\Deposits\Models\Transaction;
 use App\Modules\Deposits\Support\FailureCode;
 use App\Modules\Deposits\Support\SessionStatus;
+use App\Modules\Deposits\Support\TransactionNotVoidable;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Devices\Services\BinService;
 use App\Modules\Identity\Models\User;
@@ -18,6 +19,7 @@ use App\Support\Device\DeviceApiException;
 use App\Support\Device\DeviceErrorCode;
 use App\Support\ReferenceCode;
 use Closure;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -39,8 +41,6 @@ use Illuminate\Support\Facades\DB;
  *     stay, so the transaction returns the error and it is thrown only once the
  *     transaction has committed.
  *   - Events go out after the commit.
- *
- * TODO: void() (admin transaction voids; not the deposit path).
  */
 class DepositService
 {
@@ -273,8 +273,58 @@ class DepositService
      */
     public function void(Transaction $transaction, User $admin, string $reason): Transaction
     {
-        // TODO
-        throw new \LogicException('Not implemented.');
+        return DB::transaction(function () use ($transaction, $admin, $reason) {
+            // Lock first, never trusting the route-bound copy: two admins
+            // voiding at once must not write two reversals (API_Design.md §7.6).
+            $transaction = Transaction::whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+
+            if (! $transaction->canBeVoided()) {
+                throw TransactionNotVoidable::notCompleted($transaction->status);
+            }
+
+            $transaction->forceFill([
+                'status' => Transaction::STATUS_VOIDED,
+                'void_reason' => $reason,
+                'voided_by' => $admin->id,
+                'voided_at' => now(),
+            ])->save();
+
+            $this->points->reverseTransaction($transaction, $reason);
+
+            return $transaction;
+        });
+    }
+
+    /**
+     * Total collected weight: the sum of net_weight_g over sessions whose
+     * transaction is COMPLETED, so voided deposits drop out (API_Design.md
+     * §7.4, System_Plan.md §5.6). Summed in the database.
+     */
+    public function totalCollectedWeightGrams(): float
+    {
+        return (float) DepositSession::whereHas('transaction', fn (Builder $query) => $query->completed())
+            ->sum('net_weight_g');
+    }
+
+    /**
+     * Every transaction, newest first, for /admin/transactions, with the
+     * session's user and device eager-loaded.
+     *
+     * @return LengthAwarePaginator<int, Transaction>
+     */
+    public function listTransactions(): LengthAwarePaginator
+    {
+        return Transaction::with(['session.user', 'session.device'])->latest('id')->paginate();
+    }
+
+    /**
+     * One transaction with what its page shows: the session's weight,
+     * verification and actuator values, who deposited at which bin, and who
+     * voided it.
+     */
+    public function forReview(Transaction $transaction): Transaction
+    {
+        return $transaction->load(['session.user', 'session.device', 'voidedBy']);
     }
 
     /**

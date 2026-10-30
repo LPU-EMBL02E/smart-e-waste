@@ -6,6 +6,7 @@ use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\RewardRule;
 use Database\Factories\Deposits\TransactionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -74,6 +75,14 @@ class Transaction extends Model
     public function ledgerEntries(): HasMany
     {
         return $this->hasMany(PointLedgerEntry::class);
+    }
+
+    // ------------------------------------------------------------------ scopes
+
+    /** Not voided: the deposits that count toward total collected weight. */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_COMPLETED);
     }
 
     // ----------------------------------------------------------------- helpers
