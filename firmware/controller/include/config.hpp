@@ -115,6 +115,8 @@ constexpr unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 // backoff between `complete` retries are not set in the plan. The values here
 // are a starting point to be confirmed on the bench.
 constexpr unsigned long TELEMETRY_INTERVAL_MS = 60000;
+// How often a saved `complete` is sent again while the bin waits on it.
+constexpr unsigned long PENDING_RESEND_MS = 10000;
 
 // ------------------------------------------------------------------ feedback
 constexpr unsigned long BEEP_SHORT_MS = 120;
