@@ -31,6 +31,10 @@ constexpr unsigned long SETUP_PORTAL_TIMEOUT_S = 300;
 constexpr int SCALE_SAMPLE_COUNT = 20;
 constexpr float SCALE_STABLE_TOLERANCE_G = 2.0f;
 constexpr unsigned long SCALE_SETTLE_TIMEOUT_MS = 5000;
+// The HX711 gives a reading every 100 ms at its slower rate, so this is five
+// missed readings: long enough to ride out one, short enough to notice an
+// unplugged amplifier.
+constexpr unsigned long SCALE_READY_TIMEOUT_MS = 500;
 
 // ------------------------------------------------------------------ actuator
 // Hard stop on a cycle. If a limit switch is never reached within this time the
