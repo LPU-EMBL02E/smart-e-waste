@@ -4,62 +4,74 @@
 
 #include "../../include/config.hpp"
 #include "../../include/pins.hpp"
+#include "station.hpp"
 
 /**
- * The item-verification module. System_Plan.md §8.2.
+ * The item-verification module. System_Plan.md §8.2 and §8.3.
  *
- * Hides the ESP32-CAM link and answers one question: is an item actually on the
- * platform? It reports pass or fail and a score, nothing more.
+ * Hides the camera check, run by the bin station on the Pi, and the LED strip
+ * that lights the flap for it. The check has two steps: presence by frame
+ * differencing, then the e-waste model. The answer names the step that
+ * decided: `cam_diff` or `ewaste_model` (P49).
  *
- * It confirms that SOMETHING is there, not WHAT it is. That is why there is one
- * points rate for every item: a higher rate for some categories could not be
- * verified by this hardware (System_Plan.md §5.7 rule 1).
+ * The strip is on only for a check or a new reference, so the camera sees the
+ * same light every time.
  *
- * The three values this returns are the whole of the server's interface to
- * verification — method, passed, score — so swapping frame differencing for
- * another camera or another sensor changes this file and nothing on the server
- * (System_Plan.md §8.1).
+ * The three values a check returns — method, passed, score — are copied
+ * unchanged into the deposit call (API_Design.md §5.5). No answer is never a
+ * pass: on any failure the caller cancels the session and returns the item.
+ *
+ * Testing to record (guidelines, Step 5 and 13): successful verification rate
+ * over at least ten trials with and without an item; e-waste and non-e-waste
+ * items, with the model's accept and reject counts; the time a check takes.
  */
 class Verifier {
-  /*
-   * TODO: implement over UART 1 (PIN_CAMERA_RX / PIN_CAMERA_TX) using the line
-   * protocol in firmware/README.md.
-   *
-   *   -> VERIFY            ask for a verdict
-   *   <- OK <0.00-1.00>    an item is present, with a score
-   *   <- FAIL <0.00-1.00>  no item
-   *   -> REFERENCE         re-learn the empty platform
-   *   <- READY             reference stored
-   *
-   * Treat no reply within a timeout as FAIL, not as a pass: the points rule
-   * says points are credited only after verification PASSES, so an unreachable
-   * camera must never be read as an accepted item.
-   *
-   * Testing to record (guidelines, Step 5): that the camera can detect an item
-   * on the weighing platform, and the successful verification rate over at
-   * least ten trials.
-   */
-
  public:
-  struct Verdict {
-    bool passed;
-    float score;         // 0.0-1.0, stored as verification_score
-    const char* method;  // stored as verification_method, e.g. "cam_diff"
-  };
+  explicit Verifier(Station& station) : p_station(station) {}
 
-  explicit Verifier() = default;
+  /** Sets up the LED strip, off. */
+  bool begin() {
+    ledcSetup(LEDC_CHANNEL_LED_STRIP, LEDC_FREQUENCY_HZ, LEDC_RESOLUTION_BITS);
+    ledcAttachPin(PIN_LED_STRIP, LEDC_CHANNEL_LED_STRIP);
+    p_light(false);
+    return true;
+  }
 
-  bool begin() { return false; }
-
-  /** Ask the camera to compare the platform against its empty reference. */
-  Verdict verify() { return {false, 0.0f, "cam_diff"}; }
+  /** Lights the flap, asks the bin station for the camera check, and switches
+   *  the light off again. */
+  Station::Result verify(Station::Verdict& out) {
+    p_light(true);
+    const Station::Result result = p_station.verify(out);
+    p_light(false);
+    if (result == Station::Result::Ok) {
+      Serial.printf("verifier: %s %s, score %.4f\n", out.method,
+                    out.passed ? "passed" : "failed", out.score);
+    }
+    return result;
+  }
 
   /**
-   * Re-learn the empty platform. Call when the chamber is known to be empty —
-   * after a transfer completes, and at boot — or lighting drift slowly turns
-   * every frame into a "difference".
+   * Lights the empty flap and asks the bin station to store it as the
+   * reference. Call only when the scale reads an empty flap and the flap is
+   * level: at boot, after each transfer or return, and whenever health
+   * reports no reference (API_Design.md §11.6).
    */
-  bool captureEmptyReference() { return false; }
+  Station::Result captureEmptyReference() {
+    p_light(true);
+    const Station::Result result = p_station.takeReference();
+    p_light(false);
+    return result;
+  }
 
-  bool isResponding() { return false; }
+ private:
+  /** Switches the strip, and on switching it on, waits for the light to
+   *  settle so the picture sees the same light every time. */
+  void p_light(bool on) {
+    ledcWrite(LEDC_CHANNEL_LED_STRIP, on ? LED_STRIP_DUTY : 0);
+    if (on) {
+      delay(LED_STRIP_SETTLE_MS);
+    }
+  }
+
+  Station& p_station;
 };

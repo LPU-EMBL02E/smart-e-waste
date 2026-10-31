@@ -10,10 +10,11 @@
 /**
  * Non-volatile storage and the setup portal. System_Plan.md §8.2.
  *
- * Hides where the server is and who this bin is. Nothing else in the firmware
- * knows that these values are stored in NVS, and nothing else may read them
- * from anywhere else — that is what lets the bin be re-pointed at a new server
- * through the portal instead of being reflashed at handover.
+ * Hides where the server and the bin station are, and who this bin is. Nothing
+ * else in the firmware knows that these values are stored in NVS, and nothing
+ * else may read them from anywhere else — that is what lets the bin be
+ * re-pointed at a new server through the portal instead of being reflashed at
+ * handover.
  *
  * The secret is never logged, never sent over the wire and never compiled in.
  */
@@ -61,12 +62,16 @@ class Settings {
     WiFiManagerParameter urlField("api_url",
                                   "Server URL, e.g. http://192.168.1.10",
                                   apiBaseUrl().c_str(), sp_URL_MAX_LENGTH);
+    WiFiManagerParameter stationField(
+        "station_url", "Bin station URL, e.g. http://192.168.1.10:8080",
+        stationBaseUrl().c_str(), sp_URL_MAX_LENGTH);
     WiFiManagerParameter codeField("dev_code", "Device code, e.g. BIN-01",
                                    deviceCode().c_str(),
                                    sp_DEVICE_CODE_MAX_LENGTH);
     WiFiManagerParameter secretField("dev_secret", "Device secret", "",
                                      sp_SECRET_LENGTH, "type='password'");
     portal.addParameter(&urlField);
+    portal.addParameter(&stationField);
     portal.addParameter(&codeField);
     portal.addParameter(&secretField);
 
@@ -84,8 +89,8 @@ class Settings {
       Serial.println("settings: setup portal closed without joining Wi-Fi");
       return false;
     }
-    if (!save(urlField.getValue(), codeField.getValue(),
-              secretField.getValue())) {
+    if (!save(urlField.getValue(), stationField.getValue(),
+              codeField.getValue(), secretField.getValue())) {
       return false;
     }
     Serial.println("settings: server details saved from the portal");
@@ -95,6 +100,10 @@ class Settings {
   /** Scheme, host and optional port only, e.g. "http://192.168.1.10" (P1). */
   String apiBaseUrl() { return p_read(sp_KEY_API_URL); }
 
+  /** Scheme, host and optional port of the bin station, e.g.
+   *  "http://192.168.1.10:8080" (API_Design.md §11.1). */
+  String stationBaseUrl() { return p_read(sp_KEY_STATION_URL); }
+
   /** Sent as the X-Device-Code header. */
   String deviceCode() { return p_read(sp_KEY_DEVICE_CODE); }
 
@@ -102,16 +111,17 @@ class Settings {
   String deviceSecret() { return p_read(sp_KEY_DEVICE_SECRET); }
 
   /**
-   * Stores the server details. Refuses them, and stores nothing, unless the
-   * URL is scheme, host and optional port only (P1), the device code fits its
-   * column, and the secret is 64 hex characters (P39).
+   * Stores the server details. Refuses them, and stores nothing, unless both
+   * URLs are scheme, host and optional port only (P1, §11.1), the device code
+   * fits its column, and the secret is 64 hex characters (P39).
    */
-  bool save(const String& baseUrl, const String& deviceCode,
-            const String& secret) {
+  bool save(const String& baseUrl, const String& stationUrl,
+            const String& deviceCode, const String& secret) {
     if (!p_ready) {
       return false;
     }
-    if (!sp_isBaseUrl(baseUrl) || deviceCode.isEmpty() ||
+    if (!sp_isBaseUrl(baseUrl) || !sp_isBaseUrl(stationUrl) ||
+        deviceCode.isEmpty() ||
         deviceCode.length() > sp_DEVICE_CODE_MAX_LENGTH ||
         !sp_isSecret(secret)) {
       Serial.println("settings: server details refused, nothing saved");
@@ -119,6 +129,7 @@ class Settings {
     }
 
     const bool saved = p_prefs.putString(sp_KEY_API_URL, baseUrl) > 0 &&
+                       p_prefs.putString(sp_KEY_STATION_URL, stationUrl) > 0 &&
                        p_prefs.putString(sp_KEY_DEVICE_CODE, deviceCode) > 0 &&
                        p_prefs.putString(sp_KEY_DEVICE_SECRET, secret) > 0;
     if (!saved) {
@@ -179,6 +190,7 @@ class Settings {
  private:
   static constexpr const char* sp_NAMESPACE = "ewaste";
   static constexpr const char* sp_KEY_API_URL = "api_url";
+  static constexpr const char* sp_KEY_STATION_URL = "station_url";
   static constexpr const char* sp_KEY_DEVICE_CODE = "dev_code";
   static constexpr const char* sp_KEY_DEVICE_SECRET = "dev_secret";
   static constexpr const char* sp_KEY_PENDING_SESSION = "pc_session";
@@ -224,7 +236,8 @@ class Settings {
   }
 
   bool p_hasServerDetails() {
-    return p_prefs.isKey(sp_KEY_API_URL) && p_prefs.isKey(sp_KEY_DEVICE_CODE) &&
+    return p_prefs.isKey(sp_KEY_API_URL) && p_prefs.isKey(sp_KEY_STATION_URL) &&
+           p_prefs.isKey(sp_KEY_DEVICE_CODE) &&
            p_prefs.isKey(sp_KEY_DEVICE_SECRET);
   }
 
