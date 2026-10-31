@@ -166,9 +166,24 @@ class Api {
       return Result::NetworkError;
     }
 
+    // The three calibration values are null until an admin has calibrated
+    // the bin (§5.2). Either all three are numbers, or there is none.
+    Calibration calibration{false, 0.0f, 0.0f, 0};
+    const JsonVariantConst offset = reply["calibration"]["weight_offset"];
+    const JsonVariantConst factor = reply["calibration"]["weight_scale_factor"];
+    const JsonVariantConst at = reply["calibration"]["calibrated_at"];
+    if (offset.is<float>() && factor.is<float>() && at.is<int64_t>()) {
+      calibration = {true, offset.as<float>(), factor.as<float>(),
+                     at.as<int64_t>()};
+    } else if (!(offset.isNull() && factor.isNull() && at.isNull())) {
+      Serial.println("api: /config calibration unreadable");
+      return Result::NetworkError;
+    }
+
     p_sessionTimeoutS = reply["session_timeout_s"].as<int>();
     p_minimumWeightG = minimum.isNull() ? NAN : minimum.as<float>();
     p_maximumWeightG = maximum.isNull() ? NAN : maximum.as<float>();
+    p_calibration = calibration;
     return Result::Ok;
   }
 
@@ -219,7 +234,35 @@ class Api {
 
   /** POST /device/sessions — open a session from a scanned token. */
   Result openSession(const String& qrToken, SessionInfo& out) {
-    return Result::NetworkError;
+    // The token is opaque text from a QR code, so it is escaped as JSON
+    // rather than pasted into the body. Built once: these exact bytes are
+    // both signed and sent.
+    JsonDocument request;
+    request["qr_token"] = qrToken;
+    request["fw"] = FIRMWARE_VERSION;
+    char body[sp_SESSION_BODY_LENGTH];
+    if (!sp_serialize(request, body)) {
+      Serial.println("api: session body does not fit");
+      return Result::NetworkError;
+    }
+
+    JsonDocument reply;
+    const Result result = p_send("POST", "/sessions", body, reply);
+    if (result != Result::Ok) {
+      return result;
+    }
+
+    const char* sessionId = reply["session_id"];
+    const char* displayName = reply["user"]["display_name"];
+    if (sessionId == nullptr || !sp_isSessionId(sessionId) ||
+        displayName == nullptr || !reply["expires_in_s"].is<int>()) {
+      Serial.println("api: /sessions reply unreadable");
+      return Result::NetworkError;
+    }
+    out.sessionId = sessionId;
+    out.displayName = displayName;
+    out.expiresInSeconds = reply["expires_in_s"].as<int>();
+    return Result::Ok;
   }
 
   /**
@@ -230,7 +273,42 @@ class Api {
                      int samples, const char* verificationMethod,
                      bool verificationPassed, float verificationScore,
                      DepositResult& out) {
-    return Result::NetworkError;
+    char endpoint[sp_PATH_LENGTH];
+    if (!sp_sessionEndpoint(sessionId, "deposit", endpoint)) {
+      return Result::NetworkError;
+    }
+
+    // weight_g at most two decimal places and score at most four (§5.5), so
+    // both are written out here rather than left to the JSON library.
+    char weight[sp_NUMBER_LENGTH];
+    char score[sp_NUMBER_LENGTH];
+    snprintf(weight, sizeof(weight), "%.2f", weightG);
+    snprintf(score, sizeof(score), "%.4f", verificationScore);
+    JsonDocument request;
+    request["weight_g"] = serialized(weight);
+    request["weight_stable"] = stable;
+    request["samples"] = samples;
+    request["verification"]["method"] = verificationMethod;
+    request["verification"]["passed"] = verificationPassed;
+    request["verification"]["score"] = serialized(score);
+    char body[sp_DEPOSIT_BODY_LENGTH];
+    if (!sp_serialize(request, body)) {
+      Serial.println("api: deposit body does not fit");
+      return Result::NetworkError;
+    }
+
+    JsonDocument reply;
+    const Result result = p_send("POST", endpoint, body, reply);
+    if (result != Result::Ok) {
+      return result;
+    }
+    if (!reply["accepted"].is<bool>()) {
+      Serial.println("api: deposit reply unreadable");
+      return Result::NetworkError;
+    }
+    out.accepted = reply["accepted"];
+    out.pointsPreview = reply["points_preview"] | 0;
+    return Result::Ok;
   }
 
   /**
@@ -243,17 +321,84 @@ class Api {
    */
   Result sendComplete(const String& sessionId, bool actuatorOk,
                       unsigned long cycleMs, CompleteResult& out) {
+    Result result = Result::NetworkError;
+    for (int attempt = 1; attempt <= COMPLETE_RETRY_LIMIT; attempt++) {
+      if (attempt > 1) {
+        delay(COMPLETE_RETRY_BASE_MS << (attempt - 2));
+      }
+      result = p_complete(sessionId, actuatorOk, cycleMs, out);
+      if (result == Result::Ok) {
+        return result;
+      }
+      // Only a lost reply or a busy database is worth sending again now.
+      if (result == Result::ServerError &&
+          strcmp(p_lastErrorCode, sp_CODE_DB_UNAVAILABLE) != 0) {
+        break;
+      }
+    }
+
+    // The item is in the bin. Unless the server has refused this session for
+    // good, keep the request so the points are not lost.
+    if (result == Result::ServerError && sp_isRefusedForGood(p_lastErrorCode)) {
+      Serial.printf("api: complete refused, %s; not kept\n", p_lastErrorCode);
+      return result;
+    }
+    if (!p_settings.savePendingComplete(sessionId, actuatorOk, cycleMs)) {
+      Serial.println("api: complete could not be kept for later");
+    }
     return Result::NetworkError;
   }
 
-  /** POST /device/sessions/{id}/cancel — the Cancel button. */
-  Result cancelSession(const String& sessionId) { return Result::NetworkError; }
+  /** POST /device/sessions/{id}/cancel — the Cancel button, a timeout's
+   *  clean-up, or an unreachable bin station. Only an OPEN session can be
+   *  cancelled (§5.7). */
+  Result cancelSession(const String& sessionId) {
+    char endpoint[sp_PATH_LENGTH];
+    if (!sp_sessionEndpoint(sessionId, "cancel", endpoint)) {
+      return Result::NetworkError;
+    }
+    JsonDocument reply;
+    return p_send("POST", endpoint, nullptr, reply);
+  }
 
   /**
    * Resend a `complete` saved by a previous run, if there is one. Call at boot
-   * and before accepting a new deposit.
+   * and before accepting a new deposit. One attempt; the caller tries again
+   * later. Ok when there is nothing left to send.
+   *
+   * A repeated `complete` is safe: the server returns the result it already
+   * recorded (§5.6). The saved request is dropped only once it has been
+   * answered, or refused for good — a session the server no longer knows or
+   * no longer accepts it for.
    */
-  Result flushPendingComplete() { return Result::NetworkError; }
+  Result flushPendingComplete() {
+    String sessionId;
+    bool actuatorOk = false;
+    unsigned long cycleMs = 0;
+    if (!p_settings.loadPendingComplete(sessionId, actuatorOk, cycleMs)) {
+      return Result::Ok;
+    }
+    // Only a damaged record holds a bad ID, and it could never be sent: kept,
+    // it would block the bin for good.
+    if (!sp_isSessionId(sessionId.c_str())) {
+      Serial.println("api: saved complete has a bad session ID; dropped");
+      p_settings.clearPendingComplete();
+      return Result::Ok;
+    }
+
+    CompleteResult ignored{};
+    const Result result = p_complete(sessionId, actuatorOk, cycleMs, ignored);
+    if (result == Result::Ok) {
+      Serial.println("api: saved complete sent");
+      p_settings.clearPendingComplete();
+    } else if (result == Result::ServerError &&
+               sp_isRefusedForGood(p_lastErrorCode)) {
+      Serial.printf("api: saved complete refused, %s; dropped\n",
+                    p_lastErrorCode);
+      p_settings.clearPendingComplete();
+    }
+    return result;
+  }
 
   /**
    * The `code` from the last error reply, e.g. "BIN_FULL". Branch on this,
@@ -274,6 +419,7 @@ class Api {
  private:
   static constexpr const char* sp_API_PREFIX = "/api/v1/device";
   static constexpr const char* sp_CODE_CLOCK_SKEW = "CLOCK_SKEW";
+  static constexpr const char* sp_CODE_DB_UNAVAILABLE = "DB_UNAVAILABLE";
   static constexpr unsigned long sp_WIFI_POLL_MS = 100;
   static constexpr size_t sp_SIGNATURE_LENGTH = 64;
   static constexpr size_t sp_HMAC_LENGTH = 32;
@@ -285,6 +431,92 @@ class Api {
   static constexpr size_t sp_TELEMETRY_BODY_LENGTH = 128;
   // The longest fault name in fault_code.hpp, quoted.
   static constexpr size_t sp_FAULT_JSON_LENGTH = 32;
+  // A 64-character token, escaped, and the firmware version.
+  static constexpr size_t sp_SESSION_BODY_LENGTH = 192;
+  // The weight, the sample count and a 50-character method, escaped.
+  static constexpr size_t sp_DEPOSIT_BODY_LENGTH = 256;
+  static constexpr size_t sp_COMPLETE_BODY_LENGTH = 64;
+  static constexpr size_t sp_NUMBER_LENGTH = 24;
+  // deposit_sessions.id is a UUID (§5.4).
+  static constexpr size_t sp_SESSION_ID_LENGTH = 36;
+
+  /** Writes `request` into `out` once. False if it does not fit. */
+  template <size_t N>
+  static bool sp_serialize(const JsonDocument& request, char (&out)[N]) {
+    if (measureJson(request) >= N) {
+      return false;
+    }
+    serializeJson(request, out, N);
+    return true;
+  }
+
+  /** A UUID's characters only, so a session ID can go into a path as it is. */
+  static bool sp_isSessionId(const char* sessionId) {
+    const size_t length = strlen(sessionId);
+    if (length == 0 || length > sp_SESSION_ID_LENGTH) {
+      return false;
+    }
+    for (size_t i = 0; i < length; i++) {
+      if (!isxdigit(static_cast<unsigned char>(sessionId[i])) &&
+          sessionId[i] != '-') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** "/sessions/{id}/{action}". False, and logged, for a bad session ID. */
+  template <size_t N>
+  static bool sp_sessionEndpoint(const String& sessionId, const char* action,
+                                 char (&out)[N]) {
+    if (!sp_isSessionId(sessionId.c_str())) {
+      Serial.printf("api: %s skipped, bad session ID\n", action);
+      return false;
+    }
+    snprintf(out, N, "/sessions/%s/%s", sessionId.c_str(), action);
+    return true;
+  }
+
+  /**
+   * Codes after which sending the same `complete` again can never succeed:
+   * the server has no such session, or no longer accepts a `complete` for it
+   * (§6). Any other failure is kept and sent again.
+   */
+  static bool sp_isRefusedForGood(const char* code) {
+    return strcmp(code, "SESSION_NOT_FOUND") == 0 ||
+           strcmp(code, "INVALID_SESSION_STATE") == 0 ||
+           strcmp(code, "SESSION_EXPIRED") == 0 ||
+           strcmp(code, "VALIDATION_ERROR") == 0;
+  }
+
+  /** One `complete` request and its reply, read into `out`. */
+  Result p_complete(const String& sessionId, bool actuatorOk,
+                    unsigned long cycleMs, CompleteResult& out) {
+    char endpoint[sp_PATH_LENGTH];
+    if (!sp_sessionEndpoint(sessionId, "complete", endpoint)) {
+      return Result::NetworkError;
+    }
+    char body[sp_COMPLETE_BODY_LENGTH];
+    snprintf(body, sizeof(body), "{\"actuator_ok\":%s,\"cycle_ms\":%lu}",
+             actuatorOk ? "true" : "false", cycleMs);
+
+    JsonDocument reply;
+    const Result result = p_send("POST", endpoint, body, reply);
+    if (result != Result::Ok) {
+      return result;
+    }
+    // transaction_id is null when the actuator failed (§5.6, P26).
+    const JsonVariantConst transactionId = reply["transaction_id"];
+    if (!(transactionId.isNull() || transactionId.is<long>()) ||
+        !reply["points_awarded"].is<int>() || !reply["balance"].is<int>()) {
+      Serial.println("api: complete reply unreadable");
+      return Result::NetworkError;
+    }
+    out.transactionId = transactionId.isNull() ? -1 : transactionId.as<long>();
+    out.pointsAwarded = reply["points_awarded"];
+    out.balance = reply["balance"];
+    return Result::Ok;
+  }
 
   /**
    * A signed request. Syncs the clock first if it never has been, and on
