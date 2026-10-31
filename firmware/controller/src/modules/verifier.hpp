@@ -30,12 +30,24 @@ class Verifier {
   explicit Verifier(Station& station) : p_station(station) {}
 
   /** Sets up the LED strip, off. */
-  bool begin() { return false; }
+  bool begin() {
+    ledcSetup(LEDC_CHANNEL_LED_STRIP, LEDC_FREQUENCY_HZ, LEDC_RESOLUTION_BITS);
+    ledcAttachPin(PIN_LED_STRIP, LEDC_CHANNEL_LED_STRIP);
+    p_light(false);
+    return true;
+  }
 
   /** Lights the flap, asks the bin station for the camera check, and switches
    *  the light off again. */
   Station::Result verify(Station::Verdict& out) {
-    return Station::Result::NoReply;
+    p_light(true);
+    const Station::Result result = p_station.verify(out);
+    p_light(false);
+    if (result == Station::Result::Ok) {
+      Serial.printf("verifier: %s %s, score %.4f\n", out.method,
+                    out.passed ? "passed" : "failed", out.score);
+    }
+    return result;
   }
 
   /**
@@ -44,8 +56,22 @@ class Verifier {
    * level: at boot, after each transfer or return, and whenever health
    * reports no reference (API_Design.md §11.6).
    */
-  Station::Result captureEmptyReference() { return Station::Result::NoReply; }
+  Station::Result captureEmptyReference() {
+    p_light(true);
+    const Station::Result result = p_station.takeReference();
+    p_light(false);
+    return result;
+  }
 
  private:
+  /** Switches the strip, and on switching it on, waits for the light to
+   *  settle so the picture sees the same light every time. */
+  void p_light(bool on) {
+    ledcWrite(LEDC_CHANNEL_LED_STRIP, on ? LED_STRIP_DUTY : 0);
+    if (on) {
+      delay(LED_STRIP_SETTLE_MS);
+    }
+  }
+
   Station& p_station;
 };

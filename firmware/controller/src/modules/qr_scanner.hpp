@@ -27,13 +27,15 @@ class QrScanner {
   explicit QrScanner(Station& station) : p_station(station) {}
 
   /** Starts scanning. False if the bin station did not arm the scanner. */
-  bool arm() { return false; }
+  bool arm() { return p_station.setScannerArmed(true) == Station::Result::Ok; }
 
   /** Stops scanning. */
-  bool disarm() { return false; }
+  bool disarm() {
+    return p_station.setScannerArmed(false) == Station::Result::Ok;
+  }
 
   /** The scanned token, if one was collected by Station::pollEvents(). */
-  bool takeToken(String& token) { return false; }
+  bool takeToken(String& token) { return p_station.takeToken(token); }
 
  private:
   Station& p_station;
