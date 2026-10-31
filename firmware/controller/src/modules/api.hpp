@@ -8,13 +8,15 @@
 #include <mbedtls/md.h>
 
 #include "../../include/config.hpp"
+#include "../fault_code.hpp"
 #include "settings.hpp"
 
 /**
  * Wi-Fi, HTTP, HMAC signing, retries and the saved unsent `complete`.
  * System_Plan.md §8.2, API_Design.md §3 and §5.
  *
- * The ONLY module that knows about HTTP. One method per device endpoint, so
+ * With Station, the only module that knows about HTTP: Api talks to the web
+ * app, Station to the bin station. One method per device endpoint, so
  * the main loop reads as the deposit sequence and not as a series of requests.
  *
  * Switching the server to HTTPS is a change to the stored base URL, not to this
@@ -82,6 +84,15 @@ class Api {
   struct BinStatus {
     float fillPercent;
     bool full;
+  };
+
+  /** The load cell calibration from GET /device/config. `present` is false
+   *  until the bin has been calibrated, when the server sends null (§5.2). */
+  struct Calibration {
+    bool present;
+    float weightOffset;
+    float weightScaleFactor;
+    int64_t calibratedAt;
   };
 
   explicit Api(Settings& settings) : p_settings(settings) {}
@@ -161,14 +172,28 @@ class Api {
     return Result::Ok;
   }
 
-  /** POST /device/telemetry — one raw distance. The server computes fill
-   *  level. */
-  Result sendTelemetry(float distanceMm, BinStatus& out) {
-    // At most two decimal places (§5.3). Built once: these exact bytes are
-    // both signed and sent.
+  /**
+   * POST /device/telemetry — one raw distance, the service-panel state and the
+   * current fault. The server computes fill level, and only stores the panel
+   * state and the fault (§5.3, P42).
+   */
+  Result sendTelemetry(float distanceMm, bool panelOpen, FaultCode fault,
+                       BinStatus& out) {
+    // At most two decimal places (§5.3). The fault names are fixed
+    // identifiers, so they need no escaping. Built once: these exact bytes
+    // are both signed and sent.
+    const char* faultName = faultCodeName(fault);
+    char faultJson[sp_FAULT_JSON_LENGTH];
+    if (faultName != nullptr) {
+      snprintf(faultJson, sizeof(faultJson), "\"%s\"", faultName);
+    } else {
+      strlcpy(faultJson, "null", sizeof(faultJson));
+    }
     char body[sp_TELEMETRY_BODY_LENGTH];
     const int length =
-        snprintf(body, sizeof(body), "{\"distance_mm\":%.2f}", distanceMm);
+        snprintf(body, sizeof(body),
+                 "{\"distance_mm\":%.2f,\"panel_open\":%s,\"fault_code\":%s}",
+                 distanceMm, panelOpen ? "true" : "false", faultJson);
     if (length < 0 || length >= static_cast<int>(sizeof(body))) {
       Serial.println("api: telemetry body does not fit");
       return Result::NetworkError;
@@ -197,10 +222,14 @@ class Api {
     return Result::NetworkError;
   }
 
-  /** POST /device/sessions/{id}/deposit — weight and verification result. */
+  /**
+   * POST /device/sessions/{id}/deposit — the weight and the bin station's
+   * verdict, its three values passed on unchanged (§5.5, P49).
+   */
   Result sendDeposit(const String& sessionId, float weightG, bool stable,
-                     int samples, bool verificationPassed,
-                     float verificationScore, DepositResult& out) {
+                     int samples, const char* verificationMethod,
+                     bool verificationPassed, float verificationScore,
+                     DepositResult& out) {
     return Result::NetworkError;
   }
 
@@ -239,6 +268,9 @@ class Api {
   float maximumWeightG() { return p_maximumWeightG; }
   int sessionTimeoutSeconds() { return p_sessionTimeoutS; }
 
+  /** Cached from GET /device/config, for Scale::applyCalibration(). */
+  const Calibration& calibration() { return p_calibration; }
+
  private:
   static constexpr const char* sp_API_PREFIX = "/api/v1/device";
   static constexpr const char* sp_CODE_CLOCK_SKEW = "CLOCK_SKEW";
@@ -250,7 +282,9 @@ class Api {
   static constexpr size_t sp_PATH_LENGTH = 96;
   // Fits the longest code in API_Design.md §6, with room to spare.
   static constexpr size_t sp_ERROR_CODE_LENGTH = 32;
-  static constexpr size_t sp_TELEMETRY_BODY_LENGTH = 64;
+  static constexpr size_t sp_TELEMETRY_BODY_LENGTH = 128;
+  // The longest fault name in fault_code.hpp, quoted.
+  static constexpr size_t sp_FAULT_JSON_LENGTH = 32;
 
   /**
    * A signed request. Syncs the clock first if it never has been, and on
@@ -434,4 +468,5 @@ class Api {
   int p_sessionTimeoutS = 0;
   float p_minimumWeightG = NAN;
   float p_maximumWeightG = NAN;
+  Calibration p_calibration{false, 0.0f, 0.0f, 0};
 };

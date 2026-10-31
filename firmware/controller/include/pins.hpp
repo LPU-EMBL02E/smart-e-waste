@@ -1,60 +1,61 @@
 #pragma once
 
 /**
- * Pin map for the NodeMCU. System_Plan.md §2.
+ * Pin map for the ESP32-S3-DevKitC-1. System_Plan.md §2.
  *
  * Every pin number in the controller firmware is here and nowhere else, so
  * rewiring is a change to this one file (§8.2).
  *
- * Seventeen pins are used, which fits the board with little to spare.
- *
- * TODO(team): this map is a starting point. Verify it on the bench, and revisit
- * the motor pins once the driver is chosen (System_Plan.md §10, before
+ * TODO(team): verify this map on the bench (System_Plan.md §10, before
  * Checkpoint 1).
  *
  * Reserved — do not use:
- *   GPIO 0, 2, 5, 12, 15   affect how the board boots
- *   GPIO 1, 3              the USB serial port
- * Spare: GPIO 36 and 39, both input-only.
+ *   GPIO 0, 3, 45, 46   boot strapping
+ *   GPIO 19, 20         USB
+ *   GPIO 26 to 32       the module's flash and PSRAM
+ *   GPIO 43, 44         the USB-to-serial port (the serial log)
+ *   GPIO 38 or 48       the RGB LED, depending on the board revision
  */
 
+// A signal with no pin assigned yet. Every module that reads one treats it as
+// the unsafe state, so a missing pin can never let the bin take a deposit.
+constexpr int PIN_UNASSIGNED = -1;
+
 // ---------------------------------------------------------------- load cell
-// GPIO 34 is INPUT-ONLY. Power the amplifier from 3.3 V so this line stays at
-// 3.3 V; a 5 V data line on an input-only pin has no protection.
-constexpr int PIN_SCALE_DATA = 34;
-constexpr int PIN_SCALE_CLOCK = 25;
+// The HX711 runs on 3.3 V, so its data line never exceeds 3.3 V.
+constexpr int PIN_SCALE_DATA = 4;
+constexpr int PIN_SCALE_CLOCK = 5;
 
 // --------------------------------------------------------------- ultrasonic
-constexpr int PIN_ULTRASONIC_TRIGGER = 26;
-// GPIO 35 is INPUT-ONLY and needs a voltage divider if the sensor runs on 5 V.
-constexpr int PIN_ULTRASONIC_ECHO = 35;
-
-// ------------------------------------------------------------- motor driver
-constexpr int PIN_MOTOR_PWM = 27;
-constexpr int PIN_MOTOR_DIR_1 = 32;
-constexpr int PIN_MOTOR_DIR_2 = 33;
-
-// ------------------------------------------------------------ limit switches
-// These two are what make actuator_ok true or false. Without them the API's
-// actuator confirmation means nothing (System_Plan.md §2). Both use the
-// internal pull-up, so a closed switch reads LOW.
-constexpr int PIN_LIMIT_HOME = 13;
-constexpr int PIN_LIMIT_END = 22;
-
-// --------------------------------------------------- display panel, UART 2
-constexpr int PIN_PANEL_RX = 16;
-constexpr int PIN_PANEL_TX = 17;
-
-// ------------------------------------------------------ ESP32-CAM, UART 1
-constexpr int PIN_CAMERA_RX = 18;
-constexpr int PIN_CAMERA_TX = 19;
-
-// ------------------------------------------- QR scanner, software serial
-// Receive only, 9600 baud. The scanner only ever sends, and slowly, so it does
-// not need one of the two hardware ports.
-constexpr int PIN_QR_RX = 4;
+constexpr int PIN_ULTRASONIC_TRIGGER = 6;
+// The HC-SR04 runs on 5 V; a 1 kΩ / 2 kΩ divider brings its echo to 3.3 V.
+constexpr int PIN_ULTRASONIC_ECHO = 7;
 
 // -------------------------------------------------------------- indicators
-constexpr int PIN_LED_GREEN = 21;
-constexpr int PIN_LED_RED = 14;
-constexpr int PIN_BUZZER = 23;
+constexpr int PIN_LED_GREEN = 8;
+constexpr int PIN_LED_AMBER = 9;
+constexpr int PIN_LED_RED = 10;
+// A 5 V active buzzer through a 2N2222A.
+constexpr int PIN_BUZZER = 14;
+
+// --------------------------------------------------------------- LED strip
+// The 12 V strip that lights the flap for the camera, through an IRLZ44N.
+// PWM, for dimming.
+constexpr int PIN_LED_STRIP = 15;
+
+// --------------------------------------------------------- actuator driver
+// BTS7960. All three lines have 10 kΩ pull-downs, so the actuator stays off
+// while the board boots or resets.
+constexpr int PIN_DRIVER_ENABLE = 16;   // R_EN and L_EN together
+constexpr int PIN_DRIVER_EXTEND = 17;   // RPWM: tips the flap toward the bin
+constexpr int PIN_DRIVER_RETRACT = 18;  // LPWM: tips it toward the return tray
+// R_IS and L_IS through a load resistor. Must be an ADC1 pin: ADC2 can't be
+// read while Wi-Fi is on.
+constexpr int PIN_ACTUATOR_CURRENT = 1;
+
+// -------------------------------------------------- service panel and flap
+// TODO(team): neither has a pin yet, and neither is on the schematic
+// (System_Plan.md §2 and §10). Until they do, the interlock reads as open and
+// the flap never reads as level, so the bin stays out of service.
+constexpr int PIN_INTERLOCK = PIN_UNASSIGNED;
+constexpr int PIN_FLAP_LEVEL = PIN_UNASSIGNED;

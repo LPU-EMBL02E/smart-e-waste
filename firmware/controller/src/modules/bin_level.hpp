@@ -19,8 +19,8 @@ class BinLevel {
    * TODO: implement with pulseIn on PIN_ULTRASONIC_TRIGGER /
    * PIN_ULTRASONIC_ECHO.
    *
-   * Remember PIN_ULTRASONIC_ECHO (GPIO 35) is input-only and needs a voltage
-   * divider if the sensor runs on 5 V.
+   * The HC-SR04 runs on 5 V; its echo reaches PIN_ULTRASONIC_ECHO through a
+   * 1 kΩ / 2 kΩ divider (System_Plan.md §2).
    *
    * Take several pulses and return the median, not the mean: an outlier off
    * the side of a pile skews a mean but not a median. Return a negative value
