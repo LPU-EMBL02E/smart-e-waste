@@ -13,13 +13,13 @@ use App\Modules\Reporting\Http\Controllers\LeaderboardController;
 use Illuminate\Support\Facades\Route;
 
 // ------------------------------------------------------------ signed in
-Route::middleware('auth')->group(function () {
+Route::middleware('confirmed')->group(function () {
     // Ranked by points earned, not balance. Includes admins.
     Route::get('leaderboard', LeaderboardController::class)->name('leaderboard');
 });
 
 // ----------------------------------------------------------------- admin
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('confirmed.admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // The one JSON web route. Normal session, not the device signature scheme.

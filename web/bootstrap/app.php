@@ -20,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'device.signed' => VerifyDeviceSignature::class,
         ]);
 
+        // The gates on every module's web pages, in one place so that "signed in"
+        // means the same in all of them (API_Design.md §7.3, §7.4). `verified`
+        // sends an unconfirmed user to /email/verify.
+        $middleware->group('confirmed', ['auth', 'verified']);
+        $middleware->group('confirmed.admin', ['auth', 'verified', 'admin']);
+
         // Trust the local Nginx hop and read the standard X-Forwarded-* headers,
         // never Cloudflare's own CF-Connecting-IP. This keeps login rate
         // limiting and audit logs correct under all three ingress setups

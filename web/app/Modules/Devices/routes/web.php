@@ -10,7 +10,7 @@
 use App\Modules\Devices\Http\Controllers\Admin\BinController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('confirmed.admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('bins', [BinController::class, 'index'])->name('bins.index');
     Route::get('bins/create', [BinController::class, 'create'])->name('bins.create');
     Route::post('bins', [BinController::class, 'store'])->name('bins.store');

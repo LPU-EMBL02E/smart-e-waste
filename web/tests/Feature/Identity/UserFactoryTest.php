@@ -20,6 +20,7 @@ class UserFactoryTest extends TestCase
         $this->assertTrue($student->isStudent());
         $this->assertTrue($student->isActive());
         $this->assertTrue($student->isActivated());
+        $this->assertTrue($student->hasVerifiedEmail());
         $this->assertNotNull($student->organization_id);
         $this->assertNotNull($student->qrCredential);
 
@@ -30,5 +31,6 @@ class UserFactoryTest extends TestCase
 
         $this->assertFalse(User::factory()->inactive()->create()->isActive());
         $this->assertFalse(User::factory()->unactivated()->create()->isActivated());
+        $this->assertFalse(User::factory()->unconfirmed()->create()->hasVerifiedEmail());
     }
 }

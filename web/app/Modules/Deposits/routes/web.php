@@ -10,14 +10,14 @@ use App\Modules\Deposits\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // ------------------------------------------------------------ signed in
-Route::middleware('auth')->group(function () {
+Route::middleware('confirmed')->group(function () {
     // Own deposit history only (§7.1).
     Route::get('transactions', [TransactionController::class, 'index'])
         ->name('transactions.index');
 });
 
 // ----------------------------------------------------------------- admin
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('confirmed.admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('transactions', [AdminTransactionController::class, 'index'])
         ->name('transactions.index');
 

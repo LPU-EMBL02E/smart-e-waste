@@ -9,13 +9,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Users for tests. Database_Schema.md §2, web/docs/TRACK-A-ACCOUNTS.md step A0.
+ * Users for tests. Database_Schema.md §2, web/docs/TRACK-A-ACCOUNTS.md steps A0
+ * and A1.
  *
- * The default is an active student with a password and an organization. Every
- * user gets a QR credential, as the application gives every account one.
- *
- * TODO: step A1 adds `email_verified_at`; the default then becomes a confirmed
- * user and an `unconfirmed()` state is added.
+ * The default is an active, confirmed student with a password and an
+ * organization. Every user gets a QR credential, as the application gives every
+ * account one.
  *
  * @extends Factory<User>
  */
@@ -33,6 +32,7 @@ class UserFactory extends Factory
             'role' => User::ROLE_STUDENT,
             'student_number' => fake()->unique()->numerify('##########'),
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -60,6 +60,12 @@ class UserFactory extends Factory
     public function inactive(): static
     {
         return $this->state(['status' => User::STATUS_INACTIVE]);
+    }
+
+    /** Registered, confirmation link not yet followed (API_Design.md P48). */
+    public function unconfirmed(): static
+    {
+        return $this->state(['email_verified_at' => null]);
     }
 
     /** Created by an admin, password not yet set from the emailed link. */
