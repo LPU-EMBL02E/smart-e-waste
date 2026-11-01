@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Services;
 
 use App\Modules\Identity\Models\Organization;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -25,6 +26,16 @@ class OrganizationService
         $organization->update($data);
 
         return $organization;
+    }
+
+    /**
+     * The admin organization list. API_Design.md §7.4.
+     *
+     * @return LengthAwarePaginator<int, Organization>
+     */
+    public function list(): LengthAwarePaginator
+    {
+        return Organization::orderBy('name')->paginate();
     }
 
     /**
