@@ -9,13 +9,13 @@ use Illuminate\Validation\Rule;
 /**
  * POST /admin/users. API_Design.md §7.6 ("Create or edit a user").
  *
- * There is no self-registration: admins create accounts one at a time or by CSV
- * import (System_Plan.md §4). No password field — the account is created with
- * users.password NULL and the student sets it from the emailed link.
+ * No password field — the account is created with users.password NULL and the
+ * student sets it from the emailed link (System_Plan.md §4).
  *
  * organization_id is required for a student and MUST be null for an admin.
  * Admins having no organization is what lets the organization leaderboard group
- * on students without a NULL group appearing (System_Plan.md §5.6).
+ * on students without a NULL group appearing (System_Plan.md §5.6). An inactive
+ * organization takes no new students (web/docs/ACCOUNT-MANAGEMENT.md).
  */
 class StoreUserRequest extends FormRequest
 {
@@ -29,7 +29,7 @@ class StoreUserRequest extends FormRequest
             'role' => ['required', Rule::in([User::ROLE_STUDENT, User::ROLE_ADMIN])],
             'organization_id' => [
                 'nullable',
-                'exists:organizations,id',
+                Rule::exists('organizations', 'id')->where('is_active', true),
                 Rule::requiredIf(fn () => $this->input('role') === User::ROLE_STUDENT),
                 Rule::prohibitedIf(fn () => $this->input('role') === User::ROLE_ADMIN),
             ],

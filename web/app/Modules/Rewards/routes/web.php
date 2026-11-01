@@ -13,7 +13,7 @@ use App\Modules\Rewards\Http\Controllers\RewardController;
 use Illuminate\Support\Facades\Route;
 
 // ------------------------------------------------------------ signed in
-Route::middleware('auth')->group(function () {
+Route::middleware('confirmed')->group(function () {
     Route::get('home', HomeController::class)->name('home');
 
     Route::get('rewards', [RewardController::class, 'index'])->name('rewards.index');
@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ----------------------------------------------------------------- admin
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('confirmed.admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('rewards', [AdminRewardController::class, 'index'])->name('rewards.index');
     Route::get('rewards/create', [AdminRewardController::class, 'create'])->name('rewards.create');
     Route::post('rewards', [AdminRewardController::class, 'store'])->name('rewards.store');

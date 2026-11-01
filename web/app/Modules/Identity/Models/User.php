@@ -7,6 +7,7 @@ use App\Modules\Notifications\Models\Notification;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\Redemption;
 use Database\Factories\Identity\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,18 +21,25 @@ use Illuminate\Notifications\Notifiable;
  * There are only two roles, and admins have no organization_id
  * (System_Plan.md §5.6).
  *
- * `password` is NULL until the student sets one from the emailed link. An
- * account in that state is "not activated" and cannot sign in; no default
- * password is ever assigned or emailed (System_Plan.md §4).
+ * A student registers themselves with a password, or an admin creates the
+ * account. For an admin-created account, `password` is NULL until the student
+ * sets one from the emailed link. An account in that state is "not activated"
+ * and cannot sign in; no default password is ever assigned or emailed
+ * (System_Plan.md §4).
+ *
+ * `email_verified_at` is NULL until a self-registered student follows the
+ * confirmation link, and every signed-in page waits for it (API_Design.md P48).
+ * An admin-created account counts as confirmed (P47). It is deliberately not in
+ * $fillable, so no form input can confirm an account.
  *
  * There is no points balance column anywhere. A balance is always
  * SUM(point_ledger.points_delta), read through PointsService.
  *
- * Notifiable is for Laravel's password reset mail only. In-app notifications use
- * this project's own `notifications` table through the Notifications module, not
- * Laravel's notification system.
+ * Notifiable is for Laravel's password reset and email confirmation mail only.
+ * In-app notifications use this project's own `notifications` table through the
+ * Notifications module, not Laravel's notification system.
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory;
     use Notifiable;
@@ -67,6 +75,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
     }

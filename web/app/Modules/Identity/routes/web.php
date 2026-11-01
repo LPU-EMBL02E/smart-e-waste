@@ -10,6 +10,7 @@
 
 use App\Modules\Identity\Http\Controllers\Admin\OrganizationController;
 use App\Modules\Identity\Http\Controllers\Admin\UserController;
+use App\Modules\Identity\Http\Controllers\Auth\EmailVerificationController;
 use App\Modules\Identity\Http\Controllers\Auth\LoginController;
 use App\Modules\Identity\Http\Controllers\Auth\NewPasswordController;
 use App\Modules\Identity\Http\Controllers\Auth\PasswordResetLinkController;
@@ -35,10 +36,18 @@ Route::middleware('guest')->group(function () {
         ->name('password.update');
 });
 
-// ------------------------------------------------------------ signed in
+// ------------------------------------------------------ signed in, unconfirmed
+// Open before the email is confirmed: the page asking for it (§7.2), and the way
+// out, so nobody is trapped by the gate.
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
+    Route::get('email/verify', [EmailVerificationController::class, 'notice'])
+        ->name('verification.notice');
+});
+
+// ------------------------------------------------------------ signed in
+Route::middleware('confirmed')->group(function () {
     // Redirects by role: /admin for an admin, /home for a student.
     Route::get('/', RootController::class)->name('root');
 
@@ -48,7 +57,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ----------------------------------------------------------------- admin
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('confirmed.admin')->prefix('admin')->name('admin.')->group(function () {
     // No destroy routes anywhere: users and organizations are switched off with
     // their status / is_active column, because other tables reference them (P33).
     Route::get('users', [UserController::class, 'index'])->name('users.index');
