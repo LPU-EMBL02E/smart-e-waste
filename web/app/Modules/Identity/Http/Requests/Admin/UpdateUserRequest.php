@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Http\Requests\Admin;
 
 use App\Modules\Identity\Models\User;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,14 +11,17 @@ use Illuminate\Validation\Rule;
  * PUT /admin/users/{user}. API_Design.md §7.6.
  *
  * Same rules as creating, except the two unique checks ignore this user's own
- * row. Deactivating by setting status = inactive is how an account is switched
- * off; there is no delete route (P33).
+ * row, and a student already in an inactive organization may stay in it while
+ * other details change (web/docs/ACCOUNT-MANAGEMENT.md). Deactivating by setting
+ * status = inactive is how an account is switched off; there is no delete route
+ * (P33).
  */
 class UpdateUserRequest extends FormRequest
 {
     public function rules(): array
     {
         $userId = $this->route('user')?->id;
+        $currentOrganizationId = $this->route('user')?->organization_id;
 
         return [
             'first_name' => ['required', 'string', 'max:100'],
@@ -27,7 +31,9 @@ class UpdateUserRequest extends FormRequest
             'role' => ['required', Rule::in([User::ROLE_STUDENT, User::ROLE_ADMIN])],
             'organization_id' => [
                 'nullable',
-                'exists:organizations,id',
+                Rule::exists('organizations', 'id')->where(
+                    fn (Builder $query) => $query->where('is_active', true)->orWhere('id', $currentOrganizationId),
+                ),
                 Rule::requiredIf(fn () => $this->input('role') === User::ROLE_STUDENT),
                 Rule::prohibitedIf(fn () => $this->input('role') === User::ROLE_ADMIN),
             ],
