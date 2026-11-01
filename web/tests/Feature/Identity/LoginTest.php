@@ -172,8 +172,11 @@ class LoginTest extends TestCase
         $this->startSession();
         $sessionId = session()->getId();
         $token = session()->token();
+        session()->save();
 
-        $this->attempt($student->email);
+        // The cookie makes the request continue this session. Without it every
+        // request starts a new one, and this test would pass whatever the code did.
+        $this->withCookie(config('session.cookie'), $sessionId)->attempt($student->email);
 
         $this->assertNotSame($sessionId, session()->getId());
         $this->assertNotSame($token, session()->token());
