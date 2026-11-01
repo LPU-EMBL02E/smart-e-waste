@@ -25,6 +25,7 @@
         <a href="{{ route('admin.leaderboard.organizations') }}">Organization leaderboard</a>
         <a href="{{ route('admin.reports') }}">Reports</a>
         <a href="{{ route('notifications.index') }}">Notifications</a>
+        <a href="{{ route('home') }}">Student view</a>
         @include('layouts.partials.logout')
     </nav>
 

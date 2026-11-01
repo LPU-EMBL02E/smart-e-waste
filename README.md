@@ -155,7 +155,7 @@ step needs.
 
 | Track | Covers | Spec | State |
 |---|---|---|---|
-| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A7 built |
+| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A8 built |
 | B | Device API, bins, points rule, ledger credit, deposit sessions | [web/docs/TRACK-B-DEPOSIT-PATH.md](web/docs/TRACK-B-DEPOSIT-PATH.md) | Built (#30) |
 | C | Rewards, redeeming, fulfilling, cancelling, voids | [web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md](web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md) | Built (#31) |
 | D | Home, history, leaderboards, dashboard, notifications | [web/docs/TRACK-D-REPORTING-AND-HISTORY.md](web/docs/TRACK-D-REPORTING-AND-HISTORY.md) | Built (#32) |
