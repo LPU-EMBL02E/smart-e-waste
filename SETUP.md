@@ -56,10 +56,25 @@ FLUSH PRIVILEGES;
 The collation is set explicitly because MariaDB 11.8's own default does not
 import into MySQL or older MariaDB, which would break the handover dump.
 
+Set `EWASTE_FIRST_ADMIN_EMAIL` in `.env`, then:
+
 ```bash
 php artisan migrate
 php artisan db:seed --class=FirstAdminSeeder
 ```
+
+### First admin's password
+
+The first admin has no password until it is set through a link. With
+`MAIL_MAILER=log`, that link is written to the log at debug level, so it is lost
+at the `LOG_LEVEL=warning` that `.env.example` ships:
+
+1. Set `LOG_LEVEL=debug` in `.env`.
+2. Open `/forgot-password` and enter the first admin's email.
+3. Find the `/reset-password/...` link in `storage/logs/`, and open it within 60
+   minutes to set the password.
+4. Set `LOG_LEVEL=warning` again. Debug logs hold every password link until they
+   are deleted, so delete that entry from the log too.
 
 ### Mail
 
@@ -189,11 +204,10 @@ under `cage`. Enter its address in the controller's setup portal.
 
 ## 8. What is not built yet
 
-In `web/`, the device API, the deposit path, points, redemptions and the
-reporting pages work. Accounts do not: there is no login, registration or first
-admin yet (Track A), so a running app can't be signed in to. The device API
-can still be driven with the simulator once a bin row exists, and
-`php artisan test` covers the rest.
+In `web/`, the device API, the deposit path, points, redemptions, the reporting
+pages, sign-in, password links and the first admin work. The rest of accounts do
+not (Track A): there is no registration, profile page, or admin user and
+organization pages yet. `php artisan test` covers what is built.
 
 The firmware modules are headers with stub bodies, and the bin station is not
 started.

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Identity\Http\Controllers\Auth;
 
+use App\Modules\Identity\Http\Requests\ResetPasswordRequest;
+use App\Modules\Identity\Services\AccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,20 +24,33 @@ use Illuminate\View\View;
  * TODO(team): API_Design.md §10 question 4 — Laravel's documented default is 60
  * minutes. Decide whether that is long enough for a new account's set-password
  * email, given a student who misses it has to use "Forgot password".
- *
- * TODO: all method bodies.
  */
 class NewPasswordController
 {
+    public function __construct(private AccountService $accounts) {}
+
     public function show(Request $request, string $token): View
     {
-        // TODO: return view('identity.auth.reset-password', compact('token'))
-        throw new \LogicException('Not implemented.');
+        return view('identity.auth.reset-password', [
+            'token' => $token,
+            'email' => $request->query('email'),
+        ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ResetPasswordRequest $request): RedirectResponse
     {
-        // TODO: Password::reset(...), min 8 characters, confirmed
-        throw new \LogicException('Not implemented.');
+        $reset = $this->accounts->resetPassword(
+            $request->validated('email'),
+            $request->validated('token'),
+            $request->validated('password'),
+        );
+
+        if (! $reset) {
+            return back()
+                ->withErrors(['email' => 'This link is not valid or has expired. Ask for a new one.'])
+                ->onlyInput('email');
+        }
+
+        return redirect()->route('login')->with('status', 'Your password has been set. You can sign in now.');
     }
 }

@@ -98,6 +98,21 @@ return [
     // API_Design.md P35. The column holds up to 64 characters.
     'qr_token_length' => 40,
 
+    // Failed sign-ins allowed per email-and-IP pair before the form refuses
+    // more. API_Design.md P29.
+    'login' => [
+        'max_attempts' => 5,
+        'decay_seconds' => 60,
+    ],
+
+    // The admin FirstAdminSeeder creates. System_Plan.md §7, step 5. The email
+    // has no default, so the repository carries no personal address.
+    'first_admin' => [
+        'email' => env('EWASTE_FIRST_ADMIN_EMAIL'),
+        'first_name' => env('EWASTE_FIRST_ADMIN_FIRST_NAME', 'System'),
+        'last_name' => env('EWASTE_FIRST_ADMIN_LAST_NAME', 'Admin'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Human-readable codes

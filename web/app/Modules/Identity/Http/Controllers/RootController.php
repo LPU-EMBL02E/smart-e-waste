@@ -15,8 +15,6 @@ class RootController
 {
     public function __invoke(Request $request): RedirectResponse
     {
-        return $request->user()->isAdmin()
-            ? redirect()->route('admin.dashboard')
-            : redirect()->route('home');
+        return redirect()->route($request->user()->homeRouteName());
     }
 }
