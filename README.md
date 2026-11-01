@@ -155,7 +155,7 @@ step needs.
 
 | Track | Covers | Spec | State |
 |---|---|---|---|
-| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A5 built |
+| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A6 built |
 | B | Device API, bins, points rule, ledger credit, deposit sessions | [web/docs/TRACK-B-DEPOSIT-PATH.md](web/docs/TRACK-B-DEPOSIT-PATH.md) | Built (#30) |
 | C | Rewards, redeeming, fulfilling, cancelling, voids | [web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md](web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md) | Built (#31) |
 | D | Home, history, leaderboards, dashboard, notifications | [web/docs/TRACK-D-REPORTING-AND-HISTORY.md](web/docs/TRACK-D-REPORTING-AND-HISTORY.md) | Built (#32) |
@@ -196,11 +196,9 @@ step needs.
 
 **Not built yet**
 
-- **The rest of accounts (Track A).** The profile and QR page, and the admin
-  organization pages. Sign-in, registration, email confirmation, password links,
-  `FirstAdminSeeder` and the admin user pages work, but until the organization
-  pages land a student has no organization to choose when registering, and an
-  admin has none to assign.
+- **The rest of accounts (Track A).** The profile and QR page. Sign-in,
+  registration, email confirmation, password links, `FirstAdminSeeder` and the
+  admin user and organization pages work.
 - **The reports page**, until the team decides what reports contain
   (`API_Design.md` §10 q2).
 - **The visual design.** The views that exist are bare Blade with no styling.

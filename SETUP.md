@@ -206,9 +206,8 @@ under `cage`. Enter its address in the controller's setup portal.
 
 In `web/`, the device API, the deposit path, points, redemptions, the reporting
 pages, sign-in, registration, email confirmation, password links, the first
-admin and the admin user pages work. The rest of accounts do not (Track A): there
-is no profile page, or admin organization pages yet. `php artisan test` covers
-what is built.
+admin and the admin user and organization pages work. The rest of accounts do not
+(Track A): there is no profile page yet. `php artisan test` covers what is built.
 
 The firmware modules are headers with stub bodies, and the bin station is not
 started.
