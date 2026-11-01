@@ -8,6 +8,9 @@ use App\Modules\Identity\Models\UserQrCredential;
 use App\Modules\Identity\Support\AccountChangeRefused;
 use App\Modules\Identity\Support\LoginRefused;
 use App\Modules\Identity\Support\QrToken;
+use App\Modules\Identity\Support\UserImportFile;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -83,15 +86,56 @@ class AccountService
      * web/docs/ACCOUNT-MANAGEMENT.md).
      *
      * The reply must not depend on the account, so a failed send is only logged
-     * and the caller can't tell it happened.
+     * and the caller can't tell it happened. The broker also limits an account to
+     * one link a minute, which is what a public form needs.
      */
     public function sendPasswordLink(string $email): void
     {
-        try {
-            Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]);
-        } catch (Throwable $failure) {
-            report($failure);
+        $this->attemptToSend(
+            fn () => Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]),
+        );
+    }
+
+    /**
+     * An admin sends the set-password email. API_Design.md §7.4, §7.6.
+     *
+     * Unlike the public form, this goes out at once, with no limit of one a
+     * minute, and the admin is told if it didn't. The new link replaces any
+     * earlier one. An inactive account can't use a link, so it gets none
+     * (web/docs/ACCOUNT-MANAGEMENT.md).
+     *
+     * @return bool whether the email was sent
+     */
+    public function sendPasswordLinkTo(User $user): bool
+    {
+        if (! $user->isActive()) {
+            return false;
         }
+
+        return $this->attemptToSend(
+            fn () => $user->sendPasswordResetNotification(Password::createToken($user)),
+        );
+    }
+
+    /**
+     * Tell the app a student has registered, once register() has committed.
+     * Laravel's own listener sends the confirmation email (API_Design.md §7.6).
+     *
+     * @return bool whether the email was sent; the account stands either way
+     */
+    public function announceRegistration(User $user): bool
+    {
+        return $this->attemptToSend(fn () => event(new Registered($user)));
+    }
+
+    /**
+     * Send the confirmation link again. API_Design.md §7.2.
+     *
+     * @return bool whether the email was sent
+     */
+    public function sendConfirmationEmail(User $user): bool
+    {
+        return $this->attemptToSend(fn () => $user->sendEmailVerificationNotification());
     }
 
     /**
@@ -113,8 +157,8 @@ class AccountService
 
     /**
      * Self-registration: always an active, unconfirmed student, whatever the
-     * input says. API_Design.md §7.6 ("Register"). The caller fires `Registered`
-     * after this returns.
+     * input says. API_Design.md §7.6 ("Register"). The caller then calls
+     * announceRegistration(), so the email goes out after the commit.
      */
     public function register(array $data): User
     {
@@ -212,6 +256,44 @@ class AccountService
     }
 
     /**
+     * What the profile page shows, loaded here so the view runs no query.
+     * API_Design.md §7.3.
+     */
+    public function loadProfile(User $user): User
+    {
+        return $user->load(['organization', 'qrCredential']);
+    }
+
+    /**
+     * The admin user list, newest first, so imported accounts are at the top to
+     * send their emails. API_Design.md §7.4. Sorting on the primary key needs no
+     * new index on `users`.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function list(): LengthAwarePaginator
+    {
+        return User::with('organization:id,code')->latest('id')->paginate();
+    }
+
+    /**
+     * Import an uploaded CSV file, all rows or none. API_Design.md §7.6, P36.
+     * Errors are keyed by row number.
+     *
+     * @return array{imported: int, errors: array<int, list<string>>}
+     */
+    public function importFile(string $path): array
+    {
+        ['rows' => $rows, 'errors' => $errors] = UserImportFile::read($path, array_keys(self::IMPORT_ROW_RULES));
+
+        if ($errors === []) {
+            $errors = $this->import($rows);
+        }
+
+        return ['imported' => $errors === [] ? count($rows) : 0, 'errors' => $errors];
+    }
+
+    /**
      * CSV import, all rows or none. API_Design.md §7.6, P36, P47.
      *
      * Every row is checked first, with one lookup per batch rather than one per
@@ -226,7 +308,7 @@ class AccountService
     {
         $rows = array_map($this->normalizeImportRow(...), $rows);
 
-        $organizationIds = Organization::where('is_active', true)
+        $organizationIds = Organization::active()
             ->whereIn('code', array_unique(array_column($rows, 'organization_code')))
             ->pluck('id', 'code')
             ->all();
@@ -272,11 +354,31 @@ class AccountService
      * Record that a QR token was just scanned at a bin. API_Design.md §5.4, P6.
      *
      * Called by DepositService inside the transaction that opens the session,
-     * so the time is written only when the session is.
+     * so the time is written only when the session is. It leaves updated_at alone,
+     * because that is the time the token was last regenerated (Database_Schema.md
+     * §3), which the profile page shows.
      */
     public function markQrCredentialUsed(UserQrCredential $credential): void
     {
-        $credential->forceFill(['last_used_at' => now()])->save();
+        UserQrCredential::withoutTimestamps(
+            fn () => $credential->forceFill(['last_used_at' => now()])->save(),
+        );
+    }
+
+    /**
+     * A failed send is logged and never fails the action (System_Plan.md §7.2).
+     */
+    private function attemptToSend(callable $send): bool
+    {
+        try {
+            $send();
+
+            return true;
+        } catch (Throwable $failure) {
+            report($failure);
+
+            return false;
+        }
     }
 
     private function createWithQrCredential(User $user): User

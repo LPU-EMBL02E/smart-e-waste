@@ -20,6 +20,10 @@
         <a href="{{ route('leaderboard') }}">Leaderboard</a>
         <a href="{{ route('notifications.index') }}">Notifications</a>
         <a href="{{ route('profile.show') }}">Profile</a>
+        {{-- An admin reaches this shell through "Student view" and needs a way back. --}}
+        @if (auth()->user()->isAdmin())
+            <a href="{{ route('admin.dashboard') }}">Admin</a>
+        @endif
         @include('layouts.partials.logout')
     </nav>
 

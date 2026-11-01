@@ -14,6 +14,7 @@ use App\Modules\Identity\Http\Controllers\Auth\EmailVerificationController;
 use App\Modules\Identity\Http\Controllers\Auth\LoginController;
 use App\Modules\Identity\Http\Controllers\Auth\NewPasswordController;
 use App\Modules\Identity\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Modules\Identity\Http\Controllers\Auth\RegisterController;
 use App\Modules\Identity\Http\Controllers\ProfileController;
 use App\Modules\Identity\Http\Controllers\RootController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'show'])->name('login');
     Route::post('login', [LoginController::class, 'store']);
+
+    Route::get('register', [RegisterController::class, 'show'])->name('register');
+
+    // Only the POST counts (P46). The last argument keeps this limit's count
+    // separate from any other limit on the same IP address.
+    Route::post('register', [RegisterController::class, 'store'])
+        ->middleware('throttle:'.config('ewaste.register_attempts_per_minute').',1,register');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'show'])
         ->name('password.request');
@@ -37,13 +45,19 @@ Route::middleware('guest')->group(function () {
 });
 
 // ------------------------------------------------------ signed in, unconfirmed
-// Open before the email is confirmed: the page asking for it (§7.2), and the way
-// out, so nobody is trapped by the gate.
+// Open before the email is confirmed: the three confirmation routes (§7.2), and
+// the way out, so nobody is trapped by the gate.
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
+    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('signed')
+        ->name('verification.verify');
+    Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:'.config('ewaste.confirmation_resends_per_minute').',1,confirmation-resend')
+        ->name('verification.send');
 });
 
 // ------------------------------------------------------------ signed in

@@ -105,6 +105,11 @@ return [
         'decay_seconds' => 60,
     ],
 
+    // POST /register, per IP address, and the "Send the link again" button, per
+    // user. API_Design.md P46.
+    'register_attempts_per_minute' => 5,
+    'confirmation_resends_per_minute' => 6,
+
     // The admin FirstAdminSeeder creates. System_Plan.md §7, step 5. The email
     // has no default, so the repository carries no personal address.
     'first_admin' => [

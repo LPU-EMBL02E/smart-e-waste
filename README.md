@@ -155,7 +155,7 @@ step needs.
 
 | Track | Covers | Spec | State |
 |---|---|---|---|
-| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A3 built |
+| A | Accounts: registration, sign-in, passwords, users, organizations | [web/docs/TRACK-A-ACCOUNTS.md](web/docs/TRACK-A-ACCOUNTS.md) | Steps A0–A8 built |
 | B | Device API, bins, points rule, ledger credit, deposit sessions | [web/docs/TRACK-B-DEPOSIT-PATH.md](web/docs/TRACK-B-DEPOSIT-PATH.md) | Built (#30) |
 | C | Rewards, redeeming, fulfilling, cancelling, voids | [web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md](web/docs/TRACK-C-REDEMPTIONS-AND-VOIDS.md) | Built (#31) |
 | D | Home, history, leaderboards, dashboard, notifications | [web/docs/TRACK-D-REPORTING-AND-HISTORY.md](web/docs/TRACK-D-REPORTING-AND-HISTORY.md) | Built (#32) |
@@ -196,10 +196,8 @@ step needs.
 
 **Not built yet**
 
-- **The rest of accounts (Track A).** Registration and email confirmation, the
-  profile and QR page, and the admin user and organization pages. Sign-in,
-  password links and `FirstAdminSeeder` work, so the first admin can sign in, but
-  no other account can be created yet.
+- **The QR image.** The profile page shows the QR token as text until the team
+  picks a package (`API_Design.md` §10 q8), so a student has no code to scan yet.
 - **The reports page**, until the team decides what reports contain
   (`API_Design.md` §10 q2).
 - **The visual design.** The views that exist are bare Blade with no styling.

@@ -1,5 +1,7 @@
 {{--
-    Guest shell: login and password pages. resources/views/README.md.
+    Guest shell: login, registration and password pages, and the page asking a
+    signed-in user to confirm their email, which is why the links are guest-only.
+    resources/views/README.md.
 
     Bare on purpose: logic first, the DESIGN.md pass comes later
     (web/docs/TRACK-A-ACCOUNTS.md, step A0).
@@ -12,10 +14,13 @@
     <title>@yield('title') · {{ config('app.name') }}</title>
 </head>
 <body>
-    <nav>
-        <a href="{{ route('login') }}">Sign in</a>
-        <a href="{{ route('password.request') }}">Forgot password</a>
-    </nav>
+    @guest
+        <nav>
+            <a href="{{ route('login') }}">Sign in</a>
+            <a href="{{ route('register') }}">Register</a>
+            <a href="{{ route('password.request') }}">Forgot password</a>
+        </nav>
+    @endguest
 
     <main>
         @include('layouts.partials.messages')
