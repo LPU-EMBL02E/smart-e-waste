@@ -8,7 +8,9 @@ use App\Modules\Identity\Models\UserQrCredential;
 use App\Modules\Identity\Support\AccountChangeRefused;
 use App\Modules\Identity\Support\LoginRefused;
 use App\Modules\Identity\Support\QrToken;
+use App\Modules\Identity\Support\UserImportFile;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -84,12 +86,34 @@ class AccountService
      * web/docs/ACCOUNT-MANAGEMENT.md).
      *
      * The reply must not depend on the account, so a failed send is only logged
-     * and the caller can't tell it happened.
+     * and the caller can't tell it happened. The broker also limits an account to
+     * one link a minute, which is what a public form needs.
      */
     public function sendPasswordLink(string $email): void
     {
         $this->attemptToSend(
             fn () => Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]),
+        );
+    }
+
+    /**
+     * An admin sends the set-password email. API_Design.md §7.4, §7.6.
+     *
+     * Unlike the public form, this goes out at once, with no limit of one a
+     * minute, and the admin is told if it didn't. The new link replaces any
+     * earlier one. An inactive account can't use a link, so it gets none
+     * (web/docs/ACCOUNT-MANAGEMENT.md).
+     *
+     * @return bool whether the email was sent
+     */
+    public function sendPasswordLinkTo(User $user): bool
+    {
+        if (! $user->isActive()) {
+            return false;
+        }
+
+        return $this->attemptToSend(
+            fn () => $user->sendPasswordResetNotification(Password::createToken($user)),
         );
     }
 
@@ -229,6 +253,35 @@ class AccountService
         $credential->update(['token' => QrToken::generate()]);
 
         return $credential;
+    }
+
+    /**
+     * The admin user list, newest first, so imported accounts are at the top to
+     * send their emails. API_Design.md §7.4. Sorting on the primary key needs no
+     * new index on `users`.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function list(): LengthAwarePaginator
+    {
+        return User::with('organization:id,code')->latest('id')->paginate();
+    }
+
+    /**
+     * Import an uploaded CSV file, all rows or none. API_Design.md §7.6, P36.
+     * Errors are keyed by row number.
+     *
+     * @return array{imported: int, errors: array<int, list<string>>}
+     */
+    public function importFile(string $path): array
+    {
+        ['rows' => $rows, 'errors' => $errors] = UserImportFile::read($path, array_keys(self::IMPORT_ROW_RULES));
+
+        if ($errors === []) {
+            $errors = $this->import($rows);
+        }
+
+        return ['imported' => $errors === [] ? count($rows) : 0, 'errors' => $errors];
     }
 
     /**

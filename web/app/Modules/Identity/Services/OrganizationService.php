@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Services;
 
 use App\Modules\Identity\Models\Organization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -29,10 +30,15 @@ class OrganizationService
     /**
      * For a form's organization list. Not paginated: a school has few of them.
      *
+     * @param  int|null  $currentId  the student's own organization, kept in the
+     *                               list if inactive so an edit can leave it alone
      * @return Collection<int, Organization>
      */
-    public function activeOptions(): Collection
+    public function activeOptions(?int $currentId = null): Collection
     {
-        return Organization::active()->orderBy('name')->get(['id', 'name']);
+        return Organization::active()
+            ->when($currentId, fn (Builder $query) => $query->orWhere('id', $currentId))
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 }
