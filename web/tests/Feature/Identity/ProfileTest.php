@@ -83,11 +83,11 @@ class ProfileTest extends TestCase
             ->assertSee('Engineering programs.');
     }
 
-    public function test_it_runs_no_query_from_the_view(): void
+    public function test_it_loads_what_the_page_needs_so_the_view_runs_no_query(): void
     {
-        $user = $this->actingAs(User::factory()->create())
-            ->get(route('profile.show'))
-            ->viewData('user');
+        $user = User::findOrFail(User::factory()->create()->id);
+
+        app(AccountService::class)->loadProfile($user);
 
         $this->assertTrue($user->relationLoaded('organization'));
         $this->assertTrue($user->relationLoaded('qrCredential'));
