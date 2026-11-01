@@ -15,6 +15,6 @@ final class AccountChangeRefused extends RuntimeException
 {
     public static function lastAdmin(): self
     {
-        return new self('This is the last active admin with a password. Make another admin first.');
+        return new self('You can\'t make this account inactive or a student. At least one other active admin with a password must remain.');
     }
 }
