@@ -256,6 +256,15 @@ class AccountService
     }
 
     /**
+     * What the profile page shows, loaded here so the view runs no query.
+     * API_Design.md §7.3.
+     */
+    public function loadProfile(User $user): User
+    {
+        return $user->load(['organization', 'qrCredential']);
+    }
+
+    /**
      * The admin user list, newest first, so imported accounts are at the top to
      * send their emails. API_Design.md §7.4. Sorting on the primary key needs no
      * new index on `users`.
@@ -345,11 +354,15 @@ class AccountService
      * Record that a QR token was just scanned at a bin. API_Design.md §5.4, P6.
      *
      * Called by DepositService inside the transaction that opens the session,
-     * so the time is written only when the session is.
+     * so the time is written only when the session is. It leaves updated_at alone,
+     * because that is the time the token was last regenerated (Database_Schema.md
+     * §3), which the profile page shows.
      */
     public function markQrCredentialUsed(UserQrCredential $credential): void
     {
-        $credential->forceFill(['last_used_at' => now()])->save();
+        UserQrCredential::withoutTimestamps(
+            fn () => $credential->forceFill(['last_used_at' => now()])->save(),
+        );
     }
 
     /**
