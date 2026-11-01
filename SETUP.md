@@ -205,9 +205,9 @@ under `cage`. Enter its address in the controller's setup portal.
 ## 8. What is not built yet
 
 In `web/`, the device API, the deposit path, points, redemptions, the reporting
-pages, sign-in, password links and the first admin work. The rest of accounts do
-not (Track A): there is no registration, profile page, or admin user and
-organization pages yet. `php artisan test` covers what is built.
+pages, sign-in, registration, email confirmation, password links and the first
+admin work. The rest of accounts do not (Track A): there is no profile page, or
+admin user and organization pages yet. `php artisan test` covers what is built.
 
 The firmware modules are headers with stub bodies, and the bin station is not
 started.

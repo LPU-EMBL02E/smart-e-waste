@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Services;
 
 use App\Modules\Identity\Models\Organization;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Organization writes. API_Design.md §7.4 and §7.6, System_Plan.md §4.
@@ -23,5 +24,15 @@ class OrganizationService
         $organization->update($data);
 
         return $organization;
+    }
+
+    /**
+     * For a form's organization list. Not paginated: a school has few of them.
+     *
+     * @return Collection<int, Organization>
+     */
+    public function activeOptions(): Collection
+    {
+        return Organization::active()->orderBy('name')->get(['id', 'name']);
     }
 }

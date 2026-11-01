@@ -37,7 +37,7 @@ class EmailConfirmationGateTest extends TestCase
      * Each module declares its own routes, so this reads the whole route table:
      * a module that forgets the gate fails here, not in production.
      */
-    public function test_it_gates_every_signed_in_route_except_logout_and_the_notice(): void
+    public function test_it_gates_every_signed_in_route_except_logout_and_the_confirmation_routes(): void
     {
         // Resolving the HTTP kernel is what gives the router its middleware aliases
         // and groups; this test makes no request that would do it.
@@ -55,6 +55,9 @@ class EmailConfirmationGateTest extends TestCase
             ->values()
             ->all();
 
-        $this->assertEqualsCanonicalizing(['logout', 'verification.notice'], $ungated);
+        $this->assertEqualsCanonicalizing(
+            ['logout', 'verification.notice', 'verification.verify', 'verification.send'],
+            $ungated,
+        );
     }
 }

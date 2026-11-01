@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Models;
 
 use Database\Factories\Identity\OrganizationFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +35,14 @@ class Organization extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Those that take new students (web/docs/ACCOUNT-MANAGEMENT.md).
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 
     public function users(): HasMany

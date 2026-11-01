@@ -8,6 +8,7 @@ use App\Modules\Identity\Models\UserQrCredential;
 use App\Modules\Identity\Support\AccountChangeRefused;
 use App\Modules\Identity\Support\LoginRefused;
 use App\Modules\Identity\Support\QrToken;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -87,11 +88,30 @@ class AccountService
      */
     public function sendPasswordLink(string $email): void
     {
-        try {
-            Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]);
-        } catch (Throwable $failure) {
-            report($failure);
-        }
+        $this->attemptToSend(
+            fn () => Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]),
+        );
+    }
+
+    /**
+     * Tell the app a student has registered, once register() has committed.
+     * Laravel's own listener sends the confirmation email (API_Design.md §7.6).
+     *
+     * @return bool whether the email was sent; the account stands either way
+     */
+    public function announceRegistration(User $user): bool
+    {
+        return $this->attemptToSend(fn () => event(new Registered($user)));
+    }
+
+    /**
+     * Send the confirmation link again. API_Design.md §7.2.
+     *
+     * @return bool whether the email was sent
+     */
+    public function sendConfirmationEmail(User $user): bool
+    {
+        return $this->attemptToSend(fn () => $user->sendEmailVerificationNotification());
     }
 
     /**
@@ -113,8 +133,8 @@ class AccountService
 
     /**
      * Self-registration: always an active, unconfirmed student, whatever the
-     * input says. API_Design.md §7.6 ("Register"). The caller fires `Registered`
-     * after this returns.
+     * input says. API_Design.md §7.6 ("Register"). The caller then calls
+     * announceRegistration(), so the email goes out after the commit.
      */
     public function register(array $data): User
     {
@@ -226,7 +246,7 @@ class AccountService
     {
         $rows = array_map($this->normalizeImportRow(...), $rows);
 
-        $organizationIds = Organization::where('is_active', true)
+        $organizationIds = Organization::active()
             ->whereIn('code', array_unique(array_column($rows, 'organization_code')))
             ->pluck('id', 'code')
             ->all();
@@ -277,6 +297,22 @@ class AccountService
     public function markQrCredentialUsed(UserQrCredential $credential): void
     {
         $credential->forceFill(['last_used_at' => now()])->save();
+    }
+
+    /**
+     * A failed send is logged and never fails the action (System_Plan.md §7.2).
+     */
+    private function attemptToSend(callable $send): bool
+    {
+        try {
+            $send();
+
+            return true;
+        } catch (Throwable $failure) {
+            report($failure);
+
+            return false;
+        }
     }
 
     private function createWithQrCredential(User $user): User
