@@ -6,18 +6,23 @@ use App\Modules\Identity\Models\Organization;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\UserQrCredential;
 use App\Modules\Identity\Support\AccountChangeRefused;
+use App\Modules\Identity\Support\LoginRefused;
 use App\Modules\Identity\Support\QrToken;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 /**
- * Account writes. System_Plan.md §4: Identity is the only writer of
+ * Account rules and writes. System_Plan.md §4: Identity is the only writer of
  * `organizations`, `users` and `user_qr_credentials`, so other modules change
- * them only through this service. web/docs/TRACK-A-ACCOUNTS.md step A2.
+ * them only through this service. web/docs/TRACK-A-ACCOUNTS.md steps A2 and A3.
  *
- * A user and its QR credential are always created in one transaction. This
- * service sends no mail: the caller does that after the commit, so a failed send
- * never undoes the write (System_Plan.md §7.2).
+ * A user and its QR credential are always created in one transaction. Mail goes
+ * out after the commit, never inside a transaction, so a failed send never undoes
+ * a write (System_Plan.md §7.2).
  *
  * Setting a password hashes it, which is slow, so that happens before each
  * transaction opens rather than inside it (AGENTS.md §5.1).
@@ -35,6 +40,76 @@ class AccountService
         'email' => ['required', 'email', 'max:255'],
         'organization_code' => ['required', 'string'],
     ];
+
+    /**
+     * Sign in through Laravel's guard. API_Design.md §7.2, P6, P29.
+     *
+     * The guard already fails an account with no password, and asking for an
+     * active status makes an inactive account fail the same way. Only failures
+     * count towards the limit, so someone signing in normally is never slowed.
+     *
+     * @throws LoginRefused
+     */
+    public function signIn(string $email, string $password, string $throttleKey): User
+    {
+        if (RateLimiter::tooManyAttempts($throttleKey, config('ewaste.login.max_attempts'))) {
+            throw LoginRefused::tooManyAttempts(RateLimiter::availableIn($throttleKey));
+        }
+
+        $signedIn = Auth::attempt([
+            'email' => $email,
+            'password' => $password,
+            'status' => User::STATUS_ACTIVE,
+        ]);
+
+        if (! $signedIn) {
+            RateLimiter::hit($throttleKey, config('ewaste.login.decay_seconds'));
+
+            throw LoginRefused::invalidCredentials();
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        /** @var User $user */
+        $user = Auth::user();
+        $user->forceFill(['last_login_at' => now()])->save();
+
+        return $user;
+    }
+
+    /**
+     * Send a link to set a password. The broker finds no account for an unknown
+     * or inactive email, so neither gets a link (API_Design.md P30,
+     * web/docs/ACCOUNT-MANAGEMENT.md).
+     *
+     * The reply must not depend on the account, so a failed send is only logged
+     * and the caller can't tell it happened.
+     */
+    public function sendPasswordLink(string $email): void
+    {
+        try {
+            Password::sendResetLink(['email' => $email, 'status' => User::STATUS_ACTIVE]);
+        } catch (Throwable $failure) {
+            report($failure);
+        }
+    }
+
+    /**
+     * Set a password from an emailed link. Refuses a wrong or expired token, an
+     * unknown email and an inactive account alike, so a refusal reveals nothing
+     * about the account (API_Design.md §7.2, web/docs/ACCOUNT-MANAGEMENT.md).
+     *
+     * @return bool whether the password was set
+     */
+    public function resetPassword(string $email, string $token, string $password): bool
+    {
+        $status = Password::reset(
+            ['email' => $email, 'token' => $token, 'password' => $password, 'status' => User::STATUS_ACTIVE],
+            fn (User $user, string $newPassword) => $this->setPassword($user, $newPassword),
+        );
+
+        return $status === Password::PASSWORD_RESET;
+    }
 
     /**
      * Self-registration: always an active, unconfirmed student, whatever the

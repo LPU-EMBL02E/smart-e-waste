@@ -139,6 +139,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->password !== null;
     }
 
+    /**
+     * Where this user lands after signing in and at `/`: /admin for an admin,
+     * /home for a student (API_Design.md P29, §7.3).
+     */
+    public function homeRouteName(): string
+    {
+        return $this->isAdmin() ? 'admin.dashboard' : 'home';
+    }
+
     public function fullName(): string
     {
         return "{$this->first_name} {$this->last_name}";
