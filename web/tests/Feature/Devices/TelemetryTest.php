@@ -4,6 +4,7 @@ namespace Tests\Feature\Devices;
 
 use App\Modules\Devices\Models\BinTelemetry;
 use App\Modules\Devices\Models\Device;
+use App\Modules\Devices\Support\BinFaultCode;
 use App\Modules\Identity\Models\User;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Support\NotificationType;
@@ -12,7 +13,7 @@ use Tests\Concerns\SignsDeviceRequests;
 use Tests\TestCase;
 
 /**
- * POST /api/v1/device/telemetry. API_Design.md §5.3, P19, P42, P43;
+ * POST /api/v1/device/telemetry. API_Design.md §5.3, P19, P42, P43, P49;
  * Database_Schema.md §5 and §12.
  *
  * The factory bin is 500 mm deep with a 90 % threshold.
@@ -58,6 +59,16 @@ class TelemetryTest extends TestCase
             'panel_open' => true,
             'fault_code' => 'ACTUATOR_JAM',
         ]);
+    }
+
+    public function test_it_accepts_a_model_unavailable_fault_and_notifies_admins(): void
+    {
+        User::factory()->admin()->create();
+
+        $this->sendReading(400, fault: 'MODEL_UNAVAILABLE')->assertCreated();
+
+        $this->assertSame(BinFaultCode::ModelUnavailable, BinTelemetry::latest('id')->first()->fault_code);
+        $this->assertSame(1, Notification::where('type', NotificationType::BinFault)->count());
     }
 
     public function test_it_rejects_an_unknown_fault_code(): void

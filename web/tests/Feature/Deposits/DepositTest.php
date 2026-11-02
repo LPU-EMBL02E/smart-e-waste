@@ -12,7 +12,7 @@ use Tests\Concerns\SignsDeviceRequests;
 use Tests\TestCase;
 
 /**
- * POST /api/v1/device/sessions/{id}/deposit. API_Design.md §5.5, P12, P22, P23.
+ * POST /api/v1/device/sessions/{id}/deposit. API_Design.md §5.5, P12, P22, P23, P49.
  *
  * The factory rule: 0.1 points per gram, 10 g to 2000 g.
  */
@@ -48,6 +48,39 @@ class DepositTest extends TestCase
             ->assertExactJson(['accepted' => true, 'points_preview' => 18]);
 
         $this->assertSame(SessionStatus::Accepted, $this->session->fresh()->status);
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseCount('point_ledger', 0);
+    }
+
+    public function test_it_accepts_a_deposit_the_ewaste_model_passed_and_keeps_its_method_and_score(): void
+    {
+        $payload = array_replace_recursive(self::VALID, [
+            'verification' => ['method' => 'ewaste_model', 'score' => 0.93],
+        ]);
+
+        $this->deposit($payload)->assertOk()->assertJsonPath('accepted', true);
+
+        $session = $this->session->fresh();
+        $this->assertSame(SessionStatus::Accepted, $session->status);
+        $this->assertSame('ewaste_model', $session->verification_method);
+        $this->assertEquals(0.93, (float) $session->verification_score);
+    }
+
+    public function test_it_rejects_a_deposit_the_ewaste_model_failed_and_keeps_the_evidence(): void
+    {
+        $payload = array_replace_recursive(self::VALID, [
+            'verification' => ['method' => 'ewaste_model', 'passed' => false, 'score' => 0.12],
+        ]);
+
+        $this->deposit($payload)
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'VERIFICATION_FAILED');
+
+        $session = $this->session->fresh();
+        $this->assertSame(SessionStatus::Rejected, $session->status);
+        $this->assertSame('ewaste_model', $session->verification_method);
+        $this->assertFalse($session->verification_passed);
+        $this->assertEquals(0.12, (float) $session->verification_score);
         $this->assertDatabaseCount('transactions', 0);
         $this->assertDatabaseCount('point_ledger', 0);
     }
