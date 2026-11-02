@@ -1,0 +1,100 @@
+/* Forms. web/docs/DESIGN.md §§5–6, design-system.html #forms. */
+.form {
+    display: grid;
+    gap: var(--spacing-6);
+    width: 100%;
+    max-width: var(--container-form);
+}
+
+.form-row {
+    display: grid;
+    gap: var(--spacing-6);
+
+    @variant sm {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.form-group {
+    display: grid;
+    gap: var(--spacing-6);
+    min-width: 0;
+}
+
+.field {
+    min-width: 0;
+}
+
+.field-label {
+    display: block;
+    margin-bottom: var(--spacing-2);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.field-label span {
+    color: var(--color-muted);
+    font-size: var(--text-small);
+    font-weight: 400;
+}
+
+.field-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--size-target);
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-weight: 400;
+}
+
+.field-input[readonly] {
+    background: var(--color-lavender-wash);
+}
+
+textarea.field-input {
+    resize: vertical;
+}
+
+.field-input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+}
+
+.hint,
+.field-error {
+    margin-top: var(--spacing-1);
+    font-size: var(--text-small);
+}
+
+.hint {
+    color: var(--color-muted);
+}
+
+.field-error {
+    color: var(--color-danger);
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-height: var(--size-target);
+    font-weight: 600;
+}
+
+.check input {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--color-ink);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-3);
+}

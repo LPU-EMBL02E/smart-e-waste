@@ -1,0 +1,64 @@
+/* Status badges, counts and the fill meter. design-system.html #status, #panels. */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1) var(--spacing-2);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: var(--text-small);
+    white-space: nowrap;
+}
+
+.pill-ok {
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.pill-warn {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.pill-danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+/* A plain number in the navigation. */
+.count {
+    margin-left: auto;
+    padding-inline: var(--spacing-1);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-paper);
+    font-size: var(--text-small);
+    font-variant-numeric: tabular-nums;
+}
+
+.reading {
+    display: inline-flex;
+    white-space: nowrap;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.meter {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 12px;
+    border: 2px solid var(--color-ink);
+    border-radius: 2px;
+    background: var(--color-paper);
+}
+
+.meter i {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    border-right: 2px solid var(--color-ink);
+    background: var(--color-lavender-strong);
+}

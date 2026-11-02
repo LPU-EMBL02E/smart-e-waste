@@ -12,6 +12,7 @@ use App\Modules\Notifications\Listeners\SendRedemptionFulfilledNotification;
 use App\Modules\Rewards\Events\RedemptionFulfilled;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -61,6 +62,19 @@ class ModuleServiceProvider extends ServiceProvider
     {
         $this->loadModuleRoutes();
         $this->registerListeners();
+        $this->shareUnreadNotificationCount();
+    }
+
+    /**
+     * The sidebar's unread count, for the signed-in user. One count on the
+     * (user_id, read_at) index, only when a page draws the sidebar: never on a
+     * redirect, a device route or an error page.
+     */
+    private function shareUnreadNotificationCount(): void
+    {
+        View::composer('layouts.partials.sidebar', function ($view): void {
+            $view->with('unreadNotifications', auth()->user()->notifications()->unread()->count());
+        });
     }
 
     private function loadModuleRoutes(): void
