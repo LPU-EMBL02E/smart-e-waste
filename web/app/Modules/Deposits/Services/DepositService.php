@@ -344,7 +344,7 @@ class DepositService
             ->select('transactions.*')
             ->join('deposit_sessions', 'deposit_sessions.id', '=', 'transactions.session_id')
             ->where('deposit_sessions.user_id', $user->id)
-            ->with('session')
+            ->with('session.device')
             ->latest('transactions.id')
             ->paginate($perPage);
     }

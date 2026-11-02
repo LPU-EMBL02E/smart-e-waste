@@ -133,6 +133,17 @@ class LeaderboardTest extends TestCase
         $this->assertSame($fewUsers, $manyUsers);
     }
 
+    public function test_it_shows_each_users_organization_and_marks_the_signed_in_user(): void
+    {
+        $organization = Organization::factory()->create(['name' => 'College of Computing']);
+        $student = $this->userWhoEarned(50, ['organization_id' => $organization->id, 'first_name' => 'Ana', 'last_name' => 'Cruz']);
+        $this->userWhoEarned(40, ['organization_id' => null, 'role' => User::ROLE_ADMIN, 'student_number' => null, 'first_name' => 'Ben', 'last_name' => 'Admin']);
+
+        $this->actingAs($student)
+            ->get(route('leaderboard'))
+            ->assertSeeInOrder(['Ana Cruz (you)', 'College of Computing', '50 pts', 'Ben Admin', '—', '40 pts']);
+    }
+
     public function test_it_keeps_students_out_of_the_organization_leaderboard(): void
     {
         $this->actingAs(User::factory()->create())
