@@ -322,7 +322,7 @@ class DepositService
      */
     public function listTransactions(): LengthAwarePaginator
     {
-        return Transaction::with(['session.user', 'session.device'])->latest('id')->paginate();
+        return Transaction::with(['session.user.organization:id,code', 'session.device'])->latest('id')->paginate();
     }
 
     /**
@@ -344,7 +344,7 @@ class DepositService
             ->select('transactions.*')
             ->join('deposit_sessions', 'deposit_sessions.id', '=', 'transactions.session_id')
             ->where('deposit_sessions.user_id', $user->id)
-            ->with('session')
+            ->with('session.device')
             ->latest('transactions.id')
             ->paginate($perPage);
     }
@@ -371,7 +371,7 @@ class DepositService
      */
     public function forReview(Transaction $transaction): Transaction
     {
-        return $transaction->load(['session.user', 'session.device', 'voidedBy']);
+        return $transaction->load(['session.user.organization:id,code', 'session.device', 'rewardRule', 'voidedBy']);
     }
 
     /**

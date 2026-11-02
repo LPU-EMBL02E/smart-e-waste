@@ -39,10 +39,10 @@ class AdminTransactionTest extends TestCase
         $this->get(route('admin.transactions.show', $transaction))
             ->assertOk()
             ->assertSee($transaction->transaction_code)
-            ->assertSee('184.60 g')
+            ->assertSee('184.6 g')
             ->assertSee('cam_diff')
             ->assertSee('0.8700')
-            ->assertSee('3200 ms')
+            ->assertSee('3,200 ms')
             ->assertSee(route('admin.transactions.void', $transaction));
     }
 

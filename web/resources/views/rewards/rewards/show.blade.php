@@ -1,5 +1,6 @@
 {{--
-    GET /rewards/{reward} — one reward, with the redeem form. API_Design.md §7.3.
+    GET /rewards/{reward} — one reward, with the redeem form. API_Design.md §7.3,
+    all-pages-wireframe.html S7.
 
     "Can you afford it" is a hint from the balance; RedemptionService re-checks
     both the balance and the stock under a lock when the form is sent.
@@ -9,37 +10,44 @@
 @section('title', $reward->name)
 
 @section('content')
-    <h1>{{ $reward->name }}</h1>
+    <x-ui.page-heading :title="$reward->name" :back="route('rewards.index')" back-label="All rewards" />
 
-    @if ($reward->description)
-        <p>{{ $reward->description }}</p>
-    @endif
+    <div class="split">
+        <section class="section">
+            @if ($reward->description)
+                <p class="prose">{{ $reward->description }}</p>
+            @endif
 
-    <dl>
-        <dt>Cost</dt>
-        <dd>{{ $reward->points_cost }} points each</dd>
-        <dt>In stock</dt>
-        <dd>{{ $reward->stock_quantity }}</dd>
-        <dt>Your balance</dt>
-        <dd>{{ $balance }} points</dd>
-    </dl>
+            <dl class="details-list">
+                <dt>Cost</dt>
+                <dd>@points($reward->points_cost) each</dd>
+                <dt>In stock</dt>
+                <dd>{{ $reward->stock_quantity }}</dd>
+                <dt>Your points</dt>
+                <dd>@points($balance)</dd>
+            </dl>
+        </section>
 
-    @if ($reward->stock_quantity < 1)
-        <p>Out of stock.</p>
-    @elseif ($balance < $reward->points_cost)
-        <p>You need {{ $reward->points_cost - $balance }} more points to redeem this.</p>
-    @else
-        <form method="POST" action="{{ route('redemptions.store') }}">
-            @csrf
-            <input type="hidden" name="reward_id" value="{{ $reward->id }}">
-            <p>
-                <label for="quantity">Quantity</label>
-                <input id="quantity" name="quantity" type="number" step="1" min="1" required
-                       value="{{ old('quantity', 1) }}">
-            </p>
-            <button type="submit">Redeem</button>
-        </form>
-    @endif
-
-    <p><a href="{{ route('rewards.index') }}">Back to rewards</a></p>
+        <x-ui.panel title="Redeem">
+            @if ($reward->stock_quantity < 1)
+                <div class="actions">
+                    <x-ui.button variant="primary" disabled>Redeem reward</x-ui.button>
+                    <p class="small">Out of stock.</p>
+                </div>
+            @elseif ($balance < $reward->points_cost)
+                <div class="actions">
+                    <x-ui.button variant="primary" disabled>Redeem reward</x-ui.button>
+                    <p class="small">You need @points($reward->points_cost - $balance) more to redeem this.</p>
+                </div>
+            @else
+                <form class="form" method="POST" action="{{ route('redemptions.store') }}">
+                    @csrf
+                    <input type="hidden" name="reward_id" value="{{ $reward->id }}">
+                    <x-form.input name="quantity" label="Quantity" type="number" step="1" min="1" required :value="1"
+                                  hint="Whole number, 1 or more." />
+                    <x-ui.button variant="primary">Redeem reward</x-ui.button>
+                </form>
+            @endif
+        </x-ui.panel>
+    </div>
 @endsection

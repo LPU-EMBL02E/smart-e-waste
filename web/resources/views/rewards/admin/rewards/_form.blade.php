@@ -1,27 +1,10 @@
-{{-- The reward fields. API_Design.md §7.6 ("Create or edit a reward"), P41. --}}
-<p>
-    <label for="name">Name</label>
-    <input id="name" name="name" maxlength="150" required value="{{ old('name', $reward->name) }}">
-</p>
-<p>
-    <label for="description">Description</label>
-    <textarea id="description" name="description">{{ old('description', $reward->description) }}</textarea>
-</p>
-<p>
-    <label for="points_cost">Cost (points)</label>
-    <input id="points_cost" name="points_cost" type="number" step="1" min="1" required
-           value="{{ old('points_cost', $reward->points_cost) }}">
-</p>
-<p>
-    <label for="stock_quantity">In stock</label>
-    <input id="stock_quantity" name="stock_quantity" type="number" step="1" min="0" required
-           value="{{ old('stock_quantity', $reward->stock_quantity) }}">
-</p>
-<p>
-    {{-- An unticked checkbox sends nothing, so the hidden 0 comes first. --}}
-    <input type="hidden" name="is_active" value="0">
-    <label>
-        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $reward->is_active))>
-        Shown to students
-    </label>
-</p>
+{{-- The reward fields. API_Design.md §7.6 ("Create or edit a reward"), P41; all-pages-wireframe.html A19, A20. --}}
+<x-form.input name="name" label="Name" maxlength="150" required :value="$reward->name" />
+<x-form.textarea name="description" label="Description" :value="$reward->description" />
+<div class="form-row">
+    <x-form.input name="points_cost" label="Points cost" type="number" step="1" min="1" required :value="$reward->points_cost"
+                  :hint="$reward->exists ? 'Changing the price doesn\'t change past redemptions.' : 'Whole number, 1 or more.'" />
+    <x-form.input name="stock_quantity" label="Stock" type="number" step="1" min="0" required :value="$reward->stock_quantity"
+                  hint="Whole number, 0 or more." />
+</div>
+<x-form.checkbox name="is_active" label="Active — students can see and redeem it" :checked="$reward->is_active" />

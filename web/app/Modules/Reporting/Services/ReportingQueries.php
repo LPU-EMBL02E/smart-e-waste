@@ -67,7 +67,8 @@ class ReportingQueries
      * every user has a QR token (API_Design.md P31).
      *
      * One query: the ledger grouped by user, joined to the users for their
-     * names. Each User carries an integer `points_earned`.
+     * names and organizations. Each User carries an integer `points_earned` and
+     * an `organization_name`, NULL for an admin.
      *
      * @return Collection<int, User>
      */
@@ -79,11 +80,12 @@ class ReportingQueries
 
         return User::query()
             ->joinSub($earned, 'earned', 'earned.user_id', '=', 'users.id')
+            ->leftJoin('organizations', 'organizations.id', '=', 'users.organization_id')
             ->orderByDesc('earned.points_earned')
             ->orderBy('users.id')
             ->limit($limit)
             ->withCasts(['points_earned' => 'integer'])
-            ->get(['users.id', 'users.first_name', 'users.last_name', 'earned.points_earned']);
+            ->get(['users.id', 'users.first_name', 'users.last_name', 'organizations.name AS organization_name', 'earned.points_earned']);
     }
 
     /**
@@ -112,7 +114,7 @@ class ReportingQueries
             ->orderByDesc('earned.points_earned')
             ->orderBy('organizations.id')
             ->withCasts(['points_earned' => 'integer'])
-            ->get(['organizations.id', 'organizations.name', 'earned.points_earned']);
+            ->get(['organizations.id', 'organizations.name', 'organizations.code', 'earned.points_earned']);
     }
 
     /**

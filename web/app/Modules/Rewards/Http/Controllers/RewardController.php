@@ -28,9 +28,12 @@ class RewardController
         private PointsService $points,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('rewards.rewards.index', ['rewards' => $this->rewards->catalogue()]);
+        return view('rewards.rewards.index', [
+            'rewards' => $this->rewards->catalogue(),
+            'balance' => $this->points->balanceFor($request->user()),
+        ]);
     }
 
     public function show(Request $request, Reward $reward): View

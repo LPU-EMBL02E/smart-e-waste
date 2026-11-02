@@ -68,6 +68,46 @@ class RewardCatalogueTest extends TestCase
         $this->get(route('rewards.show', $inactive))->assertNotFound();
     }
 
+    public function test_it_tells_a_student_what_they_can_spend(): void
+    {
+        $student = User::factory()->create();
+        PointLedgerEntry::factory()->create(['user_id' => $student->id, 'points_delta' => 1200]);
+
+        $this->actingAs($student)->get(route('rewards.index'))->assertSee('1,200 pts');
+    }
+
+    public function test_it_offers_the_redeem_form_when_a_student_can_afford_it(): void
+    {
+        $student = User::factory()->create();
+        PointLedgerEntry::factory()->create(['user_id' => $student->id, 'points_delta' => 50]);
+
+        $this->actingAs($student)
+            ->get(route('rewards.show', Reward::factory()->create(['points_cost' => 50])))
+            ->assertSee('action="'.route('redemptions.store').'"', false);
+    }
+
+    public function test_it_says_how_many_points_a_student_is_short(): void
+    {
+        $student = User::factory()->create();
+        PointLedgerEntry::factory()->create(['user_id' => $student->id, 'points_delta' => 40]);
+
+        $this->actingAs($student)
+            ->get(route('rewards.show', Reward::factory()->create(['points_cost' => 50])))
+            ->assertSee('You need 10 pts more')
+            ->assertDontSee('action="'.route('redemptions.store').'"', false);
+    }
+
+    public function test_it_offers_no_redeem_form_when_out_of_stock(): void
+    {
+        $student = User::factory()->create();
+        PointLedgerEntry::factory()->create(['user_id' => $student->id, 'points_delta' => 500]);
+
+        $this->actingAs($student)
+            ->get(route('rewards.show', Reward::factory()->outOfStock()->create()))
+            ->assertSee('Out of stock')
+            ->assertDontSee('action="'.route('redemptions.store').'"', false);
+    }
+
     public function test_it_keeps_students_out_of_the_admin_reward_pages(): void
     {
         $reward = Reward::factory()->create();

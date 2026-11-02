@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Http\Controllers;
 
 use App\Modules\Identity\Services\AccountService;
+use App\Modules\Identity\Support\QrCodeImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,7 +33,12 @@ class ProfileController
 
     public function show(Request $request): View
     {
-        return view('identity.profile.show', ['user' => $this->accounts->loadProfile($request->user())]);
+        $user = $this->accounts->loadProfile($request->user());
+
+        return view('identity.profile.show', [
+            'user' => $user,
+            'qrSvg' => QrCodeImage::svg($user->qrCredential->token),
+        ]);
     }
 
     /**

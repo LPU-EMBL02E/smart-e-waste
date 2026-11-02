@@ -6,6 +6,7 @@ use App\Modules\Devices\Models\Device;
 use App\Modules\Identity\Models\Organization;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Services\AccountService;
+use App\Modules\Identity\Support\QrCodeImage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\Concerns\SignsDeviceRequests;
@@ -27,7 +28,15 @@ class ProfileTest extends TestCase
         $this->actingAs($student)
             ->get(route('profile.show'))
             ->assertOk()
-            ->assertSee($student->qrCredential->token);
+            ->assertSee(QrCodeImage::svg($student->qrCredential->token), false);
+    }
+
+    public function test_it_draws_the_qr_code_as_an_inline_svg_without_a_script(): void
+    {
+        $svg = QrCodeImage::svg('abc123');
+
+        $this->assertStringStartsWith('<svg', $svg);
+        $this->assertStringNotContainsString('<script', $svg);
     }
 
     public function test_it_shows_no_other_users_token(): void
@@ -37,6 +46,7 @@ class ProfileTest extends TestCase
 
         $this->actingAs($student)
             ->get(route('profile.show'))
+            ->assertDontSee(QrCodeImage::svg($other->qrCredential->token), false)
             ->assertDontSee($other->qrCredential->token);
     }
 

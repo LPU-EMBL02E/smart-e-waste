@@ -1,50 +1,42 @@
 {{--
-    The register and edit fields. API_Design.md §7.6 ("Register or edit a bin").
-    There is no secret field: the server generates it (P39).
+    The register and edit fields. API_Design.md §7.6 ("Register or edit a bin"),
+    all-pages-wireframe.html A14, A16. There is no secret field: the server
+    generates it (P39).
 --}}
 @use('App\Modules\Devices\Models\Device')
 
-<p>
-    <label for="device_code">Device code</label>
-    <input id="device_code" name="device_code" maxlength="50" required
-           value="{{ old('device_code', $device->device_code) }}">
-</p>
-<p>
-    <label for="name">Name</label>
-    <input id="name" name="name" maxlength="100" required value="{{ old('name', $device->name) }}">
-</p>
-<p>
-    <label for="location">Location</label>
-    <input id="location" name="location" maxlength="255" value="{{ old('location', $device->location) }}">
-</p>
-<p>
-    <label for="empty_distance_mm">Empty distance (mm)</label>
-    <input id="empty_distance_mm" name="empty_distance_mm" type="number" step="0.01" min="0.01" required
-           value="{{ old('empty_distance_mm', $device->empty_distance_mm) }}">
-</p>
-<p>
-    <label for="fill_threshold_percent">Full at (%)</label>
-    <input id="fill_threshold_percent" name="fill_threshold_percent" type="number" step="0.01" min="0" max="100" required
-           value="{{ old('fill_threshold_percent', $device->fill_threshold_percent) }}">
-</p>
-<fieldset>
-    <legend>Load cell calibration</legend>
-    <p>
-        <label for="weight_offset">Weight offset</label>
-        <input id="weight_offset" name="weight_offset" type="number" step="0.0001"
-               value="{{ old('weight_offset', $device->weight_offset) }}">
-    </p>
-    <p>
-        <label for="weight_scale_factor">Scale factor</label>
-        <input id="weight_scale_factor" name="weight_scale_factor" type="number" step="0.000001"
-               value="{{ old('weight_scale_factor', $device->weight_scale_factor) }}">
-    </p>
-</fieldset>
-<p>
-    <label for="status">Status</label>
-    <select id="status" name="status" required>
-        @foreach ([Device::STATUS_ACTIVE, Device::STATUS_INACTIVE, Device::STATUS_RETIRED] as $status)
-            <option value="{{ $status }}" @selected(old('status', $device->status) === $status)>{{ ucfirst($status) }}</option>
-        @endforeach
-    </select>
-</p>
+<div class="form-row">
+    <x-form.input name="device_code" label="Device code" maxlength="50" required :value="$device->device_code"
+                  hint="Unique. The bin sends it with every request." />
+    <x-form.input name="name" label="Name" maxlength="100" required :value="$device->name" />
+</div>
+<x-form.input name="location" label="Location" maxlength="255" :value="$device->location" />
+<div class="form-row">
+    <x-form.input name="empty_distance_mm" label="Empty distance (mm)" type="number" step="0.01" min="0.01" required
+                  :value="$device->empty_distance_mm" hint="Ultrasonic reading with the bin empty. Above 0." />
+    <x-form.input name="fill_threshold_percent" label="Fill threshold (%)" type="number" step="0.01" min="0" max="100" required
+                  :value="$device->fill_threshold_percent" hint="0–100. The bin counts as full at or above this." />
+</div>
+
+<div class="form-group">
+    <h2>Load cell calibration</h2>
+    @if ($device->calibrated_at)
+        <p class="hint">
+            Last calibrated @date($device->calibrated_at). Saving new values updates this date. The bin uses them after
+            its next config fetch.
+        </p>
+    @endif
+    <div class="form-row">
+        <x-form.input name="weight_offset" label="Offset" type="number" step="0.0001" :value="$device->weight_offset" />
+        <x-form.input name="weight_scale_factor" label="Scale factor" type="number" step="0.000001"
+                      :value="$device->weight_scale_factor" />
+    </div>
+</div>
+
+<x-form.select name="status" label="Status" required :value="$device->status"
+               hint="Inactive or retired bins can't take deposits. Retired bins leave the dashboard."
+               :options="[
+                   Device::STATUS_ACTIVE => 'Active',
+                   Device::STATUS_INACTIVE => 'Inactive',
+                   Device::STATUS_RETIRED => 'Retired',
+               ]" />

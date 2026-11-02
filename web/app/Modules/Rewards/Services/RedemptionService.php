@@ -160,7 +160,7 @@ class RedemptionService
      */
     public function list(): LengthAwarePaginator
     {
-        return Redemption::with(['user', 'reward'])->latest('id')->paginate();
+        return Redemption::with(['user.organization:id,code', 'reward'])->latest('id')->paginate();
     }
 
     /**

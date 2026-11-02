@@ -141,6 +141,20 @@ class AdminRedemptionTest extends TestCase
             ->assertDontSee(route('admin.redemptions.fulfil', Redemption::where('redemption_code', 'RDM-20261030-DONE01')->sole()));
     }
 
+    public function test_it_reopens_the_cancel_form_on_the_row_with_the_missing_reason(): void
+    {
+        $other = Redemption::factory()->for($this->reward)->create();
+
+        $this->from(route('admin.redemptions.index'))
+            ->followingRedirects()
+            ->post(route('admin.redemptions.cancel', $this->redemption), ['cancel_reason' => '', 'redemption_id' => $this->redemption->id])
+            ->assertSee('The cancel reason field is required.')
+            ->assertSee('id="cancel_reason_'.$this->redemption->id.'"', false);
+
+        $this->assertSame(Redemption::STATUS_PENDING, $other->fresh()->status);
+        $this->assertSame(Redemption::STATUS_PENDING, $this->redemption->fresh()->status);
+    }
+
     public function test_it_keeps_students_out(): void
     {
         $this->actingAs($this->student);

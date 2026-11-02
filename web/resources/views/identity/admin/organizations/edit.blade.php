@@ -1,17 +1,18 @@
-{{-- GET /admin/organizations/{organization}/edit. API_Design.md §7.4, §7.6. --}}
+{{-- GET /admin/organizations/{organization}/edit. API_Design.md §7.4, §7.6; all-pages-wireframe.html A9. --}}
 @extends('layouts.admin')
 
 @section('title', 'Edit '.$organization->name)
 
 @section('content')
-    <h1>{{ $organization->name }}</h1>
+    <x-ui.page-heading :title="$organization->name" :back="route('admin.organizations.index')" back-label="Organizations" />
 
-    <form method="POST" action="{{ route('admin.organizations.update', $organization) }}">
+    <form class="form" method="POST" action="{{ route('admin.organizations.update', $organization) }}">
         @csrf
         @method('PUT')
         @include('identity.admin.organizations._form')
-        <button type="submit">Save changes</button>
+        <div class="actions">
+            <x-ui.button variant="primary">Save changes</x-ui.button>
+            <a class="text-link" href="{{ route('admin.organizations.index') }}">Cancel</a>
+        </div>
     </form>
-
-    <p><a href="{{ route('admin.organizations.index') }}">Back to organizations</a></p>
 @endsection

@@ -1,4 +1,4 @@
-{{-- GET /reset-password/{token}. Both emails link here. API_Design.md §7.2, P41. --}}
+{{-- GET /reset-password/{token}. Both emails link here. API_Design.md §7.2, P41; all-pages-wireframe.html G4. --}}
 @extends('layouts.guest')
 
 @section('title', 'Set your password')
@@ -6,23 +6,16 @@
 @section('content')
     <h1>Set your password</h1>
 
-    <form method="POST" action="{{ route('password.update') }}">
+    <form class="form" method="POST" action="{{ route('password.update') }}">
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
-        <p>
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" maxlength="255" required autocomplete="username"
-                   value="{{ old('email', $email) }}">
-        </p>
-        <p>
-            <label for="password">New password</label>
-            <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
-        </p>
-        <p>
-            <label for="password_confirmation">Confirm the password</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" required
-                   autocomplete="new-password">
-        </p>
-        <button type="submit">Set password</button>
+        <x-form.input name="email" label="Email" type="email" maxlength="255" required autocomplete="username" :value="$email" />
+        <x-form.input name="password" label="New password" type="password" minlength="8" required autocomplete="new-password"
+                      hint="At least 8 characters." />
+        <x-form.input name="password_confirmation" label="Confirm new password" type="password" minlength="8" required
+                      autocomplete="new-password" />
+        <x-ui.button variant="primary" block>Save password</x-ui.button>
     </form>
+
+    <a class="text-link" href="{{ route('password.request') }}">Send me a new link</a>
 @endsection
