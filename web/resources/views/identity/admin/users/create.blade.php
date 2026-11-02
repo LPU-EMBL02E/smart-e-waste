@@ -1,17 +1,18 @@
-{{-- GET /admin/users/create. API_Design.md §7.4, §7.6. --}}
+{{-- GET /admin/users/create. API_Design.md §7.4, §7.6; all-pages-wireframe.html A5. --}}
 @extends('layouts.admin')
 
 @section('title', 'New user')
 
 @section('content')
-    <h1>New user</h1>
+    <x-ui.page-heading title="New user" :back="route('admin.users.index')" back-label="Users" />
 
-    <form method="POST" action="{{ route('admin.users.store') }}">
+    <form class="form" method="POST" action="{{ route('admin.users.store') }}">
         @csrf
         @include('identity.admin.users._form')
-        <p>We'll email the user a link to set their password.</p>
-        <button type="submit">Create user</button>
+        <p class="hint">We'll email the user a link to set their password.</p>
+        <div class="actions">
+            <x-ui.button variant="primary">Create user</x-ui.button>
+            <a class="text-link" href="{{ route('admin.users.index') }}">Cancel</a>
+        </div>
     </form>
-
-    <p><a href="{{ route('admin.users.index') }}">Back to users</a></p>
 @endsection
