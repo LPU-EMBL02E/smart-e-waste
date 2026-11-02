@@ -1,41 +1,38 @@
-{{-- GET /admin/rewards — every reward, active or not. API_Design.md §7.4. --}}
+{{-- GET /admin/rewards — every reward, active or not. API_Design.md §7.4, all-pages-wireframe.html A18. --}}
 @extends('layouts.admin')
 
 @section('title', 'Rewards')
 
 @section('content')
-    <h1>Rewards</h1>
+    <x-ui.page-heading title="Rewards">
+        <x-slot:actions>
+            <x-ui.button variant="primary" :href="route('admin.rewards.create')">New reward</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-heading>
 
-    <p><a href="{{ route('admin.rewards.create') }}">New reward</a></p>
+    @if ($rewards->isEmpty())
+        <x-ui.empty title="No rewards yet" />
+    @else
+        <section class="section">
+            <x-ui.table label="Rewards">
+                <x-slot:head>
+                    <th scope="col">Name</th>
+                    <th scope="col" class="numeric">Points cost</th>
+                    <th scope="col" class="numeric">Stock</th>
+                    <th scope="col">Status</th>
+                </x-slot:head>
 
-    <div style="overflow-x: auto">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Cost</th>
-                    <th>In stock</th>
-                    <th>Shown to students</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rewards as $reward)
+                @foreach ($rewards as $reward)
                     <tr>
-                        <td>{{ $reward->name }}</td>
-                        <td>{{ $reward->points_cost }} points</td>
-                        <td>{{ $reward->stock_quantity }}</td>
-                        <td>{{ $reward->is_active ? 'Yes' : 'No' }}</td>
-                        <td><a href="{{ route('admin.rewards.edit', $reward) }}">Edit</a></td>
+                        <td><a href="{{ route('admin.rewards.edit', $reward) }}">{{ $reward->name }}</a></td>
+                        <td class="numeric">@wholenumber($reward->points_cost)</td>
+                        <td class="numeric">@wholenumber($reward->stock_quantity)</td>
+                        <td><x-ui.pill :status="$reward->is_active ? 'Active' : 'Inactive'" /></td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="5">No rewards yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                @endforeach
+            </x-ui.table>
 
-    {{ $rewards->links() }}
+            {{ $rewards->links() }}
+        </section>
+    @endif
 @endsection

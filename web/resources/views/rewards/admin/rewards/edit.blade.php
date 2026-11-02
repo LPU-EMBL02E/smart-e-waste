@@ -1,17 +1,21 @@
-{{-- GET /admin/rewards/{reward}/edit. API_Design.md §7.4. A new cost never changes past redemptions. --}}
+{{--
+    GET /admin/rewards/{reward}/edit. API_Design.md §7.4, all-pages-wireframe.html A20.
+    A new cost never changes past redemptions.
+--}}
 @extends('layouts.admin')
 
 @section('title', 'Edit '.$reward->name)
 
 @section('content')
-    <h1>Edit {{ $reward->name }}</h1>
+    <x-ui.page-heading :title="'Edit '.$reward->name" :back="route('admin.rewards.index')" back-label="Rewards" />
 
-    <form method="POST" action="{{ route('admin.rewards.update', $reward) }}">
+    <form class="form" method="POST" action="{{ route('admin.rewards.update', $reward) }}">
         @csrf
         @method('PUT')
         @include('rewards.admin.rewards._form')
-        <button type="submit">Save</button>
+        <div class="actions">
+            <x-ui.button variant="primary">Save changes</x-ui.button>
+            <a class="text-link" href="{{ route('admin.rewards.index') }}">Cancel</a>
+        </div>
     </form>
-
-    <p><a href="{{ route('admin.rewards.index') }}">Back to rewards</a></p>
 @endsection

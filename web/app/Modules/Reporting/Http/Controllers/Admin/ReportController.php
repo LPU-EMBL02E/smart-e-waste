@@ -2,7 +2,6 @@
 
 namespace App\Modules\Reporting\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -18,12 +17,13 @@ use Illuminate\View\View;
  * per-organization totals, voided transactions with reasons, bin fill history,
  * redemption fulfilment, and the ACCEPTED-session review list.
  *
- * TODO: method body.
+ * Until then the page says the contents aren't decided, and shows no figures
+ * (all-pages-wireframe.html A3).
  */
 class ReportController
 {
-    public function __invoke(Request $request): View
+    public function __invoke(): View
     {
-        throw new \LogicException('Not implemented.');
+        return view('reporting.admin.reports');
     }
 }

@@ -114,7 +114,7 @@ class ReportingQueries
             ->orderByDesc('earned.points_earned')
             ->orderBy('organizations.id')
             ->withCasts(['points_earned' => 'integer'])
-            ->get(['organizations.id', 'organizations.name', 'earned.points_earned']);
+            ->get(['organizations.id', 'organizations.name', 'organizations.code', 'earned.points_earned']);
     }
 
     /**

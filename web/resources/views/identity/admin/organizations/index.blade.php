@@ -1,39 +1,38 @@
-{{-- GET /admin/organizations. API_Design.md §7.4, P33. --}}
+{{-- GET /admin/organizations. API_Design.md §7.4, P33; all-pages-wireframe.html A7. --}}
 @extends('layouts.admin')
 
 @section('title', 'Organizations')
 
 @section('content')
-    <h1>Organizations</h1>
+    <x-ui.page-heading title="Organizations">
+        <x-slot:actions>
+            <x-ui.button variant="primary" :href="route('admin.organizations.create')">New organization</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-heading>
 
-    <p><a href="{{ route('admin.organizations.create') }}">New organization</a></p>
+    @if ($organizations->isEmpty())
+        <x-ui.empty title="No organizations yet" />
+    @else
+        <section class="section">
+            <x-ui.table label="Organizations">
+                <x-slot:head>
+                    <th scope="col">Name</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Status</th>
+                </x-slot:head>
 
-    <div style="overflow-x: auto">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Code</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($organizations as $organization)
+                @foreach ($organizations as $organization)
                     <tr>
                         <td><a href="{{ route('admin.organizations.edit', $organization) }}">{{ $organization->name }}</a></td>
                         <td>{{ $organization->code }}</td>
                         <td>{{ $organization->description ?? '—' }}</td>
-                        <td>{{ $organization->is_active ? 'Active' : 'Inactive' }}</td>
+                        <td><x-ui.pill :status="$organization->is_active ? 'Active' : 'Inactive'" /></td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="4">No organizations yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                @endforeach
+            </x-ui.table>
 
-    {{ $organizations->links() }}
+            {{ $organizations->links() }}
+        </section>
+    @endif
 @endsection

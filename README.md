@@ -196,11 +196,8 @@ step needs.
 
 **Not built yet**
 
-- **The QR image.** The profile page shows the QR token as text until the team
-  picks a package (`API_Design.md` §10 q8), so a student has no code to scan yet.
-- **The reports page**, until the team decides what reports contain
-  (`API_Design.md` §10 q2).
-- **The visual design.** The views that exist are bare Blade with no styling.
+- **The reports' contents.** The page exists and says so until the team decides
+  what reports contain (`API_Design.md` §10 q2).
 - **The bin station (Track E)**, in `firmware/station/`.
 
 Unbuilt controllers and services are documented skeletons: each carries the

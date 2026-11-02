@@ -1,6 +1,7 @@
 {{--
     GET /admin/points-rate — the rule in effect, the form for a new one, and every
-    past rule. API_Design.md §7.4, §7.6 ("Save a points rule"), P38.
+    past rule. API_Design.md §7.4, §7.6 ("Save a points rule"), P38;
+    all-pages-wireframe.html A22.
 
     There is no edit: saving closes the current rule and inserts a new one, so
     past transactions keep the rule they were priced with.
@@ -10,89 +11,88 @@
 @section('title', 'Points rate')
 
 @section('content')
-    <h1>Points rate</h1>
+    <x-ui.page-heading title="Points rate" />
 
-    <h2>In effect now</h2>
     @if ($current)
-        <dl>
-            <dt>Name</dt>
-            <dd>{{ $current->name }}</dd>
-            <dt>Points per gram</dt>
-            <dd>{{ $current->points_per_gram }}</dd>
-            <dt>Weight accepted</dt>
-            <dd>{{ $current->minimum_weight_g }} g to {{ $current->maximum_weight_g !== null ? $current->maximum_weight_g.' g' : 'no limit' }}</dd>
-            <dt>Daily cap</dt>
-            <dd>{{ $current->daily_points_cap !== null ? $current->daily_points_cap.' points' : 'No cap' }}</dd>
-        </dl>
+        <x-ui.panel title="Current rule">
+            <dl class="details-list">
+                <dt>Name</dt>
+                <dd>{{ $current->name }}</dd>
+                <dt>Points per gram</dt>
+                <dd>{{ $current->points_per_gram }}</dd>
+                <dt>Minimum weight</dt>
+                <dd>@grams($current->minimum_weight_g)</dd>
+                <dt>Maximum weight</dt>
+                <dd>{{ $current->maximum_weight_g !== null ? \App\Support\Display::grams($current->maximum_weight_g) : 'No limit' }}</dd>
+                <dt>Daily cap</dt>
+                <dd>{{ $current->daily_points_cap !== null ? \App\Support\Display::points($current->daily_points_cap).' per student' : 'No cap' }}</dd>
+                <dt>In effect since</dt>
+                <dd>@datetime($current->effective_from)</dd>
+            </dl>
+        </x-ui.panel>
     @else
-        <p>No rule is in effect. Every bin refuses deposits until one is saved.</p>
+        <div class="feedback" role="status">
+            No points rule is in effect. The bin refuses every deposit until you save one.
+        </div>
     @endif
 
-    <h2>Save a new rule</h2>
-    <p>The new rule takes effect at once and the current one is closed.</p>
+    <x-ui.panel title="Save a new rule" class="panel-narrow">
+        <form class="form" method="POST" action="{{ route('admin.points-rate.store') }}">
+            @csrf
+            <x-form.input name="name" label="Name" maxlength="100" required />
+            <div class="form-row">
+                <x-form.input name="points_per_gram" label="Points per gram" type="number" step="0.0001" min="0.0001" required
+                              :value="$current?->points_per_gram" hint="Above 0." />
+                <x-form.input name="minimum_weight_g" label="Minimum weight (g)" type="number" step="0.01" min="0.01" required
+                              :value="$current?->minimum_weight_g" hint="At least 1 ÷ points per gram, so a deposit never earns 0." />
+            </div>
+            <div class="form-row">
+                <x-form.input name="maximum_weight_g" label="Maximum weight (g)" type="number" step="0.01" min="0.01"
+                              :value="$current?->maximum_weight_g"
+                              hint="Above the minimum, up to the bin's hardware limit. Empty = no limit." />
+                <x-form.input name="daily_points_cap" label="Daily points cap" type="number" step="1" min="1"
+                              :value="$current?->daily_points_cap" hint="Whole number, 1 or more. Empty = no cap." />
+            </div>
+            <p class="hint">
+                The new rule starts now and the current one ends. Deposits already in progress keep the rule they started under.
+            </p>
+            <div class="actions">
+                <x-ui.button variant="primary">Save new rule</x-ui.button>
+            </div>
+        </form>
+    </x-ui.panel>
 
-    <form method="POST" action="{{ route('admin.points-rate.store') }}">
-        @csrf
-        <p>
-            <label for="name">Name</label>
-            <input id="name" name="name" maxlength="100" required value="{{ old('name') }}">
-        </p>
-        <p>
-            <label for="points_per_gram">Points per gram</label>
-            <input id="points_per_gram" name="points_per_gram" type="number" step="0.0001" min="0.0001" required
-                   value="{{ old('points_per_gram', $current?->points_per_gram) }}">
-        </p>
-        <p>
-            <label for="minimum_weight_g">Minimum weight (g)</label>
-            <input id="minimum_weight_g" name="minimum_weight_g" type="number" step="0.01" min="0.01" required
-                   value="{{ old('minimum_weight_g', $current?->minimum_weight_g) }}">
-        </p>
-        <p>
-            <label for="maximum_weight_g">Maximum weight (g), empty for no limit</label>
-            <input id="maximum_weight_g" name="maximum_weight_g" type="number" step="0.01" min="0.01"
-                   value="{{ old('maximum_weight_g', $current?->maximum_weight_g) }}">
-        </p>
-        <p>
-            <label for="daily_points_cap">Daily points cap, empty for no cap</label>
-            <input id="daily_points_cap" name="daily_points_cap" type="number" step="1" min="1"
-                   value="{{ old('daily_points_cap', $current?->daily_points_cap) }}">
-        </p>
-        <button type="submit">Save and apply now</button>
-    </form>
+    <section class="section">
+        <h2>All rules</h2>
 
-    <h2>All rules</h2>
-    <div style="overflow-x: auto">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Points per gram</th>
-                    <th>Minimum</th>
-                    <th>Maximum</th>
-                    <th>Daily cap</th>
-                    <th>From</th>
-                    <th>To</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rules as $rule)
+        @if ($rules->isEmpty())
+            <x-ui.empty title="No rules yet" />
+        @else
+            <x-ui.table label="All rules">
+                <x-slot:head>
+                    <th scope="col">Name</th>
+                    <th scope="col" class="numeric">Pts/g</th>
+                    <th scope="col" class="numeric">Min</th>
+                    <th scope="col" class="numeric">Max</th>
+                    <th scope="col" class="numeric">Daily cap</th>
+                    <th scope="col">From ({{ config('ewaste.display_timezone') }})</th>
+                    <th scope="col">To</th>
+                </x-slot:head>
+
+                @foreach ($rules as $rule)
                     <tr>
                         <td>{{ $rule->name }}</td>
-                        <td>{{ $rule->points_per_gram }}</td>
-                        <td>{{ $rule->minimum_weight_g }} g</td>
-                        <td>{{ $rule->maximum_weight_g !== null ? $rule->maximum_weight_g.' g' : 'No limit' }}</td>
-                        <td>{{ $rule->daily_points_cap ?? 'No cap' }}</td>
-                        <td>{{ $rule->effective_from->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
-                        <td>{{ $rule->effective_to?->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') ?? 'In effect' }}</td>
+                        <td class="numeric">{{ $rule->points_per_gram }}</td>
+                        <td class="numeric">@grams($rule->minimum_weight_g)</td>
+                        <td class="numeric">{{ $rule->maximum_weight_g !== null ? \App\Support\Display::grams($rule->maximum_weight_g) : 'No limit' }}</td>
+                        <td class="numeric">{{ $rule->daily_points_cap ?? 'No cap' }}</td>
+                        <td>@datetime($rule->effective_from)</td>
+                        <td>@datetime($rule->effective_to, 'In effect')</td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">No rules yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                @endforeach
+            </x-ui.table>
 
-    {{ $rules->links() }}
+            {{ $rules->links() }}
+        @endif
+    </section>
 @endsection

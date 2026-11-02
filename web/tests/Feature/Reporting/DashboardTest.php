@@ -127,7 +127,32 @@ class DashboardTest extends TestCase
             ->assertSee('30 Oct 2026, 9:00am')
             ->assertSee('30 Oct 2026, 8:59am')
             ->assertSeeInOrder(['Deposits', '1', 'Weight collected', '184.6', 'Points awarded', '18'])
-            ->assertSee(json_encode(route('admin.dashboard.summary')), false);
+            ->assertSee(route('admin.dashboard.summary'));
+    }
+
+    public function test_it_lists_full_and_faulted_bins_under_needs_attention(): void
+    {
+        $full = Device::factory()->create(['name' => 'Library Bin']);
+        BinTelemetry::factory()->full()->create(['device_id' => $full->id, 'fault_code' => 'CAMERA_UNAVAILABLE']);
+
+        $this->get(route('admin.dashboard'))
+            ->assertSeeInOrder(['Needs attention', 'Library Bin is full (95%)', 'Library Bin: Camera unavailable', 'awaiting review']);
+    }
+
+    public function test_it_counts_one_item_in_the_singular(): void
+    {
+        Redemption::factory()->create();
+
+        $this->get(route('admin.dashboard'))
+            ->assertSee('1 redemption waiting to be fulfilled')
+            ->assertSee('0 sessions awaiting review');
+    }
+
+    public function test_it_says_the_report_contents_are_not_decided(): void
+    {
+        $this->get(route('admin.reports'))
+            ->assertOk()
+            ->assertSee('Report contents not decided yet');
     }
 
     public function test_it_keeps_students_out_of_the_summary(): void

@@ -206,9 +206,9 @@ under `cage`. Enter its address in the controller's setup portal.
 
 In `web/`, the device API, the deposit path, points, redemptions, the reporting
 pages, sign-in, registration, email confirmation, password links, the first
-admin, the admin user and organization pages and the profile page work. The
-profile page shows the QR token as text until the team picks a QR package
-(`docs/API_Design.md` §10 question 8). `php artisan test` covers what is built.
+admin, the admin user and organization pages and the profile page work, and every
+page uses the styled interface. The reports page says its contents aren't decided
+(`docs/API_Design.md` §10 question 2). `php artisan test` covers what is built.
 
 The firmware modules are headers with stub bodies, and the bin station is not
 started.
