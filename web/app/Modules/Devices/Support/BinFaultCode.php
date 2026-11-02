@@ -17,5 +17,6 @@ enum BinFaultCode: string
     case ActuatorRetractFailed = 'ACTUATOR_RETRACT_FAILED';
     case StationUnreachable = 'STATION_UNREACHABLE';
     case CameraUnavailable = 'CAMERA_UNAVAILABLE';
+    case ModelUnavailable = 'MODEL_UNAVAILABLE';
     case ScannerUnavailable = 'SCANNER_UNAVAILABLE';
 }
