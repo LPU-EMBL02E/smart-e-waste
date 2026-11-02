@@ -1,0 +1,194 @@
+/* The brand, sidebar and skip link. web/docs/DESIGN.md §5, design-system.html #nav. */
+.skip {
+    position: absolute;
+    top: -10rem;
+    left: var(--gutter);
+    z-index: 10;
+    padding: var(--spacing-3);
+    border: 2px solid var(--color-ink);
+    background: var(--color-paper);
+}
+
+.skip:focus {
+    top: var(--spacing-2);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: var(--size-target);
+    height: var(--size-target);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-lavender);
+    font-weight: 800;
+}
+
+.brand-copy strong,
+.brand-copy small {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.brand-copy small {
+    color: var(--color-muted);
+    font-size: var(--text-small);
+    font-weight: 400;
+}
+
+.sidebar {
+    min-width: 0;
+    border-bottom: 2px solid var(--color-ink);
+    background: var(--color-paper);
+
+    @variant lg {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 2px solid var(--color-ink);
+        border-bottom: 0;
+    }
+}
+
+.sidebar-brand {
+    padding: var(--spacing-4);
+    border-bottom: 2px solid var(--color-ink);
+}
+
+.nav-summary {
+    min-height: var(--size-target);
+    padding: var(--spacing-3) var(--spacing-4);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sidebar-menu[open] > .nav-summary {
+    border-bottom: 2px solid var(--color-ink);
+}
+
+/*
+ * The menu is a native <details> on small screens (no script, DESIGN.md §5) and
+ * always open from the lg breakpoint. A browser that can't force it open keeps
+ * the summary, so its users can still reach the links.
+ */
+@supports selector(::details-content) {
+    @variant lg {
+        .nav-summary {
+            display: none;
+        }
+
+        .sidebar-menu::details-content {
+            content-visibility: visible;
+        }
+    }
+}
+
+/* Wrapping links on small screens, so a long label moves down a row instead of breaking mid-word. */
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4);
+
+    @variant lg {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.nav > .nav-link {
+    width: auto;
+
+    @variant lg {
+        width: 100%;
+    }
+}
+
+.nav-group {
+    flex-basis: 100%;
+    padding-block: var(--spacing-2);
+    color: var(--color-muted);
+    font-size: var(--text-small);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    width: 100%;
+    min-height: var(--size-target);
+    padding: var(--spacing-2);
+    border: 2px solid transparent;
+    border-radius: var(--radius-control);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.nav-link[aria-current='page'] {
+    border-color: var(--color-ink);
+    background: var(--color-lavender-wash);
+    font-weight: 700;
+}
+
+.sidebar-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4);
+    border-top: 2px solid var(--color-ink);
+
+    @variant lg {
+        display: block;
+    }
+}
+
+.sidebar-user {
+    min-width: 0;
+    font-size: var(--text-small);
+    overflow-wrap: anywhere;
+
+    @variant lg {
+        margin-bottom: var(--spacing-3);
+    }
+}
+
+.symbol {
+    display: inline-flex;
+    flex: 0 0 1.5rem;
+    align-items: center;
+}
+
+.symbol svg {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+        background: var(--color-lavender-wash);
+    }
+}

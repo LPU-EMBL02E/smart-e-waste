@@ -1,0 +1,182 @@
+/* Panels, tiles and lists of details. web/docs/DESIGN.md §5, design-system.html #panels. */
+.panel,
+.tile {
+    min-width: 0;
+    padding: var(--spacing-4);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-paper);
+
+    @variant sm {
+        padding: var(--spacing-6);
+    }
+}
+
+.panel-danger {
+    border-color: var(--color-danger);
+}
+
+.panel-narrow {
+    max-width: var(--container-form);
+}
+
+.panel-title {
+    margin-bottom: var(--spacing-4);
+}
+
+.tiles {
+    display: grid;
+    gap: var(--spacing-6);
+
+    @variant sm {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @variant xl {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.tile-label {
+    font-size: var(--text-small);
+    font-weight: 600;
+}
+
+.tile-value {
+    margin-block: var(--spacing-4) var(--spacing-2);
+    font-size: var(--text-title-lg);
+    font-weight: 800;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.tile-foot {
+    color: var(--color-muted);
+    font-size: var(--text-small);
+}
+
+/* The one focal panel on a page: static, so no hover and no pointer. */
+.points-panel {
+    background: var(--color-lavender);
+    box-shadow: var(--shadow-focal);
+}
+
+.points-panel .tile-value {
+    font-size: var(--text-focal);
+    letter-spacing: -0.02em;
+
+    @variant lg {
+        font-size: var(--text-focal-lg);
+    }
+}
+
+.points-panel .tile-foot {
+    color: var(--color-ink);
+}
+
+.points-unit {
+    font-size: var(--text-body);
+    letter-spacing: normal;
+}
+
+.details-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--spacing-2) var(--spacing-4);
+}
+
+.details-list dt {
+    font-weight: 600;
+}
+
+.details-list dd {
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.reward-grid {
+    display: grid;
+    gap: var(--spacing-6);
+
+    @variant sm {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @variant xl {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.reward-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.reward-cost {
+    font-size: var(--text-section);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Black on white, with the renderer's quiet zone left alone. DESIGN.md §7. */
+.qr-code {
+    width: 15rem;
+    max-width: 100%;
+    background: var(--color-paper);
+}
+
+.qr-code svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.secret-value {
+    padding: var(--spacing-3);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    background: var(--color-lavender-wash);
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+}
+
+/* A notification row. Unread is marked in text and weight as well as the fill. */
+.notification {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4) var(--spacing-3);
+    border-bottom: 1px solid var(--color-ink);
+}
+
+.notification-unread {
+    background: var(--color-lavender-wash);
+}
+
+.notification-copy {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.notification-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-2);
+}
+
+.notification-title {
+    font-size: var(--text-body);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.notification-unread .notification-title {
+    font-weight: 800;
+}

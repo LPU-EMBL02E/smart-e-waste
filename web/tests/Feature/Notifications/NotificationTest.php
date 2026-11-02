@@ -27,6 +27,20 @@ class NotificationTest extends TestCase
         $this->actingAs($this->student);
     }
 
+    public function test_it_counts_only_the_users_own_unread_notifications_in_the_menu(): void
+    {
+        Notification::factory()->for($this->student)->count(2)->create();
+        Notification::factory()->for($this->student)->read()->create();
+        Notification::factory()->create();
+
+        $this->get(route('home'))->assertSeeInOrder(['Unread: ', '2'], false);
+    }
+
+    public function test_it_shows_no_count_when_nothing_is_unread(): void
+    {
+        $this->get(route('home'))->assertDontSee('Unread: ');
+    }
+
     public function test_it_lists_only_the_users_own_notifications(): void
     {
         $older = Notification::factory()->for($this->student)->read()->create(['title' => 'Older one']);

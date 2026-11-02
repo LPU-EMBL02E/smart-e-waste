@@ -9,19 +9,38 @@ The one piece of JavaScript in the whole application is the admin dashboard's
 polling script, which calls `GET /admin/dashboard/summary` every
 `config('ewaste.dashboard_poll_seconds')` seconds.
 
+## Structure
+
+```
+resources/css/
+  app.css                 the entry point; imports everything below
+  tokens.css              the design system's colours, type, spacing, as @theme tokens
+  base.css                element defaults
+  components/*.css        one file per component family
+
+resources/views/
+  layouts/                base -> portal -> app | admin, and guest
+  layouts/partials/       sidebar, navigation, flash messages
+  components/ui/          <x-ui.*>: button, pill, meter, tile, focal-panel, panel,
+                          table, empty, page-heading, nav-link, icon
+  components/form/        <x-form.*>: input, textarea, select, checkbox, field
+  vendor/pagination/      the pager
+  errors/                 403, 404, 419, 429, 500, 503
+  <module>/...            the pages, by the module that owns their data
+```
+
+Build a page from these before writing markup of your own. All visual values
+come from `web/docs/wireframes/design-system.html` through `tokens.css`: a colour, size or
+font written anywhere else is a defect. Sizes outside the tokens don't exist,
+because `tokens.css` resets Tailwind's default scales.
+
 ## Naming
 
 Views are namespaced by module so a page is easy to trace back to the module
 that owns its data:
 
 ```
-layouts/app.blade.php          signed-in student shell
-layouts/admin.blade.php        admin shell
-layouts/guest.blade.php        login and password pages
-
-identity/auth/login.blade.php
-identity/auth/forgot-password.blade.php
-identity/auth/reset-password.blade.php
+identity/auth/{login,register,forgot-password,reset-password,verify-email}.blade.php
 identity/profile/show.blade.php
 identity/admin/users/{index,create,edit}.blade.php
 identity/admin/organizations/{index,create,edit}.blade.php
@@ -47,21 +66,24 @@ reporting/admin/reports.blade.php
 notifications/index.blade.php
 ```
 
-Register the namespaces in `ModuleServiceProvider` with
-`$this->loadViewsFrom(...)` if module-local view directories are preferred over
-this shared tree. Either works; pick one and keep to it.
-
-## Displaying times
+## Displaying values
 
 Every timestamp in the database is UTC. Convert for display, never at the
-query:
+query. `App\Support\Display` holds the one format for each kind of value, and
+each has a Blade directive:
 
 ```blade
-{{ $transaction->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+@datetime($transaction->created_at)         {{-- 30 Oct 2026, 9:00am --}}
+@datetime($user->last_login_at, 'Never')    {{-- with text for a missing time --}}
+@datetimeseconds(...)  @date(...)
+@grams(...)  @kilograms(...)  @points(...)  @wholenumber(...)  @percent(...)  @faultlabel(...)
 ```
+
+`resources/js/pages/admin-dashboard.js` repeats a few of these formats for the
+values it redraws, so a change to one changes both.
 
 ## Responsiveness
 
 The dashboard has to work on a phone as well as a desktop (guidelines, Step 8).
-Tables of transactions and telemetry are the parts that break first — give them
-a horizontal scroll container rather than letting the page scroll sideways.
+A wide table sits in `<x-ui.table>`, which scrolls by itself, so the page never
+scrolls sideways.

@@ -1,9 +1,22 @@
-@import 'tailwindcss';
+/*
+ * The stylesheet entry point. web/docs/DESIGN.md §10.
+ *
+ * Tailwind only scans the Blade views and the dashboard script, so the wireframe
+ * HTML in web/docs/ can't add utilities to the build.
+ */
+@import 'tailwindcss' source(none);
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@source '../views';
+@source '../js';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+@import './tokens.css';
+@import './base.css';
+
+@import './components/button.css' layer(components);
+@import './components/form.css' layer(components);
+@import './components/status.css' layer(components);
+@import './components/surface.css' layer(components);
+@import './components/table.css' layer(components);
+@import './components/feedback.css' layer(components);
+@import './components/navigation.css' layer(components);
+@import './components/layout.css' layer(components);

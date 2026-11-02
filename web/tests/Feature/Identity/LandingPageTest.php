@@ -58,6 +58,6 @@ class LandingPageTest extends TestCase
 
     private function link(string $route, string $label): string
     {
-        return '<a href="'.route($route).'">'.$label.'</a>';
+        return '<a class="nav-link" href="'.route($route).'"';
     }
 }
