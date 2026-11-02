@@ -58,6 +58,8 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
+            // Same setting as mariadb below: the app must behave the same after handover.
+            'isolation_level' => 'READ COMMITTED',
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
@@ -81,6 +83,12 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
+            // Under REPEATABLE READ, MariaDB 11.8's innodb_snapshot_isolation refuses a
+            // write to a row changed since the transaction's first read (error 1020),
+            // so requests at the same moment fail even though they don't conflict. The
+            // row locks and guarded updates are what keep the data right
+            // (System_Plan.md §6.1), and they work the same at this level.
+            'isolation_level' => 'READ COMMITTED',
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
