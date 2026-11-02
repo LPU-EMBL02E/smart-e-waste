@@ -5,25 +5,26 @@
 
     Expects $transactions: Transaction models with `session` eager-loaded.
 --}}
-<div style="overflow-x: auto">
-    <table>
+<div class="table-region" role="region" tabindex="0" aria-label="Deposit records">
+    <table class="data-table">
         <thead>
             <tr>
-                <th>Code</th>
-                <th>Weight</th>
-                <th>Points</th>
-                <th>Status</th>
-                <th>Completed</th>
+                <th scope="col">Code</th>
+                <th scope="col" class="numeric">Weight</th>
+                <th scope="col" class="numeric">Points</th>
+                <th scope="col">Status</th>
+                <th scope="col">Completed</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($transactions as $transaction)
                 <tr>
                     <td>{{ $transaction->transaction_code }}</td>
-                    <td>{{ $transaction->session->net_weight_g }} g</td>
-                    <td>{{ $transaction->points_awarded }}</td>
-                    <td>{{ ucfirst(strtolower($transaction->status)) }}</td>
-                    <td>{{ $transaction->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
+                    <td class="numeric">{{ $transaction->session->net_weight_g }} g</td>
+                    <td class="numeric">{{ $transaction->points_awarded }}</td>
+                    <td><span class="status-tag">{{ ucfirst(strtolower($transaction->status)) }}</span></td>
+                    <td>{{ $transaction->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+                    </td>
                 </tr>
             @empty
                 <tr>

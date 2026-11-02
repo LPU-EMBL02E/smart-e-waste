@@ -126,7 +126,7 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertSee('30 Oct 2026, 9:00am')
             ->assertSee('30 Oct 2026, 8:59am')
-            ->assertSeeInOrder(['Deposits', '1', 'Weight collected', '184.6', 'Points awarded', '18'])
+            ->assertSeeInOrder(['Completed deposits', '1', 'Weight collected', '184.6', 'Points awarded', '18'])
             ->assertSee(json_encode(route('admin.dashboard.summary')), false);
     }
 

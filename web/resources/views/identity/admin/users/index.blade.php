@@ -19,22 +19,22 @@
         </div>
     @endif
 
-    <p><a href="{{ route('admin.users.create') }}">New user</a></p>
+    <p><a class="button primary" href="{{ route('admin.users.create') }}">New user</a></p>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Student no.</th>
-                    <th>Role</th>
-                    <th>Organization</th>
-                    <th>Status</th>
-                    <th>Activated</th>
-                    <th>Email confirmed</th>
-                    <th>Last login</th>
-                    <th></th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Student no.</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Organization</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Activated</th>
+                    <th scope="col">Email confirmed</th>
+                    <th scope="col">Last login</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,10 +53,11 @@
                         </td>
                         <td>
                             <a href="{{ route('admin.users.edit', $user) }}">Edit</a>
-                            @if ($user->isActive() && ! $user->isActivated())
-                                <form method="POST" action="{{ route('admin.users.password-link', $user) }}">
+                            @if ($user->isActive() && !$user->isActivated())
+                                <form class="app-form" method="POST"
+                                    action="{{ route('admin.users.password-link', $user) }}">
                                     @csrf
-                                    <button type="submit">Resend set-password email</button>
+                                    <button class="button primary" type="submit">Resend set-password email</button>
                                 </form>
                             @endif
                         </td>
@@ -70,7 +71,7 @@
         </table>
     </div>
 
-    {{ $users->links() }}
+    {{ $users->links('pagination.portal') }}
 
     <h2>Import students from CSV</h2>
     <p>
@@ -79,12 +80,16 @@
         list afterwards.
     </p>
 
-    <form method="POST" action="{{ route('admin.users.import') }}" enctype="multipart/form-data">
+    <form class="app-form" method="POST" action="{{ route('admin.users.import') }}" enctype="multipart/form-data">
         @csrf
-        <p>
+        <p class="form-field">
             <label for="file">CSV file</label>
-            <input id="file" name="file" type="file" accept=".csv,text/csv" required>
+            <input class="form-control" @error('file') aria-invalid="true" aria-describedby="file-error" @enderror
+                id="file" name="file" type="file" accept=".csv,text/csv" required>
+            @error('file')
+                <span class="field-error" id="file-error">{{ $message }}</span>
+            @enderror
         </p>
-        <button type="submit">Import</button>
+        <button class="button primary" type="submit">Import</button>
     </form>
 @endsection

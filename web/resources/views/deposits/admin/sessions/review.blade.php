@@ -18,16 +18,16 @@
         credited. The bin may still send the result.
     </p>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Session</th>
-                    <th>Student</th>
-                    <th>Bin</th>
-                    <th>Weight</th>
-                    <th>Verification</th>
-                    <th>Opened</th>
+                    <th scope="col">Session</th>
+                    <th scope="col">Student</th>
+                    <th scope="col">Bin</th>
+                    <th scope="col" class="numeric">Weight</th>
+                    <th scope="col">Verification</th>
+                    <th scope="col">Opened</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,9 +36,10 @@
                         <td>{{ $session->id }}</td>
                         <td>{{ $session->user->fullName() }}</td>
                         <td>{{ $session->device->name }}</td>
-                        <td>{{ $session->net_weight_g }} g</td>
+                        <td class="numeric">{{ $session->net_weight_g }} g</td>
                         <td>{{ $session->verification_method }} ({{ $session->verification_score ?? 'no score' }})</td>
-                        <td>{{ $session->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
+                        <td>{{ $session->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -49,5 +50,5 @@
         </table>
     </div>
 
-    {{ $sessions->links() }}
+    {{ $sessions->links('pagination.portal') }}
 @endsection

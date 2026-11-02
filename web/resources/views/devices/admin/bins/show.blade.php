@@ -9,7 +9,7 @@
 @section('content')
     <h1>{{ $device->name }}</h1>
 
-    <dl>
+    <dl class="details-list">
         <dt>Device code</dt>
         <dd>{{ $device->device_code }}</dd>
         <dt>Location</dt>
@@ -45,31 +45,32 @@
 
     <p><a href="{{ route('admin.bins.edit', $device) }}">Edit</a></p>
 
-    <form method="POST" action="{{ route('admin.bins.secret', $device) }}">
+    <form class="app-form" method="POST" action="{{ route('admin.bins.secret', $device) }}">
         @csrf
-        <button type="submit">Issue a new secret</button>
+        <button class="button primary" type="submit">Issue a new secret</button>
         The bin stops working until the new secret is entered in its setup portal.
     </form>
 
     <h2>Fill history</h2>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Time</th>
-                    <th>Distance</th>
-                    <th>Fill</th>
-                    <th>Panel</th>
-                    <th>Fault</th>
+                    <th scope="col">Time</th>
+                    <th scope="col" class="numeric">Distance</th>
+                    <th scope="col" class="numeric">Fill</th>
+                    <th scope="col">Panel</th>
+                    <th scope="col">Fault</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($readings as $reading)
                     <tr>
-                        <td>{{ $reading->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
-                        <td>{{ $reading->distance_mm }} mm</td>
-                        <td>{{ $reading->fill_percent }}% ({{ $reading->status }})</td>
+                        <td>{{ $reading->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+                        </td>
+                        <td class="numeric">{{ $reading->distance_mm }} mm</td>
+                        <td class="numeric">{{ $reading->fill_percent }}% ({{ $reading->status }})</td>
                         <td>{{ $reading->panel_open ? 'Open' : 'Closed' }}</td>
                         <td>{{ $reading->fault_code?->value ?? 'None' }}</td>
                     </tr>
@@ -82,5 +83,5 @@
         </table>
     </div>
 
-    {{ $readings->links() }}
+    {{ $readings->links('pagination.portal') }}
 @endsection

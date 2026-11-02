@@ -10,9 +10,9 @@
         folder. The link works for {{ config('auth.verification.expire', 60) }} minutes.
     </p>
 
-    <form method="POST" action="{{ route('verification.send') }}">
+    <form class="app-form" method="POST" action="{{ route('verification.send') }}">
         @csrf
-        <button type="submit">Send the link again</button>
+        <button class="button primary" type="submit">Send the link again</button>
     </form>
 
     @include('layouts.partials.logout')

@@ -10,30 +10,32 @@
 @section('content')
     <h1>Notifications</h1>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Notification</th>
-                    <th>Received</th>
-                    <th>Read</th>
+                    <th scope="col">Notification</th>
+                    <th scope="col">Received</th>
+                    <th scope="col">Read</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($notifications as $notification)
                     <tr>
-                        <td>
+                        <td class="message-cell">
                             <strong>{{ $notification->title }}</strong><br>
                             {{ $notification->message }}
                         </td>
-                        <td>{{ $notification->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
+                        <td>{{ $notification->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+                        </td>
                         <td>
                             @if ($notification->isRead())
                                 {{ $notification->read_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
                             @else
-                                <form method="POST" action="{{ route('notifications.read', $notification) }}">
+                                <form class="app-form" method="POST"
+                                    action="{{ route('notifications.read', $notification) }}">
                                     @csrf
-                                    <button type="submit">Mark as read</button>
+                                    <button class="button primary" type="submit">Mark as read</button>
                                 </form>
                             @endif
                         </td>
@@ -47,5 +49,5 @@
         </table>
     </div>
 
-    {{ $notifications->links() }}
+    {{ $notifications->links('pagination.portal') }}
 @endsection

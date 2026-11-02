@@ -21,14 +21,14 @@
         Last changed
         {{ $user->qrCredential->updated_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}.
     </p>
-    <form method="POST" action="{{ route('profile.qr.regenerate') }}">
+    <form class="app-form" method="POST" action="{{ route('profile.qr.regenerate') }}">
         @csrf
-        <button type="submit">Make a new QR code</button>
+        <button class="button primary" type="submit">Make a new QR code</button>
     </form>
     <p>Your old code stops working at once. Use this if your code was shared or photographed.</p>
 
     <h2>Your details</h2>
-    <dl>
+    <dl class="details-list">
         <dt>Name</dt>
         <dd>{{ $user->fullName() }}</dd>
         <dt>Email</dt>
@@ -43,7 +43,7 @@
 
     <h2>Organization</h2>
     @if ($user->organization)
-        <dl>
+        <dl class="details-list">
             <dt>Name</dt>
             <dd>{{ $user->organization->name }}</dd>
             <dt>Code</dt>

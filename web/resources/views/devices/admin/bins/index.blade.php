@@ -6,20 +6,20 @@
 @section('content')
     <h1>Bins</h1>
 
-    <p><a href="{{ route('admin.bins.create') }}">Register a bin</a></p>
+    <p><a class="button primary" href="{{ route('admin.bins.create') }}">Register a bin</a></p>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Code</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Fill</th>
-                    <th>Panel</th>
-                    <th>Fault</th>
-                    <th>Last seen</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="numeric">Fill</th>
+                    <th scope="col">Panel</th>
+                    <th scope="col">Fault</th>
+                    <th scope="col">Last seen</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,13 +30,16 @@
                         <td>{{ $device->location }}</td>
                         <td>{{ $device->status }}</td>
                         @if ($device->latestTelemetry)
-                            <td>{{ $device->latestTelemetry->fill_percent }}% ({{ $device->latestTelemetry->status }})</td>
+                            <td class="numeric">{{ $device->latestTelemetry->fill_percent }}%
+                                ({{ $device->latestTelemetry->status }})
+                            </td>
                             <td>{{ $device->latestTelemetry->panel_open ? 'Open' : 'Closed' }}</td>
                             <td>{{ $device->latestTelemetry->fault_code?->value ?? 'None' }}</td>
                         @else
                             <td colspan="3">No reading yet</td>
                         @endif
-                        <td>{{ $device->last_seen_at?->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') ?? 'Never' }}</td>
+                        <td>{{ $device->last_seen_at?->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') ?? 'Never' }}
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -47,5 +50,5 @@
         </table>
     </div>
 
-    {{ $devices->links() }}
+    {{ $devices->links('pagination.portal') }}
 @endsection

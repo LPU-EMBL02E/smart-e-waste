@@ -6,17 +6,25 @@
 @section('content')
     <h1>Sign in</h1>
 
-    <form method="POST" action="{{ route('login') }}">
+    <form class="app-form" method="POST" action="{{ route('login') }}">
         @csrf
-        <p>
+        <p class="form-field">
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" maxlength="255" required autofocus autocomplete="username"
-                   value="{{ old('email') }}">
+            <input class="form-control" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                id="email" name="email" type="email" maxlength="255" required autofocus autocomplete="username"
+                value="{{ old('email') }}">
+            @error('email')
+                <span class="field-error" id="email-error">{{ $message }}</span>
+            @enderror
         </p>
-        <p>
+        <p class="form-field">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" required autocomplete="current-password">
+            <input class="form-control" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                id="password" name="password" type="password" required autocomplete="current-password">
+            @error('password')
+                <span class="field-error" id="password-error">{{ $message }}</span>
+            @enderror
         </p>
-        <button type="submit">Sign in</button>
+        <button class="button primary" type="submit">Sign in</button>
     </form>
 @endsection

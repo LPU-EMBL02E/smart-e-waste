@@ -6,18 +6,18 @@
 @section('content')
     <h1>Redemptions</h1>
 
-    <div style="overflow-x: auto">
-        <table>
+    <div class="table-region" role="region" tabindex="0" aria-label="Records">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Code</th>
-                    <th>Student</th>
-                    <th>Reward</th>
-                    <th>Quantity</th>
-                    <th>Points</th>
-                    <th>Status</th>
-                    <th>Redeemed</th>
-                    <th></th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Student</th>
+                    <th scope="col">Reward</th>
+                    <th scope="col" class="numeric">Quantity</th>
+                    <th scope="col" class="numeric">Points</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Redeemed</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,24 +26,28 @@
                         <td>{{ $redemption->redemption_code }}</td>
                         <td>{{ $redemption->user->fullName() }}</td>
                         <td>{{ $redemption->reward->name }}</td>
-                        <td>{{ $redemption->quantity }}</td>
-                        <td>{{ $redemption->points_cost }}</td>
+                        <td class="numeric">{{ $redemption->quantity }}</td>
+                        <td class="numeric">{{ $redemption->points_cost }}</td>
                         <td>{{ ucfirst(strtolower($redemption->status)) }}</td>
-                        <td>{{ $redemption->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}</td>
+                        <td>{{ $redemption->created_at->timezone(config('ewaste.display_timezone'))->format('d M Y, g:ia') }}
+                        </td>
                         <td>
                             @if ($redemption->canBeFulfilled())
-                                <form method="POST" action="{{ route('admin.redemptions.fulfil', $redemption) }}">
+                                <form class="app-form" method="POST"
+                                    action="{{ route('admin.redemptions.fulfil', $redemption) }}">
                                     @csrf
-                                    <button type="submit">Mark fulfilled</button>
+                                    <button class="button primary" type="submit">Mark fulfilled</button>
                                 </form>
                             @endif
 
                             @if ($redemption->canBeCancelled())
-                                <form method="POST" action="{{ route('admin.redemptions.cancel', $redemption) }}">
+                                <form class="app-form" method="POST"
+                                    action="{{ route('admin.redemptions.cancel', $redemption) }}">
                                     @csrf
                                     <label for="cancel_reason_{{ $redemption->id }}">Reason</label>
-                                    <input type="text" id="cancel_reason_{{ $redemption->id }}" name="cancel_reason" maxlength="255" required>
-                                    <button type="submit">Cancel and return the points</button>
+                                    <input class="form-control" type="text" id="cancel_reason_{{ $redemption->id }}"
+                                        name="cancel_reason" maxlength="255" required>
+                                    <button class="button danger" type="submit">Cancel and return the points</button>
                                 </form>
                             @endif
                         </td>
@@ -57,5 +61,5 @@
         </table>
     </div>
 
-    {{ $redemptions->links() }}
+    {{ $redemptions->links('pagination.portal') }}
 @endsection

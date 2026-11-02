@@ -6,23 +6,36 @@
 @section('content')
     <h1>Set your password</h1>
 
-    <form method="POST" action="{{ route('password.update') }}">
+    <form class="app-form" method="POST" action="{{ route('password.update') }}">
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
-        <p>
+        <p class="form-field">
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" maxlength="255" required autocomplete="username"
-                   value="{{ old('email', $email) }}">
+            <input class="form-control" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                id="email" name="email" type="email" maxlength="255" required autocomplete="username"
+                value="{{ old('email', $email) }}">
+            @error('email')
+                <span class="field-error" id="email-error">{{ $message }}</span>
+            @enderror
         </p>
-        <p>
+        <p class="form-field">
             <label for="password">New password</label>
-            <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+            <input class="form-control" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+            @error('password')
+                <span class="field-error" id="password-error">{{ $message }}</span>
+            @enderror
         </p>
-        <p>
+        <p class="form-field">
             <label for="password_confirmation">Confirm the password</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" required
-                   autocomplete="new-password">
+            <input class="form-control"
+                @error('password_confirmation') aria-invalid="true" aria-describedby="password_confirmation-error" @enderror
+                id="password_confirmation" name="password_confirmation" type="password" minlength="8" required
+                autocomplete="new-password">
+            @error('password_confirmation')
+                <span class="field-error" id="password_confirmation-error">{{ $message }}</span>
+            @enderror
         </p>
-        <button type="submit">Set password</button>
+        <button class="button primary" type="submit">Set password</button>
     </form>
 @endsection

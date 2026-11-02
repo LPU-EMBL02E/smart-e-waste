@@ -38,7 +38,7 @@ class HomeTest extends TestCase
             'points_delta' => -50,
         ]);
 
-        $this->get(route('home'))->assertOk()->assertSee('Points balance: 100');
+        $this->get(route('home'))->assertOk()->assertSee('Available points')->assertSeeHtml('<div class="points-total">100 <span>pts</span></div>');
     }
 
     public function test_it_shows_a_negative_balance_after_a_void(): void
@@ -53,7 +53,7 @@ class HomeTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Points balance: -80')
+            ->assertSee('Available points')->assertSeeHtml('<div class="points-total">-80 <span>pts</span></div>')
             ->assertSee('Voided');
     }
 

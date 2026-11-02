@@ -6,11 +6,11 @@
 @section('content')
     <h1>New user</h1>
 
-    <form method="POST" action="{{ route('admin.users.store') }}">
+    <form class="app-form" method="POST" action="{{ route('admin.users.store') }}">
         @csrf
         @include('identity.admin.users._form')
         <p>We'll email the user a link to set their password.</p>
-        <button type="submit">Create user</button>
+        <button class="button primary" type="submit">Create user</button>
     </form>
 
     <p><a href="{{ route('admin.users.index') }}">Back to users</a></p>

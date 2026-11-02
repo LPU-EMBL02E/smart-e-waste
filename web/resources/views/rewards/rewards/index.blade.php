@@ -7,13 +7,14 @@
     <h1>Rewards</h1>
 
     @forelse ($rewards as $reward)
-        <article>
+        <article class="content-card">
             <h2><a href="{{ route('rewards.show', $reward) }}">{{ $reward->name }}</a></h2>
-            <p>{{ $reward->points_cost }} points · {{ $reward->stock_quantity > 0 ? $reward->stock_quantity.' left' : 'Out of stock' }}</p>
+            <p>{{ $reward->points_cost }} points ·
+                {{ $reward->stock_quantity > 0 ? $reward->stock_quantity . ' left' : 'Out of stock' }}</p>
         </article>
     @empty
         <p>No rewards yet.</p>
     @endforelse
 
-    {{ $rewards->links() }}
+    {{ $rewards->links('pagination.portal') }}
 @endsection

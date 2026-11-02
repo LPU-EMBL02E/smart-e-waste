@@ -4,7 +4,7 @@
 --}}
 @extends('layouts.admin')
 
-@section('title', 'Secret for '.$device->name)
+@section('title', 'Secret for ' . $device->name)
 
 @section('content')
     <h1>Secret for {{ $device->name }}</h1>
@@ -12,7 +12,7 @@
     <p>Enter these in the bin's setup portal now. The secret is shown only on this page.
         If it is lost, issue a new one; the old one stops working at once.</p>
 
-    <dl>
+    <dl class="details-list">
         <dt>Device code</dt>
         <dd><code>{{ $device->device_code }}</code></dd>
         <dt>Secret</dt>
