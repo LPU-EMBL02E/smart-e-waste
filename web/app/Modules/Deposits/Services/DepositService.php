@@ -118,7 +118,15 @@ class DepositService
                 return DeviceApiException::of(DeviceErrorCode::DuplicateTransaction);
             }
 
-            DepositSession::where('device_id', $device->id)
+            // Found first, then changed by primary key: filtering in the UPDATE walks
+            // the (status, expires_at) index across every bin's OPEN rows and deadlocks
+            // with another bin's deposit. The UPDATE repeats the status check because
+            // a deposit on this bin can still move one of these rows in between.
+            $openIds = DepositSession::where('device_id', $device->id)
+                ->where('status', SessionStatus::Open)
+                ->pluck('id');
+
+            DepositSession::whereKey($openIds)
                 ->where('status', SessionStatus::Open)
                 ->update(['status' => SessionStatus::Cancelled, 'closed_at' => now()]);
 
@@ -544,8 +552,10 @@ class DepositService
      */
     private function expireOpenSessionsWhere(?Closure $scope): int
     {
+        $now = now();
+
         $query = DepositSession::where('status', SessionStatus::Open)
-            ->where('expires_at', '<=', now());
+            ->where('expires_at', '<=', $now);
 
         // A nested where, so the scope's OR stays inside its own brackets.
         // (Not ->when(): it would call a Closure condition on the outer query.)
@@ -553,6 +563,12 @@ class DepositService
             $query->where($scope);
         }
 
-        return $query->update(['status' => SessionStatus::Expired, 'closed_at' => now()]);
+        // Found first, then changed by primary key, for the reason in openSession().
+        // The UPDATE repeats the conditions so it never overwrites a session another
+        // request has just moved on.
+        return DepositSession::whereKey($query->pluck('id'))
+            ->where('status', SessionStatus::Open)
+            ->where('expires_at', '<=', $now)
+            ->update(['status' => SessionStatus::Expired, 'closed_at' => $now]);
     }
 }
