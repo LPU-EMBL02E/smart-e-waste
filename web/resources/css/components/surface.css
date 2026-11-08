@@ -24,17 +24,11 @@
     margin-bottom: var(--spacing-4);
 }
 
+/* As many tiles per row as fit at 12rem each, so a row never ends with one left over on its own. */
 .tiles {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     gap: var(--spacing-6);
-
-    @variant sm {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    @variant xl {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 }
 
 .tile-label {

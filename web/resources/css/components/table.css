@@ -25,10 +25,10 @@
     vertical-align: top;
 }
 
+/* Headers wrap between words only when the columns need the room, so a wide table fits before it scrolls. */
 .data-table th {
     background: var(--color-lavender-wash);
     font-weight: 600;
-    white-space: nowrap;
 }
 
 .data-table .numeric {
