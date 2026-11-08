@@ -1,10 +1,11 @@
 {{--
     One sidebar link. `active` is a route name pattern, for pages that belong to
-    this link without being its route. design-system.html #nav.
+    this link without being its route. `params` are the route's parameters and
+    query. design-system.html #nav.
 --}}
-@props(['route', 'active' => null, 'icon' => null, 'count' => null])
+@props(['route', 'params' => [], 'active' => null, 'icon' => null, 'count' => null])
 
-<a class="nav-link" href="{{ route($route) }}" @if (request()->routeIs($active ?? $route)) aria-current="page" @endif>
+<a class="nav-link" href="{{ route($route, $params) }}" @if (request()->routeIs($active ?? $route)) aria-current="page" @endif>
     @if ($icon)
         <x-ui.icon :name="$icon" />
     @endif
