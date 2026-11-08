@@ -11,7 +11,10 @@ use Illuminate\View\View;
  * API_Design.md §7.3.
  *
  * One route for both roles: admins read their bin-full alerts here, the same
- * place students read theirs (§7.4).
+ * place students read theirs (§7.4). An admin sees it in the admin shell,
+ * unless they came from the student shell ("Student view"): its link adds
+ * ?portal=student so the admin stays in the shell they were using. A student
+ * always gets the student shell, whatever the query says.
  *
  * A user may only see their own, so both methods are scoped to
  * $request->user(). markRead looks the id up through the user's own
@@ -20,11 +23,15 @@ use Illuminate\View\View;
  */
 class NotificationController
 {
-    /** Newest first, paginated. */
+    /** Newest first, paginated. The page links keep ?portal so the shell stays put. */
     public function index(Request $request): View
     {
+        $user = $request->user();
+        $inAdminShell = $user->isAdmin() && $request->query('portal') !== 'student';
+
         return view('notifications.index', [
-            'notifications' => $request->user()->notifications()->latest('id')->paginate(),
+            'layout' => $inAdminShell ? 'layouts.admin' : 'layouts.app',
+            'notifications' => $user->notifications()->latest('id')->paginate()->withQueryString(),
         ]);
     }
 
