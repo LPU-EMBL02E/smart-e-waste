@@ -1,12 +1,13 @@
 {{--
     GET /notifications — the signed-in user's own notifications, newest first.
     API_Design.md §7.3, §7.1; all-pages-wireframe.html S9. Admins read their bin
-    alerts here too (§7.4), in the admin shell.
+    alerts here too (§7.4). NotificationController picks $layout: the admin shell
+    for an admin, unless they came from the student shell.
 
     Unread and read differ by a written label and by weight, not only colour
     (web/docs/DESIGN.md §7).
 --}}
-@extends(auth()->user()->isAdmin() ? 'layouts.admin' : 'layouts.app')
+@extends($layout)
 
 @section('title', 'Notifications')
 

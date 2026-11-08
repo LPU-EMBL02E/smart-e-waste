@@ -173,7 +173,9 @@ space for shadows and focus outlines so surrounding containers do not clip them.
 | 40rem to below 64rem | 24px gutters; use two columns only when content remains readable |
 | 64rem and above | 32px gutters; admin may use a 15rem navigation column |
 
-Center the overall shell within a maximum width of 80rem. Keep single-task forms
+Center the guest shell within a maximum width of 80rem. In the signed-in shell,
+keep the navigation column against the left edge and center the content column,
+at most 80rem wide, in the space beside it. Keep single-task forms
 within 36rem. Align navigation, page titles, forms, and tables to a shared grid.
 Content determines height; do not fix card heights or truncate critical text.
 

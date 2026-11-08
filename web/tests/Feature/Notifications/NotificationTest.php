@@ -97,4 +97,47 @@ class NotificationTest extends TestCase
             ->assertSee('Bin 1 is 95% full')
             ->assertSee(route('admin.dashboard'));
     }
+
+    public function test_it_shows_an_admin_the_page_in_the_admin_shell(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertSee('Admin portal')
+            ->assertDontSee('Student portal');
+    }
+
+    public function test_it_keeps_an_admin_in_the_student_shell_when_they_come_from_it(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->get(route('home'))
+            ->assertSee(route('notifications.index', ['portal' => 'student']));
+
+        $this->get(route('notifications.index', ['portal' => 'student']))
+            ->assertOk()
+            ->assertSee('Student portal')
+            ->assertDontSee('Admin portal');
+    }
+
+    public function test_it_never_shows_a_student_the_admin_shell(): void
+    {
+        $this->get(route('notifications.index', ['portal' => 'admin']))
+            ->assertOk()
+            ->assertSee('Student portal')
+            ->assertDontSee('Admin portal');
+
+        $this->get(route('home'))
+            ->assertDontSee('portal=student');
+    }
+
+    public function test_it_keeps_the_shell_on_the_next_page(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Notification::factory()->for($admin)->count(16)->create();
+
+        $this->actingAs($admin)
+            ->get(route('notifications.index', ['portal' => 'student']))
+            ->assertSee(route('notifications.index', ['portal' => 'student', 'page' => 2]));
+    }
 }
