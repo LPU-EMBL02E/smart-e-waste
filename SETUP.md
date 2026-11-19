@@ -79,15 +79,19 @@ at the `LOG_LEVEL=warning` that `.env.example` ships:
 ### Mail
 
 Leave `MAIL_MAILER=log` until real mail is needed; it writes mail to the log
-instead of sending it. To send through Resend, install its package:
+instead of sending it. To send for real through the team Gmail account:
 
-```bash
-composer require resend/resend-php
-```
+1. Turn on 2-Step Verification for the account and create an app password.
+2. In `.env`, set `MAIL_MAILER=smtp`, `MAIL_USERNAME` and `MAIL_FROM_ADDRESS` to
+   the Gmail address, and `MAIL_PASSWORD` to the app password. Keep
+   `MAIL_HOST=smtp.gmail.com`, `MAIL_PORT=587` and `MAIL_SCHEME=smtp` from
+   `.env.example`.
+3. Run `php artisan config:clear`, then send yourself a "Forgot password" email.
 
-Application code only ever uses Laravel's `Mail` and `Notification` classes —
-the Resend SDK is never called directly, which is what makes the switch to the
-university's SMTP server an `.env` change at handover (`System_Plan.md` §7.2).
+No package is needed: Laravel's built-in `smtp` mailer does it. Application code
+only ever uses Laravel's `Mail` and `Notification` classes, which is what makes
+the switch to the university's SMTP server an `.env` change at handover
+(`System_Plan.md` §7.2).
 
 ### Before the bin works at all
 
