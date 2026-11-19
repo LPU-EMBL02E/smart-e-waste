@@ -159,8 +159,8 @@ No fabrication begins before Checkpoint 1 approval.
 | | `mariadb-dump` (MariaDB's `mysqldump`) | Routine backups |
 | | Full Pi disk image, booted from USB SSD | Disaster recovery if boot media fails |
 | **External Services** | Cloudflare Tunnel (`cloudflared` as a systemd service) | Dashboard reachable beyond the local network until handover |
-| | A domain | Stable Tunnel hostname and email sender address; makes either handover path a DNS change |
-| | Resend | Email delivery until handover, replaced by the university's SMTP afterwards |
+| | A domain | Stable Tunnel hostname; makes either handover path a DNS change |
+| | Gmail SMTP (a team Gmail account) | Email delivery until handover, replaced by the university's SMTP afterwards |
 | | GitHub | Version control; what gets handed over if the Pi needs rebuilding |
 
 **Version policy:** use the newest versions that Raspberry Pi OS itself ships and
@@ -670,27 +670,32 @@ three ingress setups.
 
 Laravel's mailer is the adapter. Application code sends mail only through
 Laravel's `Mail` and `Notification` classes, and the delivery service is chosen by
-`MAIL_MAILER` in `.env`. No custom adapter is written, the Resend SDK is never
-called directly, and no Resend-only feature (templates, tags, webhooks) is used.
+`MAIL_MAILER` in `.env`. No custom adapter is written, and no Google SDK or Gmail
+API is used: Laravel's built-in `smtp` mailer talks to Gmail as it would to any
+SMTP server.
 
 | | Now and for the demo | After handover |
 |---|---|---|
-| Delivery | Resend, over its HTTPS API | The university's SMTP server |
-| `.env` | `MAIL_MAILER=resend`, `RESEND_API_KEY` | `MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` |
-| Sender | `MAIL_FROM_ADDRESS` on the project domain | `MAIL_FROM_ADDRESS` on the university domain |
-| Needs | The `resend/resend-php` package; the domain verified in Resend with DNS records | SMTP credentials from the school's IT office |
+| Delivery | Gmail's SMTP server, from a team Gmail account | The university's SMTP server |
+| `.env` | `MAIL_MAILER=smtp`, `MAIL_HOST=smtp.gmail.com`, `MAIL_PORT=587`, `MAIL_USERNAME`, `MAIL_PASSWORD` (an app password) | `MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` |
+| Sender | `MAIL_FROM_ADDRESS` = the team Gmail address | `MAIL_FROM_ADDRESS` on the university domain |
+| Needs | A team Gmail account with 2-Step Verification on and an app password; no package, no domain | SMTP credentials from the school's IT office |
 | App code changes | — | None |
 
 - **Scope:** three emails only — confirm your email (self-registration), set
   your password (an account an admin created) and forgot password.
   Notifications stay in-app in the `notifications` table.
-- **The domain is required for this.** Without a verified domain, Resend delivers
-  only to the account owner's own address.
-- **Free plan limits:** 100 emails a day and 3,000 a month, with one domain. A CSV
-  import of more than 100 students has to be invited over several days, or the
-  rest given passwords by an admin. More than 100 students registering in one
+- **A team account, not a personal one.** The account is created for the project
+  and handed over with it (Section 8). Its app password lives only in the Pi's
+  `.env`, never in the repo. Mail comes from the Gmail address, so no domain is
+  needed for email.
+- **Sending limits:** a personal Gmail account is commonly listed at about 500
+  recipients a day, and some reports put the SMTP limit lower. Plan for 100 a
+  day. A CSV import of more than 100 students is invited over several days, or
+  the rest given passwords by an admin. More than 100 students registering in one
   day hits the same limit: the rest get their confirmation link the next day,
-  using the resend button.
+  using the resend button. Google may also pause an account that suddenly sends
+  much more than usual; the failed-send rule below covers that.
 - **No queue.** Mail is sent during the request. A failed send must not fail the
   action: catch it and say the email was not sent. An admin then uses the admin
   password fallback; a registering student uses the resend button later.
@@ -741,11 +746,12 @@ What keeps this portable:
    a new secret.
 5. The physical Pi, already configured and running the web app and the bin
    station, and the bin.
-6. The domain, the Cloudflare account and the Resend account, registered under a
-   transferable account (a group or school email, not a personal one). The Resend
-   account can be closed once the school's SMTP is in use. If the domain came from
-   a student offer tied to one person, the school replaces it with a name of its
-   own at handover, which changes `APP_URL`, DNS and the mail sender.
+6. The domain and the Cloudflare account, registered under a transferable
+   account (a group or school email, not a personal one), and the login for the
+   team Gmail account. The Gmail account can be closed once the school's SMTP is
+   in use. If the domain came from a student offer tied to one person, the
+   school replaces it with a name of its own at handover, which changes
+   `APP_URL` and DNS.
 
 ### 8.1 Swappable services
 
@@ -753,14 +759,14 @@ What keeps this portable:
 service. A service's name appears only in `.env` and `config/`. No custom adapter
 classes are written where Laravel already has a driver. Two checks keep this true:
 
-- No vendor SDK is imported anywhere in `app/` (nothing from Resend, Cloudflare or
+- No vendor SDK is imported anywhere in `app/` (nothing from Google, Cloudflare or
   a cloud provider).
 - `env()` is called only inside `config/`. Everything else reads `config()`.
 
 | Concern | App code uses | Now | Can become | Change needed |
 |---|---|---|---|---|
 | Database | Eloquent and migrations | MariaDB 11.8 | MySQL on the school's server | `.env`, then import the dump |
-| Email | `Mail`, `Notification` | Resend | University SMTP | `.env` (Section 7.2) |
+| Email | `Mail`, `Notification` | Gmail SMTP | University SMTP | `.env` (Section 7.2) |
 | Sessions | Laravel sessions | Database | File or Redis | `.env` (`SESSION_DRIVER`) |
 | Cache | `Cache` | Database | File or Redis | `.env` (`CACHE_STORE`) |
 | Logging | `Log` | Daily files on disk | The school's log server | `.env` (`LOG_CHANNEL`) |
@@ -990,9 +996,12 @@ points rate).
 ## 10. Open Items
 
 **Team decisions still to confirm:**
-- [ ] Domain: get one before the tunnel and email are set up. The options are a
+- [ ] Domain: get one before the tunnel is set up. The options are a
       first-year-free domain from the GitHub Student Developer Pack, or a low-cost
-      paid one. It is needed for email as well as for a stable tunnel hostname.
+      paid one. It is needed for a stable tunnel hostname; email does not need it
+      (Section 7.2).
+- [ ] Email delivery: Gmail SMTP from a team Gmail account until handover, in
+      place of Resend, so email needs no domain and no package (Section 7.2).
 - [ ] Accounts: students register themselves and confirm their email, with no
       admin approval; admins can also create accounts, which set their password
       by email (Section 4).
