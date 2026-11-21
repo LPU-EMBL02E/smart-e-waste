@@ -109,6 +109,11 @@
     gap: var(--spacing-2);
 }
 
+/* Each card's link sits on its bottom edge, so the links line up across a row. */
+.reward-link {
+    margin-top: auto;
+}
+
 .reward-cost {
     font-size: var(--text-section);
     font-weight: 800;
@@ -135,6 +140,9 @@
     background: var(--color-lavender-wash);
     font-family: var(--font-mono);
     overflow-wrap: anywhere;
+    /* Selects the whole secret at once: no copy script (DESIGN.md §10), no
+       half-selected secret typed into the portal. */
+    user-select: all;
 }
 
 /* A notification row. Unread is marked in text and weight as well as the fill. */

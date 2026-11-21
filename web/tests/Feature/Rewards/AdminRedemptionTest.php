@@ -149,7 +149,11 @@ class AdminRedemptionTest extends TestCase
             ->followingRedirects()
             ->post(route('admin.redemptions.cancel', $this->redemption), ['cancel_reason' => '', 'redemption_id' => $this->redemption->id])
             ->assertSee('The cancel reason field is required.')
-            ->assertSee('id="cancel_reason_'.$this->redemption->id.'"', false);
+            // The failed row's field takes the id the error summary links to; the others keep their own.
+            ->assertSee('<a href="#cancel_reason">', false)
+            ->assertSee('id="cancel_reason"', false)
+            ->assertSee('id="cancel_reason_'.$other->id.'"', false)
+            ->assertDontSee('id="cancel_reason_'.$this->redemption->id.'"', false);
 
         $this->assertSame(Redemption::STATUS_PENDING, $other->fresh()->status);
         $this->assertSame(Redemption::STATUS_PENDING, $this->redemption->fresh()->status);

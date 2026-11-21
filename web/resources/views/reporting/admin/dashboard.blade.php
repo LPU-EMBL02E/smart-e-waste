@@ -30,7 +30,8 @@
          data-time-zone="{{ config('ewaste.display_timezone') }}"
          data-bin-url="{{ route('admin.bins.show', ':id') }}"
          data-redemptions-url="{{ route('admin.redemptions.index') }}"
-         data-review-url="{{ route('admin.sessions.review') }}">
+         data-review-url="{{ route('admin.sessions.review') }}"
+         data-login-url="{{ route('login') }}">
         <x-ui.page-heading title="Dashboard" />
 
         {{-- Announces only a failed refresh and its recovery, never each poll (DESIGN.md §9). --}}

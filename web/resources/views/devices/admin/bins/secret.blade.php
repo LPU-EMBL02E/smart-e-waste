@@ -21,7 +21,12 @@
             <dd><code>{{ $device->device_code }}</code></dd>
         </dl>
 
-        <div class="secret-value" aria-label="Device secret">{{ $secret }}</div>
+        {{-- A visible label, which aria-label on a plain div never gave a screen reader. --}}
+        <div>
+            <p class="field-label" id="device-secret-label">Device secret</p>
+            <div class="secret-value" aria-labelledby="device-secret-label">{{ $secret }}</div>
+            <p class="hint">One click or tap selects the whole secret, ready to copy.</p>
+        </div>
 
         <p class="hint">If you lose it, issue a new secret from the bin's page. The old one stops working.</p>
 

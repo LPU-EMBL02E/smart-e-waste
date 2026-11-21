@@ -11,7 +11,7 @@
     <x-ui.page-heading title="Profile" />
 
     <div class="split">
-        <section class="section">
+        <section class="section" id="qr">
             <h2>Your QR code</h2>
 
             {{-- Server-rendered SVG of a token we generate: letters and digits only. Never recolour or crop it. --}}
@@ -24,9 +24,9 @@
 
             <form method="POST" action="{{ route('profile.qr.regenerate') }}">
                 @csrf
-                <x-ui.button>Make a new QR code</x-ui.button>
+                <x-ui.button aria-describedby="qr-regenerate-hint">Make a new QR code</x-ui.button>
             </form>
-            <p class="hint">Your old code stops working at once. Use this if your code was shared or photographed.</p>
+            <p class="hint" id="qr-regenerate-hint">Your old code stops working at once. Use this if your code was shared or photographed.</p>
         </section>
 
         <div class="section">

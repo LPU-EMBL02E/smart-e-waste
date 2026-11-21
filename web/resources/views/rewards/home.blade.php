@@ -16,7 +16,8 @@
         </x-ui.focal-panel>
 
         <div class="home-actions">
-            <x-ui.button variant="primary" :href="route('profile.show')">View QR code</x-ui.button>
+            {{-- Straight to the code: on a phone at the bin it is otherwise below the menu and title. --}}
+            <x-ui.button variant="primary" :href="route('profile.show').'#qr'">View QR code</x-ui.button>
             <a class="text-link" href="{{ route('rewards.index') }}">Browse rewards</a>
         </div>
     </div>
