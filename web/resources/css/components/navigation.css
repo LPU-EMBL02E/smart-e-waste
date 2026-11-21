@@ -57,6 +57,9 @@
         align-self: start;
         height: 100vh;
         overflow-y: auto;
+        /* Scrolling past the end of the menu doesn't scroll the page behind it. */
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
         border-right: 2px solid var(--color-ink);
         border-bottom: 0;
     }
@@ -105,7 +108,7 @@
     @variant lg {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: var(--spacing-1);
+        gap: 0;
     }
 }
 
@@ -117,6 +120,7 @@
     }
 }
 
+/* Inset by the link's padding and border, so a label lines up with the icons below it. */
 .nav-group {
     flex-basis: 100%;
     padding-block: var(--spacing-2);
@@ -124,7 +128,7 @@
     font-size: var(--text-small);
 
     @variant lg {
-        padding-block: var(--spacing-3) var(--spacing-1);
+        padding: var(--spacing-3) calc(var(--spacing-2) + 2px) var(--spacing-1);
     }
 }
 
@@ -198,7 +202,7 @@
     height: 1.5rem;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.75;
+    stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
@@ -261,9 +265,9 @@
     }
 }
 
-/* Its own row under the name and Sign out. */
-.sidebar-foot .theme-switch {
-    flex-basis: 100%;
+/* The theme control, below the menu links. */
+.sidebar-settings {
+    padding: 0 var(--spacing-4) var(--spacing-4);
 }
 
 .site-header .theme-switch {
