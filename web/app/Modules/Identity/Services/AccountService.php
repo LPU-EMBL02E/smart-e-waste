@@ -11,6 +11,8 @@ use App\Modules\Identity\Support\QrToken;
 use App\Modules\Identity\Support\UserImportFile;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -34,6 +36,9 @@ class AccountService
 {
     /** Rows per insert in a CSV import, and values per lookup while checking one. */
     private const IMPORT_BATCH_SIZE = 500;
+
+    /** Accounts per transaction when deleting those never confirmed. */
+    private const SWEEP_BATCH_SIZE = 100;
 
     /** The same limits as the admin's user form. API_Design.md §7.6. */
     private const IMPORT_ROW_RULES = [
@@ -165,6 +170,46 @@ class AccountService
     }
 
     /**
+     * Delete the accounts registered over a week ago and never confirmed, with
+     * their QR credential, sessions and password links, so the email and
+     * student number are free again. Run hourly by the scheduler.
+     * API_Design.md §7.2, P54.
+     *
+     * An account confirmed before is never deleted, even while a changed email
+     * waits to be confirmed again. Neither is one with points, deposits,
+     * redemptions or notifications: those rows stay, the ledger above all.
+     * Each batch locks its rows and checks them again, so an account confirmed
+     * at that moment is kept.
+     *
+     * @return int how many accounts were deleted
+     */
+    public function deleteNeverConfirmedAccounts(): int
+    {
+        $deleted = 0;
+
+        $this->neverConfirmedPastDeadline()->select('id')->chunkById(
+            self::SWEEP_BATCH_SIZE,
+            function (Collection $batch) use (&$deleted): void {
+                $deleted += DB::transaction(function () use ($batch): int {
+                    $users = $this->neverConfirmedPastDeadline()
+                        ->whereKey($batch->modelKeys())
+                        ->lockForUpdate()
+                        ->get(['id', 'email']);
+                    $ids = $users->modelKeys();
+
+                    UserQrCredential::whereIn('user_id', $ids)->delete();
+                    DB::table(config('session.table'))->whereIn('user_id', $ids)->delete();
+                    DB::table(config('auth.passwords.users.table'))->whereIn('email', $users->pluck('email'))->delete();
+
+                    return User::whereKey($ids)->delete();
+                });
+            },
+        );
+
+        return $deleted;
+    }
+
+    /**
      * Set a password from an emailed link. Refuses a wrong or expired token, an
      * unknown email and an inactive account alike, so a refusal reveals nothing
      * about the account (API_Design.md §7.2, web/docs/ACCOUNT-MANAGEMENT.md).
@@ -205,7 +250,7 @@ class AccountService
     public function createByAdmin(array $data): User
     {
         $user = new User($data);
-        $user->forceFill(['email_verified_at' => now()]);
+        $user->forceFill(['email_verified_at' => now(), 'first_confirmed_at' => now()]);
 
         return $this->createWithQrCredential($user);
     }
@@ -412,6 +457,7 @@ class AccountService
                     'student_number' => $row['student_number'],
                     'email' => $row['email'],
                     'email_verified_at' => $now,
+                    'first_confirmed_at' => $now,
                     'first_name' => $row['first_name'],
                     'last_name' => $row['last_name'],
                     'status' => User::STATUS_ACTIVE,
@@ -512,6 +558,18 @@ class AccountService
      * $exceptSessionId keeps one session: the user's own, when they made the
      * change themselves.
      */
+    /** Never confirmed, past the deadline, and nothing else holds on to it (P54). */
+    private function neverConfirmedPastDeadline(): Builder
+    {
+        return User::query()
+            ->whereNull('first_confirmed_at')
+            ->where('created_at', '<=', now()->subDays(config('ewaste.unconfirmed_account_days')))
+            ->whereDoesntHave('ledgerEntries')
+            ->whereDoesntHave('depositSessions')
+            ->whereDoesntHave('redemptions')
+            ->whereDoesntHave('notifications');
+    }
+
     private function endSessions(User $user, ?string $exceptSessionId = null): void
     {
         DB::table(config('session.table'))

@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'student_number' => fake()->unique()->numerify('##########'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'first_confirmed_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -64,6 +65,12 @@ class UserFactory extends Factory
 
     /** Registered, confirmation link not yet followed (API_Design.md P48). */
     public function unconfirmed(): static
+    {
+        return $this->state(['email_verified_at' => null, 'first_confirmed_at' => null]);
+    }
+
+    /** Confirmed before, then changed their email and must confirm again (P50). */
+    public function reconfirming(): static
     {
         return $this->state(['email_verified_at' => null]);
     }

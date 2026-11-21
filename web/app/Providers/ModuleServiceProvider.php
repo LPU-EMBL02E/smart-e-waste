@@ -5,13 +5,18 @@ namespace App\Providers;
 use App\Modules\Deposits\Events\DepositCompleted;
 use App\Modules\Devices\Events\BinFault;
 use App\Modules\Devices\Events\BinFull;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Support\Theme;
 use App\Modules\Notifications\Listeners\SendBinFaultNotifications;
 use App\Modules\Notifications\Listeners\SendBinFullNotifications;
 use App\Modules\Notifications\Listeners\SendDepositCompletedNotification;
 use App\Modules\Notifications\Listeners\SendRedemptionFulfilledNotification;
 use App\Modules\Rewards\Events\RedemptionFulfilled;
+use App\Support\Display;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -23,11 +28,13 @@ use Illuminate\Support\ServiceProvider;
  * provider is the only place that knows the module list, so adding a module is
  * one line here.
  *
- * It does two things:
+ * Mainly it does two things:
  *   1. loads each module's routes — web routes in the `web` middleware group,
  *      device routes under /api/v1/device with the signature middleware;
  *   2. wires the module events to their listeners, which is the whole of the
  *      Notifications module's coupling to the rest of the app.
+ * It also shares a few values with the layouts and adds the deadline to the
+ * confirmation email.
  *
  * Registered in bootstrap/providers.php.
  */
@@ -65,6 +72,29 @@ class ModuleServiceProvider extends ServiceProvider
         $this->registerListeners();
         $this->shareUnreadNotificationCount();
         $this->shareTheme();
+        $this->addDeadlineToConfirmationEmail();
+    }
+
+    /**
+     * Laravel's confirmation email, plus the date after which an account never
+     * confirmed is deleted (API_Design.md §7.2, P54). An email confirming a
+     * changed address has no deadline, so it is Laravel's email unchanged.
+     */
+    private function addDeadlineToConfirmationEmail(): void
+    {
+        VerifyEmail::toMailUsing(function (User $user, string $url): MailMessage {
+            $message = (new MailMessage)
+                ->subject(Lang::get('Verify your email address'))
+                ->line(Lang::get('Please click the button below to verify your email address.'))
+                ->action(Lang::get('Verify Email Address'), $url);
+
+            if ($deadline = $user->confirmationDeadline()) {
+                $message->line('Confirm it by '.Display::dateTime($deadline).' ('.config('ewaste.display_timezone')
+                    .'). After that, the account is deleted and the email address can be used to sign up again.');
+            }
+
+            return $message->line(Lang::get('If you did not create an account, no further action is required.'));
+        });
     }
 
     /**
