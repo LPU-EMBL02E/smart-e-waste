@@ -917,6 +917,17 @@ Lengths and required fields come from the schema. Other limits are **[P41]**.
   student is told to use the resend button.
 - On a validation failure the form comes back with the errors and the old
   input, except the password fields.
+- A taken email or student number is reported as taken, beside its field
+  **[P56]**. This is a deliberate exception to the OWASP Authentication Cheat
+  Sheet, which prefers one reply whether or not the account exists:
+  - the student number must be unique, and the person registering has to be
+    told why they can't, so it can't be hidden;
+  - sign-up is limited to 5 attempts a minute for each IP address (P46), the
+    fallback the cheat sheet accepts;
+  - an account never confirmed stops holding the email and student number after
+    7 days (P54).
+
+  Login (P29) and "Forgot password" (P30) still give one reply for every case.
 
 **Change own details** (`PUT /profile`) **[P50]**
 
@@ -1174,6 +1185,7 @@ written as if each is accepted.
 | P53 | Guest pages not cached | `GET /register`, `/login`, `/forgot-password` and `/reset-password/{token}` are sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). The redirects from the guest `POST` routes keep Laravel's default, `no-cache, private`. Signed-in pages are covered by P55 |
 | P54 | Accounts never confirmed | Deleted 7 days after registration (`ewaste.unconfirmed_account_days`) by an hourly scheduled task, with their QR credential, sessions and password links, so the email and student number are free again. `users.first_confirmed_at` marks an account confirmed at least once; it is never deleted this way. The confirmation page and email show the deadline |
 | P55 | Signed-in pages not cached | Every signed-in response, the confirmation pages included, is sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). `POST /logout` sends `Clear-Site-Data: "cache", "storage"`, without `"cookies"` so the theme cookie stays |
+| P56 | Taken email or student number | Registration says when the email or student number is already taken. An accepted exception to the OWASP Authentication Cheat Sheet's single reply: the student number can't be hidden, sign-up is rate-limited (P46), and accounts never confirmed expire (P54). Login and "Forgot password" keep one reply (P29, P30) |
 
 ---
 
