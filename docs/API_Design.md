@@ -672,6 +672,16 @@ user.
 - A user whose email is not confirmed can sign in, but every signed-in page
   except these four redirects to `/email/verify` (Section 7.3).
 
+**Theme.** Open to everyone, signed in or not, confirmed or not **[P52]**.
+
+| Method | Path | Route name | Module | Purpose |
+|---|---|---|---|---|
+| POST | `/theme` | `theme.update` | Identity | Choose light, dark or the device's setting, for this browser |
+
+- The choice is kept in a cookie, not on the account, so it also applies on
+  the sign-in pages and follows the browser rather than the user. The rules are
+  in Section 7.6 ("Choose a theme").
+
 ### 7.3 Signed-in routes
 
 These are the pages the plan lists for students. They are open to any signed-in
@@ -918,6 +928,17 @@ Lengths and required fields come from the schema. Other limits are **[P41]**.
 - On a validation failure the form comes back with the errors and no password
   fields filled in.
 
+**Choose a theme** (`POST /theme`) **[P52]**
+
+| Field | Rule |
+|---|---|
+| `theme` | Required. `system`, `light` or `dark` |
+
+- `light` or `dark` sets a cookie named `theme` for 365 days. `system` deletes
+  it, so the page follows the device's light or dark setting.
+- Redirects back to the page the form was sent from.
+- Plain `POST` form with `@csrf`, no script (`web/docs/DESIGN.md` §10).
+
 **Create or edit an organization**
 
 | Field | Rule |
@@ -1119,6 +1140,7 @@ written as if each is accepted.
 | P49 | E-waste check | `verification.method` is `cam_diff` when the presence step failed and `ewaste_model` when the model ran; `score` is that step's score. `health` reports `model`. A missing or failing model is 503 `MODEL_UNAVAILABLE` from the bin station and the bin fault `MODEL_UNAVAILABLE` in telemetry |
 | P50 | Own account | A signed-in user can change their own name, email and password; a student can also change their student number and organization. Changing the email or the password needs the current password, ends the account's other sessions and deletes its password links. A changed email must be confirmed again. Both forms are limited to 6 a minute per user |
 | P51 | Password link lifetime | 7 days (10080 minutes) for both the set-password and the forgot-password email. The email confirmation link keeps Laravel's 60 minutes |
+| P52 | Theme | Light, dark or the device's setting, chosen from a control on every page and kept per browser in a `theme` cookie for 365 days. No account column. The dark palette is in `web/docs/DESIGN.md` §3 |
 
 ---
 
