@@ -648,6 +648,14 @@ pages themselves and the rules behind them come from the plan.
   form has no role field. The rules are in Section 7.6. `POST /register` is
   limited to 5 attempts a minute for each IP address **[P46]**. A successful
   registration signs the student in and redirects to `/email/verify`.
+- **No browser caching.** The four guest pages, `GET /register`, `/login`,
+  `/forgot-password` and `/reset-password/{token}`, are sent with
+  `Cache-Control: no-store`, so the browser keeps no copy of them **[P53]**.
+  Pressing Back after signing in or signing up asks the server again, which
+  redirects a signed-in user away, and the reset page, whose address holds the
+  token, is not kept in the browser's cache. The header is set on the response,
+  not with a `<meta>` tag, as OWASP ASVS 5.0 V14.3.2 and the OWASP Session
+  Management Cheat Sheet ask.
 
 **Email confirmation.** The first three are the routes in Laravel's email
 verification documentation, with the same names. All four need a signed-in
@@ -1141,6 +1149,7 @@ written as if each is accepted.
 | P50 | Own account | A signed-in user can change their own name, email and password; a student can also change their student number and organization. Changing the email or the password needs the current password, ends the account's other sessions and deletes its password links. A changed email must be confirmed again. Both forms are limited to 6 a minute per user |
 | P51 | Password link lifetime | 7 days (10080 minutes) for both the set-password and the forgot-password email. The email confirmation link keeps Laravel's 60 minutes |
 | P52 | Theme | Light, dark or the device's setting, chosen from a control on every page and kept per browser in a `theme` cookie for 365 days. No account column. The dark palette is in `web/docs/DESIGN.md` §3 |
+| P53 | Guest pages not cached | `GET /register`, `/login`, `/forgot-password` and `/reset-password/{token}` are sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). The redirects from the guest `POST` routes and every other page keep Laravel's default, `no-cache, private` |
 
 ---
 
