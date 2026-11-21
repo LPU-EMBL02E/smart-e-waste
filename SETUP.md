@@ -71,8 +71,8 @@ at the `LOG_LEVEL=warning` that `.env.example` ships:
 
 1. Set `LOG_LEVEL=debug` in `.env`.
 2. Open `/forgot-password` and enter the first admin's email.
-3. Find the `/reset-password/...` link in `storage/logs/`, and open it within 60
-   minutes to set the password.
+3. Find the `/reset-password/...` link in `storage/logs/`, and open it within 7
+   days to set the password (`docs/API_Design.md` P51).
 4. Set `LOG_LEVEL=warning` again. Debug logs hold every password link until they
    are deleted, so delete that entry from the log too.
 
@@ -136,6 +136,10 @@ One cron entry covers all scheduled work (`routes/console.php`):
 
 Then `cloudflared` as a systemd service on the project domain, and
 `mariadb-dump` on a schedule (`System_Plan.md` §7, steps 8–9).
+
+The full step-by-step for the Raspberry Pi, with Nginx, PHP-FPM, the tunnel,
+the scheduler, backups and updates, is in
+[`docs/Pi_Deployment_Guide.md`](docs/Pi_Deployment_Guide.md).
 
 ---
 
