@@ -110,6 +110,9 @@ return [
     'register_attempts_per_minute' => 5,
     'confirmation_resends_per_minute' => 6,
 
+    // PUT /profile and PUT /profile/password, each per user. API_Design.md P50.
+    'own_account_changes_per_minute' => 6,
+
     // The admin FirstAdminSeeder creates. System_Plan.md §7, step 5. The email
     // has no default, so the repository carries no personal address.
     'first_admin' => [

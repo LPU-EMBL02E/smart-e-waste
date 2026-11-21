@@ -6,6 +6,7 @@ use App\Modules\Identity\Models\Organization;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Services\AccountService;
 use App\Modules\Identity\Support\AccountChangeRefused;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 /**
- * Every account rule and write. API_Design.md §7.6, P35, P36, P47,
+ * Every account rule and write. API_Design.md §7.6, P35, P36, P47, P50,
  * System_Plan.md §4, web/docs/ACCOUNT-MANAGEMENT.md,
  * web/docs/TRACK-A-ACCOUNTS.md step A2.
  */
@@ -233,6 +234,58 @@ class AccountServiceTest extends TestCase
         $this->assertDatabaseHas('password_reset_tokens', ['email' => $student->email]);
     }
 
+    public function test_it_unconfirms_a_users_own_new_email_and_ends_only_their_other_sessions(): void
+    {
+        Notification::fake();
+        $student = User::factory()->create(['email' => 'old@example.com']);
+        $this->addSession($student, 'this-session');
+        $this->addSession($student, 'other-session');
+        Password::broker()->createToken($student);
+
+        $sent = $this->accounts->updateOwnDetails($student, ['email' => 'new@example.com'], 'this-session');
+
+        $this->assertTrue($sent);
+        $this->assertFalse($student->fresh()->hasVerifiedEmail());
+        $this->assertDatabaseHas('sessions', ['id' => 'this-session']);
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-session']);
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'old@example.com']);
+        Notification::assertSentTo($student, VerifyEmail::class);
+    }
+
+    public function test_it_keeps_sessions_links_and_confirmation_when_a_user_changes_only_their_name(): void
+    {
+        Notification::fake();
+        $student = User::factory()->create();
+        $this->addSession($student, 'other-session');
+        Password::broker()->createToken($student);
+
+        $sent = $this->accounts->updateOwnDetails($student, ['first_name' => 'Renamed'], 'this-session');
+
+        $this->assertNull($sent);
+        $this->assertTrue($student->fresh()->hasVerifiedEmail());
+        $this->assertDatabaseHas('sessions', ['id' => 'other-session']);
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => $student->email]);
+        Notification::assertNothingSent();
+    }
+
+    public function test_it_ends_only_the_other_sessions_when_a_user_changes_their_own_password(): void
+    {
+        $student = User::factory()->create();
+        $bystander = User::factory()->create();
+        $this->addSession($student, 'this-session');
+        $this->addSession($student, 'other-session');
+        $this->addSession($bystander);
+        Password::broker()->createToken($student);
+
+        $this->accounts->changeOwnPassword($student, 'a-new-password', 'this-session');
+
+        $this->assertTrue(Hash::check('a-new-password', $student->fresh()->password));
+        $this->assertDatabaseHas('sessions', ['id' => 'this-session']);
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-session']);
+        $this->assertDatabaseHas('sessions', ['user_id' => $bystander->id]);
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => $student->email]);
+    }
+
     public function test_it_keeps_sessions_when_an_account_is_reactivated(): void
     {
         $student = User::factory()->inactive()->create();
@@ -409,10 +462,10 @@ class AccountServiceTest extends TestCase
         $this->assertTrue($refused, 'The change should have been refused.');
     }
 
-    private function addSession(User $user): void
+    private function addSession(User $user, ?string $id = null): void
     {
         DB::table('sessions')->insert([
-            'id' => "session-{$user->id}",
+            'id' => $id ?? "session-{$user->id}",
             'user_id' => $user->id,
             'payload' => '',
             'last_activity' => now()->getTimestamp(),

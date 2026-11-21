@@ -3,28 +3,31 @@
     screen until the next page. web/docs/DESIGN.md §§6, 8.
 
     A summary item links to its field, except for a refusal that belongs to the
-    whole action rather than to one input.
+    whole action rather than to one input. A field in a named error bag has the
+    id "{bag}_{field}" (components/form/input.blade.php).
 --}}
 @if (session('status'))
     <div class="toast" role="status">{{ session('status') }}</div>
 @endif
 
-@if ($errors->any())
+@foreach ($errors->getBags() as $bagName => $bag)
+    @continue($bag->isEmpty())
     @php($refusals = ['transaction', 'redemption'])
+    @php($idPrefix = $bagName === 'default' ? '' : "{$bagName}_")
 
     <div class="feedback" role="alert">
-        @if ($errors->count() === 1 && in_array($errors->keys()[0], $refusals, true))
-            {{ $errors->first() }}
+        @if ($bag->count() === 1 && in_array($bag->keys()[0], $refusals, true))
+            {{ $bag->first() }}
         @else
-            <strong>Please fix {{ trans_choice('{1} 1 problem|[2,*] :count problems', $errors->count()) }}</strong>
+            <strong>Please fix {{ trans_choice('{1} 1 problem|[2,*] :count problems', $bag->count()) }}</strong>
             <ul>
-                @foreach ($errors->messages() as $field => $messages)
+                @foreach ($bag->messages() as $field => $messages)
                     @foreach ($messages as $message)
                         <li>
                             @if (in_array($field, $refusals, true))
                                 {{ $message }}
                             @else
-                                <a href="#{{ $field }}">{{ $message }}</a>
+                                <a href="#{{ $idPrefix }}{{ $field }}">{{ $message }}</a>
                             @endif
                         </li>
                     @endforeach
@@ -32,4 +35,4 @@
             </ul>
         @endif
     </div>
-@endif
+@endforeach

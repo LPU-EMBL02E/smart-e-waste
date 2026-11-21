@@ -2,8 +2,10 @@
     The label, hint and error around one control. web/docs/DESIGN.md §6: a
     persistent label, required or optional stated in text, and the message beside
     the field. The controls tie themselves to the hint and error by these ids.
+
+    bag: the error bag, for a page with two forms that share a field name.
 --}}
-@props(['name', 'id', 'label', 'required' => false, 'optional' => true, 'hint' => null])
+@props(['name', 'id', 'label', 'required' => false, 'optional' => true, 'hint' => null, 'bag' => 'default'])
 
 <div {{ $attributes->class('field') }}>
     <label class="field-label" for="{{ $id }}">
@@ -18,7 +20,7 @@
     @if ($hint)
         <p class="hint" id="{{ $id }}-hint">{{ $hint }}</p>
     @endif
-    @error($name)
+    @error($name, $bag)
         <p class="field-error" id="{{ $id }}-error">{{ $message }}</p>
     @enderror
 </div>

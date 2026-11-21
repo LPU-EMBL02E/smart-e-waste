@@ -74,6 +74,14 @@ Route::middleware('confirmed')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('profile/qr', [ProfileController::class, 'regenerateQr'])
         ->name('profile.qr.regenerate');
+
+    // Each form has its own limit per signed-in user (P50).
+    Route::put('profile', [ProfileController::class, 'update'])
+        ->middleware('throttle:'.config('ewaste.own_account_changes_per_minute').',1,profile-details')
+        ->name('profile.update');
+    Route::put('profile/password', [ProfileController::class, 'updatePassword'])
+        ->middleware('throttle:'.config('ewaste.own_account_changes_per_minute').',1,profile-password')
+        ->name('profile.password.update');
 });
 
 // ----------------------------------------------------------------- admin

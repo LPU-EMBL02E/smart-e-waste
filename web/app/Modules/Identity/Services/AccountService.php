@@ -270,6 +270,63 @@ class AccountService
     }
 
     /**
+     * A user changes their own details. API_Design.md §7.6 ("Change own
+     * details"), P50. The caller has already checked the current password if the
+     * email changes.
+     *
+     * Unlike an admin's change (update()), a new email must be confirmed again:
+     * it goes back to unconfirmed, the account's other sessions end, and the
+     * password links for the old address are deleted. $keepSessionId, the
+     * caller's own session, stays signed in.
+     *
+     * @return bool|null null when the email is unchanged; otherwise whether the
+     *                   confirmation email was sent. The change is kept either way
+     */
+    public function updateOwnDetails(User $user, array $data, string $keepSessionId): ?bool
+    {
+        $user->fill($data);
+
+        $emailChanged = $user->isDirty('email');
+        $previousEmail = $user->getOriginal('email');
+
+        DB::transaction(function () use ($user, $emailChanged, $previousEmail, $keepSessionId) {
+            if ($emailChanged) {
+                $user->forceFill(['email_verified_at' => null]);
+            }
+
+            $user->save();
+
+            if ($emailChanged) {
+                $this->endSessions($user, $keepSessionId);
+                $this->deletePasswordLinks($previousEmail);
+            }
+        });
+
+        return $emailChanged ? $this->sendConfirmationEmail($user) : null;
+    }
+
+    /**
+     * A user changes their own password, having entered the current one.
+     * API_Design.md §7.6 ("Change own password"), P50.
+     *
+     * Ends every other session of the account and deletes its password links
+     * (web/docs/ACCOUNT-MANAGEMENT.md, "Sessions after account changes").
+     * $keepSessionId, the caller's own session, stays signed in; the caller then
+     * gives it a new id.
+     */
+    public function changeOwnPassword(User $user, string $password, string $keepSessionId): void
+    {
+        $user->forceFill(['password' => $password]);
+
+        DB::transaction(function () use ($user, $keepSessionId) {
+            $user->save();
+
+            $this->endSessions($user, $keepSessionId);
+            $this->deletePasswordLinks($user->email);
+        });
+    }
+
+    /**
      * Overwrites the token, so the old one stops matching at once.
      * Database_Schema.md §3.
      */
@@ -451,10 +508,16 @@ class AccountService
      * This only works with SESSION_DRIVER=database, the current setting. Moving
      * to file or Redis (System_Plan.md §8.1) needs this replaced first, or a
      * disabled user would stay signed in.
+     *
+     * $exceptSessionId keeps one session: the user's own, when they made the
+     * change themselves.
      */
-    private function endSessions(User $user): void
+    private function endSessions(User $user, ?string $exceptSessionId = null): void
     {
-        DB::table(config('session.table'))->where('user_id', $user->getKey())->delete();
+        DB::table(config('session.table'))
+            ->where('user_id', $user->getKey())
+            ->when($exceptSessionId, fn ($query) => $query->where('id', '!=', $exceptSessionId))
+            ->delete();
     }
 
     private function deletePasswordLinks(string $email): void
