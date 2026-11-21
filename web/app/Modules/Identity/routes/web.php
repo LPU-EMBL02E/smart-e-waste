@@ -45,8 +45,8 @@ Route::middleware('guest')->group(function () {
 });
 
 // ------------------------------------------------------ signed in, unconfirmed
-// Open before the email is confirmed: the three confirmation routes (§7.2), and
-// the way out, so nobody is trapped by the gate.
+// Open before the email is confirmed: the confirmation routes (§7.2), and the
+// way out, so nobody is trapped by the gate.
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
@@ -58,6 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
         ->middleware('throttle:'.config('ewaste.confirmation_resends_per_minute').',1,confirmation-resend')
         ->name('verification.send');
+
+    // Correcting a mistyped email sends a new link, so it shares the resend
+    // limit: the same limit name counts both routes together.
+    Route::put('email/verify', [EmailVerificationController::class, 'changeEmail'])
+        ->middleware('throttle:'.config('ewaste.confirmation_resends_per_minute').',1,confirmation-resend')
+        ->name('verification.email.update');
 });
 
 // ------------------------------------------------------------ signed in
