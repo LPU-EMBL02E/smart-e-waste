@@ -12,6 +12,7 @@
                 {{ config('app.name') }}
             </a>
             <span class="small muted">Campus web portal</span>
+            @include('layouts.partials.theme')
         </header>
 
         <div class="guest-layout">

@@ -19,6 +19,7 @@
 
 .button-primary {
     background: var(--color-lavender);
+    color: var(--color-on-lavender);
     box-shadow: var(--shadow-button);
 }
 

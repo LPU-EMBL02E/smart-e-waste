@@ -1,7 +1,9 @@
-/* Element defaults on top of Tailwind's reset. web/docs/DESIGN.md §§4, 9. */
+/* Element defaults on top of Tailwind's reset. web/docs/DESIGN.md §§3, 4, 9. */
 @layer base {
+    /* Follows the device unless the visitor chose a theme, which the layout
+       writes as data-theme on <html> (API_Design.md P52). */
     :root {
-        color-scheme: light;
+        color-scheme: light dark;
         --gutter: var(--spacing-4);
 
         @variant sm {
@@ -11,6 +13,14 @@
         @variant lg {
             --gutter: var(--spacing-8);
         }
+    }
+
+    :root[data-theme='light'] {
+        color-scheme: light;
+    }
+
+    :root[data-theme='dark'] {
+        color-scheme: dark;
     }
 
     html {

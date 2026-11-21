@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Modules\Deposits\Events\DepositCompleted;
 use App\Modules\Devices\Events\BinFault;
 use App\Modules\Devices\Events\BinFull;
+use App\Modules\Identity\Support\Theme;
 use App\Modules\Notifications\Listeners\SendBinFaultNotifications;
 use App\Modules\Notifications\Listeners\SendBinFullNotifications;
 use App\Modules\Notifications\Listeners\SendDepositCompletedNotification;
@@ -63,6 +64,18 @@ class ModuleServiceProvider extends ServiceProvider
         $this->loadModuleRoutes();
         $this->registerListeners();
         $this->shareUnreadNotificationCount();
+        $this->shareTheme();
+    }
+
+    /**
+     * The visitor's theme, read from their cookie, for the <html> element and
+     * the theme control (API_Design.md P52). No query.
+     */
+    private function shareTheme(): void
+    {
+        View::composer(['layouts.base', 'layouts.partials.theme'], function ($view): void {
+            $view->with('theme', Theme::fromCookie(request()->cookie(Theme::COOKIE)));
+        });
     }
 
     /**
