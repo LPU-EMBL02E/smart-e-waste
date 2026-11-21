@@ -49,12 +49,14 @@
                                     @endif
 
                                     @if ($redemption->canBeCancelled())
-                                        <details class="table-disclosure" @if ($errors->has('cancel_reason') && (int) old('redemption_id') === $redemption->id) open @endif>
+                                        {{-- The row that failed takes the plain id, so the error summary's #cancel_reason link lands on it. --}}
+                                        @php($failedHere = $errors->has('cancel_reason') && (int) old('redemption_id') === $redemption->id)
+                                        <details class="table-disclosure" @if ($failedHere) open @endif>
                                             <summary class="button button-danger">Cancel</summary>
                                             <form method="POST" action="{{ route('admin.redemptions.cancel', $redemption) }}">
                                                 @csrf
                                                 <input type="hidden" name="redemption_id" value="{{ $redemption->id }}">
-                                                <x-form.input name="cancel_reason" :id="'cancel_reason_'.$redemption->id" label="Reason" maxlength="255" required
+                                                <x-form.input name="cancel_reason" :id="$failedHere ? 'cancel_reason' : 'cancel_reason_'.$redemption->id" label="Reason" maxlength="255" required
                                                               :value="(int) old('redemption_id') === $redemption->id ? old('cancel_reason') : null" />
                                                 <x-ui.button variant="danger">Cancel redemption</x-ui.button>
                                             </form>
