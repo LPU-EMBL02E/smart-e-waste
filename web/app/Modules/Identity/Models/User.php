@@ -6,6 +6,7 @@ use App\Modules\Deposits\Models\DepositSession;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\Rewards\Models\PointLedgerEntry;
 use App\Modules\Rewards\Models\Redemption;
+use Carbon\CarbonInterface;
 use Database\Factories\Identity\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,11 @@ use Illuminate\Notifications\Notifiable;
  * confirmation link, and every signed-in page waits for it (API_Design.md P48).
  * An admin-created account counts as confirmed (P47). It is deliberately not in
  * $fillable, so no form input can confirm an account.
+ *
+ * `first_confirmed_at` is set with it the first time and never cleared, so a
+ * changed email waiting to be confirmed again (P50) still counts as confirmed
+ * before. An account where it is NULL has never been confirmed and is deleted
+ * after a week (P54). Not in $fillable either.
  *
  * There is no points balance column anywhere. A balance is always
  * SUM(point_ledger.points_delta), read through PointsService.
@@ -76,6 +82,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
+            'first_confirmed_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
     }
@@ -113,6 +120,32 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // ----------------------------------------------------------------- helpers
+
+    /**
+     * Laravel calls this when the confirmation link is followed. The first
+     * confirmation is kept for good (API_Design.md P54).
+     */
+    public function markEmailAsVerified(): bool
+    {
+        $now = $this->freshTimestamp();
+
+        return $this->forceFill([
+            'email_verified_at' => $now,
+            'first_confirmed_at' => $this->first_confirmed_at ?? $now,
+        ])->save();
+    }
+
+    /**
+     * When an account never confirmed is deleted, or null for one confirmed
+     * before (API_Design.md §7.2, P54). The sweep runs hourly, so the deletion
+     * itself can come up to an hour later.
+     */
+    public function confirmationDeadline(): ?CarbonInterface
+    {
+        return $this->first_confirmed_at === null
+            ? $this->created_at->copy()->addDays(config('ewaste.unconfirmed_account_days'))
+            : null;
+    }
 
     public function isAdmin(): bool
     {

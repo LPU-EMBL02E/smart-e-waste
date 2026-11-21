@@ -113,6 +113,10 @@ return [
     // PUT /profile and PUT /profile/password, each per user. API_Design.md P50.
     'own_account_changes_per_minute' => 6,
 
+    // How long a self-registered account may stay unconfirmed before it is
+    // deleted. API_Design.md P54.
+    'unconfirmed_account_days' => 7,
+
     // How long a chosen light or dark theme is remembered. API_Design.md P52.
     'theme_cookie_days' => 365,
 

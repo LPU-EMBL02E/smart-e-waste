@@ -12,6 +12,7 @@
  */
 
 use App\Modules\Deposits\Services\DepositService;
+use App\Modules\Identity\Services\AccountService;
 use Illuminate\Support\Facades\Schedule;
 
 /**
@@ -28,6 +29,15 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::call(function (DepositService $deposits) {
     $deposits->expireOpenSessions();
 })->everyMinute()->name('deposit-sessions:expire')->withoutOverlapping();
+
+/**
+ * Accounts never confirmed are deleted a week after registration, so their
+ * email and student number can be used again (API_Design.md §7.2, P54). One
+ * query on the users (first_confirmed_at, created_at) index finds them.
+ */
+Schedule::call(function (AccountService $accounts) {
+    $accounts->deleteNeverConfirmedAccounts();
+})->hourly()->name('accounts:delete-never-confirmed')->withoutOverlapping();
 
 /**
  * TODO(team): scheduled reports. API_Design.md §10 question 2 — the plan names

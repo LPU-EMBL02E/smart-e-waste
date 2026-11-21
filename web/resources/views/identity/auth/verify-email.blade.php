@@ -12,6 +12,13 @@
     <p class="small muted">
         Can't find it? Check your spam folder. The link works for {{ config('auth.verification.expire', 60) }} minutes.
     </p>
+    @if ($deadline = auth()->user()->confirmationDeadline())
+        {{-- API_Design.md P54. --}}
+        <p>
+            Confirm it by <strong>@datetime($deadline) ({{ config('ewaste.display_timezone') }})</strong>. After that,
+            this account is deleted and you can sign up again with the same email and student number.
+        </p>
+    @endif
 
     <div class="actions">
         <form method="POST" action="{{ route('verification.send') }}">
