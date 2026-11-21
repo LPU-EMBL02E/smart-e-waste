@@ -667,18 +667,32 @@ pages themselves and the rules behind them come from the plan.
   Management Cheat Sheet ask.
 
 **Email confirmation.** The first three are the routes in Laravel's email
-verification documentation, with the same names. All four need a signed-in
-user.
+verification documentation, with the same names. The link in the email works
+for whoever opens it **[P57]**; the other three need a signed-in user.
 
 | Method | Path | Route name | Module | Purpose |
 |---|---|---|---|---|
 | GET | `/email/verify` | `verification.notice` | Identity | Page asking the student to confirm their email, with a resend button |
-| GET | `/email/verify/{id}/{hash}` | `verification.verify` | Identity | The link in the email. Sets `users.email_verified_at` and redirects to `/home` |
+| GET | `/email/verify/{id}/{hash}` | `verification.verify` | Identity | The link in the email. Confirms the account it was sent to, signed in or not |
 | POST | `/email/verification-notification` | `verification.send` | Identity | Send the link again |
 | PUT | `/email/verify` | `verification.email.update` | Identity | Correct the email of an account not yet confirmed, and send the link there |
 
 - The link is signed and expires after Laravel's `verification.expire` setting
   in `config/auth.php`, 60 minutes by default (Section 10).
+- **The link works on any device [P57].** Its signature and the hash of the
+  address it was sent to prove the user can read that inbox, so it needs no
+  session: it can be opened on a phone, or in a browser signed in as someone
+  else. It sets `users.email_verified_at` (and `first_confirmed_at`, P54) and
+  never signs anyone in or changes who is signed in:
+  - signed in as that account: redirects to `/home` with "Your email is
+    confirmed.";
+  - not signed in: redirects to `/login` with "Your email is confirmed. Sign in
+    to continue.";
+  - signed in as another account: redirects to that account's own page, saying
+    which email was confirmed and that the session is unchanged.
+- A changed, tampered or expired link, a hash that no longer matches the
+  account's email (the address was changed since), or an account that no longer
+  exists gets 403.
 - `POST /email/verification-notification` is limited to 6 a minute, as in
   Laravel's documentation **[P46]**. `PUT /email/verify` shares that limit, so
   changing the address can't send more links than resending.
@@ -1186,6 +1200,7 @@ written as if each is accepted.
 | P54 | Accounts never confirmed | Deleted 7 days after registration (`ewaste.unconfirmed_account_days`) by an hourly scheduled task, with their QR credential, sessions and password links, so the email and student number are free again. `users.first_confirmed_at` marks an account confirmed at least once; it is never deleted this way. The confirmation page and email show the deadline |
 | P55 | Signed-in pages not cached | Every signed-in response, the confirmation pages included, is sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). `POST /logout` sends `Clear-Site-Data: "cache", "storage"`, without `"cookies"` so the theme cookie stays |
 | P56 | Taken email or student number | Registration says when the email or student number is already taken. An accepted exception to the OWASP Authentication Cheat Sheet's single reply: the student number can't be hidden, sign-up is rate-limited (P46), and accounts never confirmed expire (P54). Login and "Forgot password" keep one reply (P29, P30) |
+| P57 | Confirmation link without a session | The signed link confirms its account whoever opens it, on any device, signed in or not. It never signs anyone in. Not signed in, it goes to `/login`; signed in as another account, it says which email was confirmed |
 
 ---
 
