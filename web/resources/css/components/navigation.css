@@ -92,8 +92,25 @@
             display: none;
         }
 
+        /* A column that fills the sidebar, so the foot sits at the bottom even under a short menu. */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-menu,
+        .sidebar-menu::details-content {
+            display: flex;
+            flex: 1 0 auto;
+            flex-direction: column;
+        }
+
         .sidebar-menu::details-content {
             content-visibility: visible;
+        }
+
+        .sidebar-foot {
+            margin-top: auto;
         }
     }
 }
@@ -162,7 +179,21 @@
     font-weight: 700;
 }
 
+/* Pinned to the bottom of the sidebar, so the theme and Sign out stay in view while the longer admin menu scrolls. */
 .sidebar-foot {
+    @variant lg {
+        position: sticky;
+        bottom: 0;
+        background: var(--color-paper);
+    }
+}
+
+/* The theme sits above the line; the name and Sign out below it. */
+.sidebar-foot .theme-switch {
+    padding: 0 var(--spacing-4) var(--spacing-4);
+}
+
+.sidebar-account {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -171,12 +202,8 @@
     padding: var(--spacing-4);
     border-top: 2px solid var(--color-ink);
 
-    /* Pinned to the bottom of the sidebar, so Sign out stays in view while the longer admin menu scrolls. */
     @variant lg {
-        position: sticky;
-        bottom: 0;
         display: block;
-        background: var(--color-paper);
     }
 }
 
@@ -263,11 +290,6 @@
     .theme-option:hover {
         background: var(--color-lavender-wash);
     }
-}
-
-/* The theme control, below the menu links. */
-.sidebar-settings {
-    padding: 0 var(--spacing-4) var(--spacing-4);
 }
 
 .site-header .theme-switch {
