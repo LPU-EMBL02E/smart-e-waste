@@ -98,7 +98,9 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
+            // Minutes. Both the set-password and the forgot-password email last
+            // a week (API_Design.md §7.2, P51).
+            'expire' => 60 * 24 * 7,
             'throttle' => 60,
         ],
     ],

@@ -117,6 +117,27 @@ class PasswordResetTest extends TestCase
         $this->assertDatabaseMissing('password_reset_tokens', ['email' => $student->email]);
     }
 
+    public function test_it_accepts_a_link_for_a_week(): void
+    {
+        $student = User::factory()->unactivated()->create();
+        $token = Password::broker()->createToken($student);
+
+        $this->travel(7 * 24 * 60 - 1)->minutes();
+
+        $this->reset($student->email, $token)->assertRedirect(route('login'));
+        $this->assertTrue(Hash::check(self::NEW_PASSWORD, $student->fresh()->password));
+    }
+
+    public function test_it_refuses_a_link_older_than_a_week(): void
+    {
+        $student = User::factory()->create();
+        $token = Password::broker()->createToken($student);
+
+        $this->travel(7 * 24 * 60 + 1)->minutes();
+
+        $this->assertFalse(Password::broker()->tokenExists($student, $token));
+    }
+
     public function test_it_ends_the_users_sessions_after_a_reset(): void
     {
         $student = User::factory()->create();
