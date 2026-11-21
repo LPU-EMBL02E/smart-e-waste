@@ -246,6 +246,18 @@ script) whose total is above the balance, and check that exactly one succeeds.
 Do the same for fulfil against cancel on one redemption. Record the result in
 the PR.
 
+**Result, 21 Nov 2026: passed.** Run on a local MariaDB 11.8.6 through the
+app's own connection (READ COMMITTED), with two processes started at the same
+instant, each holding its lock 300 ms longer than usual. 20 trials of each:
+
+| Race | Exactly one succeeded | End state |
+|---|---|---|
+| One user, two redemptions totalling 120 against a balance of 100 | 20 of 20 | Balance 40, stock 9, one redemption. The refused request finished about 305 ms after the other: it waited on the user lock |
+| Two users, one item left in stock | 20 of 20 | Stock 0, one redemption |
+| Fulfil against cancel on one redemption | 20 of 20 | 11 cancelled, with the points and stock returned; 9 fulfilled, with no reversal |
+
+The script and the raw results are in the pull request that added this note.
+
 ---
 
 ## Questions for the owner
