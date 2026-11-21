@@ -28,6 +28,7 @@
 - `student_number` — VARCHAR(50) — UNIQUE, NULL
 - `email` — VARCHAR(255) — UNIQUE, NOT NULL
 - `email_verified_at` — TIMESTAMP — NULL — when the email was confirmed; NULL until a self-registered student follows the confirmation link, and set at creation for an account an admin creates
+- `first_confirmed_at` — TIMESTAMP — NULL — when the account was first confirmed. Set with `email_verified_at` and never cleared, so a changed email that waits to be confirmed again (API_Design.md P50) leaves it alone. NULL only for a self-registered account that has never been confirmed, which is deleted 7 days after `created_at` (API_Design.md §7.2, P54)
 - `password` — VARCHAR(255) — NULL — NULL until the student sets a password from the emailed link; login fails while it is NULL. Set at registration for a self-registered student
 - `first_name` — VARCHAR(100) — NOT NULL
 - `last_name` — VARCHAR(100) — NOT NULL
@@ -267,10 +268,11 @@ A bin-full or bin-fault alert is one row per admin user.
 
 ## Additional Indexes
 
-Foreign keys and unique columns are indexed automatically. Add these two:
+Foreign keys and unique columns are indexed automatically. Add these three:
 
 - `bin_telemetry (device_id, created_at)` — latest reading per bin, and fill history
 - `deposit_sessions (status, expires_at)` — the timeout sweep, and the active-session check
+- `users (first_confirmed_at, created_at)` — the sweep that deletes accounts never confirmed (API_Design.md P54)
 
 ## Primary Key Summary
 

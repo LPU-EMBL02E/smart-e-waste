@@ -153,7 +153,7 @@ No fabrication begins before Checkpoint 1 approval.
 | | Laravel Mail | Account emails; the delivery service is a `.env` setting (Section 7.2) |
 | **Services** | Module `Services/` classes | Business logic: state machine, points commit, redemption, fill level |
 | | Nginx 1.26 + PHP 8.4-FPM | Serve the app, native via `apt` |
-| | Laravel scheduler (one cron entry) | Session timeout sweeps, scheduled reports |
+| | Laravel scheduler (one cron entry) | Session timeout sweeps, deleting accounts never confirmed, scheduled reports |
 | **Data** | MariaDB 11.8 LTS, InnoDB | Persistent storage, atomic commits, foreign keys |
 | | Eloquent models + migrations | Schema, defined in code (no hand-written `schema.sql`) |
 | | `mariadb-dump` (MariaDB's `mysqldump`) | Routine backups |

@@ -679,6 +679,19 @@ user.
   user is sent to `/home` and nothing changes.
 - A user whose email is not confirmed can sign in, but every signed-in page
   except these four redirects to `/email/verify` (Section 7.3).
+- **Accounts never confirmed expire.** A self-registered account that has never
+  been confirmed (`users.first_confirmed_at` is NULL) is deleted 7 days after it
+  was created, so its email and student number can be used to register again
+  **[P54]**. Changing the email on `/email/verify` does not restart the 7 days.
+  - A scheduled task runs every hour and deletes each such account with its
+    `user_qr_credentials` row, its sessions and its password links.
+  - It never deletes an account that has been confirmed before, even while a
+    changed email waits to be confirmed again (P50), or one with any row in
+    `point_ledger`, `deposit_sessions`, `redemptions` or `notifications`.
+  - The confirmation page and the confirmation email both give the date and
+    time, in Asia/Manila, after which the account is deleted, and say that the
+    user can register again after it. The email sent to confirm a changed
+    address has no such line.
 
 **Theme.** Open to everyone, signed in or not, confirmed or not **[P52]**.
 
@@ -1150,6 +1163,7 @@ written as if each is accepted.
 | P51 | Password link lifetime | 7 days (10080 minutes) for both the set-password and the forgot-password email. The email confirmation link keeps Laravel's 60 minutes |
 | P52 | Theme | Light, dark or the device's setting, chosen from a control on every page and kept per browser in a `theme` cookie for 365 days. No account column. The dark palette is in `web/docs/DESIGN.md` §3 |
 | P53 | Guest pages not cached | `GET /register`, `/login`, `/forgot-password` and `/reset-password/{token}` are sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). The redirects from the guest `POST` routes and every other page keep Laravel's default, `no-cache, private` |
+| P54 | Accounts never confirmed | Deleted 7 days after registration (`ewaste.unconfirmed_account_days`) by an hourly scheduled task, with their QR credential, sessions and password links, so the email and student number are free again. `users.first_confirmed_at` marks an account confirmed at least once; it is never deleted this way. The confirmation page and email show the deadline |
 
 ---
 
