@@ -641,28 +641,36 @@ pages themselves and the rules behind them come from the plan.
   redirects an admin to `/admin` and a student to `/home` **[P29]**.
 - `POST /forgot-password` shows the same message whether or not the email belongs
   to an account **[P30]**.
-- The link lifetime is Laravel's `expire` setting for password resets in
-  `config/auth.php`. Laravel's documentation shows 60 minutes (Section 10).
+- Both password links, the set-password email and the forgot-password email,
+  last 7 days: Laravel's `expire` setting for password resets in
+  `config/auth.php` is 10080 minutes **[P51]**.
 - **Registration** always creates a `student` whose `status` is `active`; the
   form has no role field. The rules are in Section 7.6. `POST /register` is
   limited to 5 attempts a minute for each IP address **[P46]**. A successful
   registration signs the student in and redirects to `/email/verify`.
 
-**Email confirmation.** These are the three routes in Laravel's email
-verification documentation, with the same names. They need a signed-in user.
+**Email confirmation.** The first three are the routes in Laravel's email
+verification documentation, with the same names. All four need a signed-in
+user.
 
 | Method | Path | Route name | Module | Purpose |
 |---|---|---|---|---|
 | GET | `/email/verify` | `verification.notice` | Identity | Page asking the student to confirm their email, with a resend button |
 | GET | `/email/verify/{id}/{hash}` | `verification.verify` | Identity | The link in the email. Sets `users.email_verified_at` and redirects to `/home` |
 | POST | `/email/verification-notification` | `verification.send` | Identity | Send the link again |
+| PUT | `/email/verify` | `verification.email.update` | Identity | Correct the email of an account not yet confirmed, and send the link there |
 
 - The link is signed and expires after Laravel's `verification.expire` setting
   in `config/auth.php`, 60 minutes by default (Section 10).
 - `POST /email/verification-notification` is limited to 6 a minute, as in
-  Laravel's documentation **[P46]**.
+  Laravel's documentation **[P46]**. `PUT /email/verify` shares that limit, so
+  changing the address can't send more links than resending.
+- `PUT /email/verify` takes `email`, with the email rules of Section 7.6
+  ("Register"); the account's own address counts as free. It deletes the
+  password links for the old address. The user stays signed in. A confirmed
+  user is sent to `/home` and nothing changes.
 - A user whose email is not confirmed can sign in, but every signed-in page
-  except these three redirects to `/email/verify` (Section 7.3).
+  except these four redirects to `/email/verify` (Section 7.3).
 
 ### 7.3 Signed-in routes
 
@@ -679,6 +687,8 @@ before confirming **[P48]**.
 | GET | `/home` | `home` | Rewards | Points balance and recent transactions |
 | GET | `/profile` | `profile.show` | Identity | Profile, organization info and QR code |
 | POST | `/profile/qr` | `profile.qr.regenerate` | Identity | Replace the QR token |
+| PUT | `/profile` | `profile.update` | Identity | Change own details |
+| PUT | `/profile/password` | `profile.password.update` | Identity | Change own password |
 | GET | `/transactions` | `transactions.index` | Deposits | Own deposit history |
 | GET | `/leaderboard` | `leaderboard` | Reporting | User leaderboard |
 | GET | `/rewards` | `rewards.index` | Rewards | Rewards catalogue |
@@ -691,6 +701,7 @@ before confirming **[P48]**.
 - **QR code:** the page shows `user_qr_credentials.token` as a QR image, rendered
   on the server as SVG so the page needs no script **[P32]**. Regenerating
   overwrites the row, so the old token stops working at once.
+- **Own details and password:** the rules are in Section 7.6 **[P50]**.
 - **Leaderboard:** ranks every user by points earned: the sum of `EARN` rows minus
   the `REVERSAL` rows that link to a transaction. Redemption rows are ignored.
 - **Rewards catalogue:** shows rewards whose `is_active` is true.
@@ -866,6 +877,46 @@ Lengths and required fields come from the schema. Other limits are **[P41]**.
   student is told to use the resend button.
 - On a validation failure the form comes back with the errors and the old
   input, except the password fields.
+
+**Change own details** (`PUT /profile`) **[P50]**
+
+| Field | Rule |
+|---|---|
+| `first_name`, `last_name` | Required, at most 100 characters each |
+| `email` | Required, a valid email, at most 255 characters, unique |
+| `student_number` | A student: required, at most 50 characters, unique **[P46]**. An admin: not accepted |
+| `organization_id` | A student: required. An existing organization whose `is_active` is true, or the student's current one. An admin: not accepted |
+| `current_password` | Required when `email` changes. Must match the account's password |
+
+- Role, status, points and the QR token can't be changed here; the form has no
+  fields for them.
+- **A changed email** must be confirmed again. In one database transaction:
+  save the details with `email_verified_at` NULL, end the account's other
+  sessions and delete the password links for the old address, which are keyed
+  by email. The current session continues. The confirmation email is sent after
+  the commit; if the send fails, the change is kept and the user is told to use
+  the resend button. Until the new address is confirmed, the user sees only
+  `/email/verify` (Section 7.2), where a mistyped address can be corrected.
+- **A changed organization** moves the student's points with them on the
+  organization leaderboard, which counts each student under their current
+  organization.
+- Limited to 6 a minute per user.
+- On a validation failure the form comes back with the errors and the old
+  input, except `current_password`.
+
+**Change own password** (`PUT /profile/password`) **[P50]**
+
+| Field | Rule |
+|---|---|
+| `current_password` | Required. Must match the account's password |
+| `password` | Required, at least 8 characters, with `password_confirmation` **[P41]** |
+
+- In one database transaction: save the new password, end the account's other
+  sessions and delete its password links. The current session continues, with
+  a new session id.
+- Limited to 6 a minute per user.
+- On a validation failure the form comes back with the errors and no password
+  fields filled in.
 
 **Create or edit an organization**
 
@@ -1066,6 +1117,8 @@ written as if each is accepted.
 | P47 | Admin-created accounts | Count as confirmed: `email_verified_at` is set when an admin creates the account, one at a time or by CSV import |
 | P48 | Unconfirmed accounts | Can sign in but see only the confirmation page. The device API does not check confirmation; the QR code is only shown once the email is confirmed |
 | P49 | E-waste check | `verification.method` is `cam_diff` when the presence step failed and `ewaste_model` when the model ran; `score` is that step's score. `health` reports `model`. A missing or failing model is 503 `MODEL_UNAVAILABLE` from the bin station and the bin fault `MODEL_UNAVAILABLE` in telemetry |
+| P50 | Own account | A signed-in user can change their own name, email and password; a student can also change their student number and organization. Changing the email or the password needs the current password, ends the account's other sessions and deletes its password links. A changed email must be confirmed again. Both forms are limited to 6 a minute per user |
+| P51 | Password link lifetime | 7 days (10080 minutes) for both the set-password and the forgot-password email. The email confirmation link keeps Laravel's 60 minutes |
 
 ---
 
@@ -1079,12 +1132,8 @@ answer them.
    What should an admin be able to do with such a session?
 2. **Reports.** The plan names a reports page and scheduled reports but does not
    say what they contain. This depends on what the project guidelines ask for.
-3. **Own password and profile.** The plan covers setting a password by email and
-   by an admin. Can a signed-in user change their own password or details? No
-   route is designed for it.
-4. **Link lifetime.** Laravel's documented setting for a reset link is 60 minutes,
-   and the email confirmation link uses the same default. Is that long enough
-   for the set-password email sent to a new account?
+3. **Own password and profile.** Answered: yes, see P50 and Section 7.6.
+4. **Link lifetime.** Answered: 7 days for password links, see P51.
 5. **Firmware timing.** The telemetry interval, the backoff between `complete`
    retries, the bin station event poll interval and the bin station's controller
    timeout are not set.
