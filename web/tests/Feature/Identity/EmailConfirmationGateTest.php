@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 /**
  * Only a confirmed user reaches a signed-in page.
- * API_Design.md §7.2–§7.4, P48, web/docs/TRACK-A-ACCOUNTS.md step A1.
+ * API_Design.md §7.2–§7.4, P48, P57, web/docs/TRACK-A-ACCOUNTS.md step A1.
  */
 class EmailConfirmationGateTest extends TestCase
 {
@@ -37,6 +37,9 @@ class EmailConfirmationGateTest extends TestCase
      * Each module declares its own routes, so this reads the whole route table:
      * a module that forgets the gate fails here, not in production.
      */
+    /**
+     * The link in the email isn't here: it needs no sign-in at all (P57).
+     */
     public function test_it_gates_every_signed_in_route_except_logout_and_the_confirmation_routes(): void
     {
         // Resolving the HTTP kernel is what gives the router its middleware aliases
@@ -56,7 +59,7 @@ class EmailConfirmationGateTest extends TestCase
             ->all();
 
         $this->assertEqualsCanonicalizing(
-            ['logout', 'verification.notice', 'verification.verify', 'verification.send', 'verification.email.update'],
+            ['logout', 'verification.notice', 'verification.send', 'verification.email.update'],
             $ungated,
         );
     }

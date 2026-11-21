@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Self-registration and email confirmation. API_Design.md §7.2, §7.6, P41, P46,
- * P48, System_Plan.md §4, web/docs/TRACK-A-ACCOUNTS.md step A4.
+ * P48, P57, System_Plan.md §4, web/docs/TRACK-A-ACCOUNTS.md step A4.
  */
 class RegistrationTest extends TestCase
 {
@@ -232,17 +232,33 @@ class RegistrationTest extends TestCase
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
-    public function test_it_rejects_someone_elses_confirmation_link(): void
+    public function test_it_confirms_a_link_opened_while_another_account_is_signed_in(): void
+    {
+        $owner = User::factory()->unconfirmed()->create();
+        $other = User::factory()->create();
+
+        $this->actingAs($other)
+            ->get($this->confirmationUrl($owner))
+            ->assertRedirect(route('home'))
+            ->assertSessionHas('status', "{$owner->email} is confirmed. You're still signed in as {$other->email}.");
+
+        $this->assertTrue($owner->fresh()->hasVerifiedEmail());
+        $this->assertAuthenticatedAs($other);
+    }
+
+    public function test_it_keeps_an_unconfirmed_account_signed_in_here_on_its_own_page(): void
     {
         $owner = User::factory()->unconfirmed()->create();
         $other = User::factory()->unconfirmed()->create();
 
         $this->actingAs($other)
             ->get($this->confirmationUrl($owner))
-            ->assertForbidden();
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status');
 
-        $this->assertFalse($owner->fresh()->hasVerifiedEmail());
+        $this->assertTrue($owner->fresh()->hasVerifiedEmail());
         $this->assertFalse($other->fresh()->hasVerifiedEmail());
+        $this->assertAuthenticatedAs($other);
     }
 
     public function test_it_rejects_an_expired_confirmation_link(): void
@@ -257,11 +273,35 @@ class RegistrationTest extends TestCase
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
-    public function test_it_sends_a_guest_with_a_confirmation_link_to_login(): void
+    public function test_it_confirms_a_link_opened_on_another_device_and_asks_to_sign_in(): void
     {
         $user = User::factory()->unconfirmed()->create();
 
-        $this->get($this->confirmationUrl($user))->assertRedirect(route('login'));
+        $this->get($this->confirmationUrl($user))
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('status', 'Your email is confirmed. Sign in to continue.');
+
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+        $this->assertGuest();
+    }
+
+    public function test_it_rejects_a_link_for_an_account_that_no_longer_exists(): void
+    {
+        $user = User::factory()->unconfirmed()->create();
+        $url = $this->confirmationUrl($user);
+        $user->qrCredential()->delete();
+        $user->delete();
+
+        $this->get($url)->assertForbidden()->assertSee('This confirmation link doesn');
+    }
+
+    public function test_it_rejects_a_stale_link_for_a_guest_too(): void
+    {
+        $user = User::factory()->unconfirmed()->create();
+        $url = $this->confirmationUrl($user);
+        $user->forceFill(['email' => 'changed@example.com'])->save();
+
+        $this->get($url)->assertForbidden();
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
