@@ -78,7 +78,9 @@ if (root) {
     const attentionItems = (summary) => [
         [redemptionsUrl, `${counted(summary.pending_redemptions, 'redemption')} waiting to be fulfilled`],
         ...summary.bins.flatMap((bin) => [
-            ...(bin.status === 'FULL' ? [[binLink(bin), `${bin.name} is full (${formatPercent(bin.fill_percent)})`]] : []),
+            ...(bin.status === 'FULL'
+                ? [[binLink(bin), `${bin.name} is full (${formatPercent(bin.fill_percent)})`]]
+                : []),
             ...(bin.fault_code ? [[binLink(bin), `${bin.name}: ${faultLabel(bin.fault_code)}`]] : []),
         ]),
         [reviewUrl, `${counted(summary.sessions_awaiting_review, 'session')} awaiting review`],
