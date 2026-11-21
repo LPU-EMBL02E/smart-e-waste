@@ -24,14 +24,14 @@
 
         @include($isAdminPortal ? 'layouts.partials.nav-admin' : 'layouts.partials.nav-student')
 
-        {{-- Scrolls with the menu: a setting chosen once shouldn't take room from the links on every page. --}}
-        <div class="sidebar-settings">
-            @include('layouts.partials.theme')
-        </div>
-
+        {{-- At the bottom of the sidebar in both portals: the theme, then the line, then the account. --}}
         <div class="sidebar-foot">
-            <p class="sidebar-user">{{ auth()->user()->fullName() }}</p>
-            @include('layouts.partials.logout')
+            @include('layouts.partials.theme')
+
+            <div class="sidebar-account">
+                <p class="sidebar-user">{{ auth()->user()->fullName() }}</p>
+                @include('layouts.partials.logout')
+            </div>
         </div>
     </details>
 </aside>
