@@ -159,7 +159,8 @@ class RegistrationTest extends TestCase
             ->assertOk()
             ->assertSee($user->email)
             ->assertSee('Send the link again')
-            ->assertSee('Sign out');
+            ->assertSee('Sign out')
+            ->assertSee('Change email');
     }
 
     public function test_it_sends_a_confirmed_user_away_from_the_confirmation_page(): void
@@ -325,6 +326,91 @@ class RegistrationTest extends TestCase
         $this->actingAs(User::factory()->unconfirmed()->create())
             ->post(route('verification.send'))
             ->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_it_changes_an_unconfirmed_email_and_sends_a_new_link(): void
+    {
+        Notification::fake();
+        $user = User::factory()->unconfirmed()->create();
+
+        $this->actingAs($user)
+            ->put(route('verification.email.update'), ['email' => 'right@example.com'])
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', fn (string $status): bool => str_contains($status, 'right@example.com'));
+
+        $this->assertSame('right@example.com', $user->fresh()->email);
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+        $this->assertAuthenticatedAs($user);
+        Notification::assertSentToTimes($user->fresh(), VerifyEmail::class, 1);
+    }
+
+    public function test_it_stops_the_old_confirmation_link_working_after_a_change(): void
+    {
+        Notification::fake();
+        $user = User::factory()->unconfirmed()->create();
+        $oldLink = $this->confirmationUrl($user);
+
+        $this->actingAs($user)->put(route('verification.email.update'), ['email' => 'right@example.com']);
+
+        $this->get($oldLink)->assertForbidden();
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_it_refuses_an_email_another_account_uses(): void
+    {
+        Notification::fake();
+        $other = User::factory()->create();
+        $user = User::factory()->unconfirmed()->create();
+
+        $this->actingAs($user)
+            ->from(route('verification.notice'))
+            ->put(route('verification.email.update'), ['email' => $other->email])
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertNotSame($other->email, $user->fresh()->email);
+        Notification::assertNothingSent();
+    }
+
+    public function test_it_does_not_change_a_confirmed_users_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $email = $user->email;
+
+        $this->actingAs($user)
+            ->put(route('verification.email.update'), ['email' => 'other@example.com'])
+            ->assertRedirect(route('home'));
+
+        $this->assertSame($email, $user->fresh()->email);
+        Notification::assertNothingSent();
+    }
+
+    public function test_it_keeps_the_new_email_when_the_link_fails_to_send(): void
+    {
+        Exceptions::fake();
+        Notification::shouldReceive('send')->andThrow(new RuntimeException('mail is down'));
+        $user = User::factory()->unconfirmed()->create();
+
+        $this->actingAs($user)
+            ->put(route('verification.email.update'), ['email' => 'right@example.com'])
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', fn (string $status): bool => str_contains($status, 'couldn\'t send'));
+
+        $this->assertSame('right@example.com', $user->fresh()->email);
+        Exceptions::assertReported(RuntimeException::class);
+    }
+
+    public function test_it_counts_email_changes_towards_the_resend_limit(): void
+    {
+        Notification::fake();
+        $this->actingAs(User::factory()->unconfirmed()->create());
+
+        foreach (range(1, 6) as $attempt) {
+            $this->post(route('verification.send'))->assertRedirect(route('verification.notice'));
+        }
+
+        $this->put(route('verification.email.update'), ['email' => 'right@example.com'])->assertTooManyRequests();
     }
 
     private function register(array $overrides = []): TestResponse

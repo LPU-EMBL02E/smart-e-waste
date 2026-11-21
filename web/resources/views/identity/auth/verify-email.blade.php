@@ -23,4 +23,14 @@
             <x-ui.button>Sign out</x-ui.button>
         </form>
     </div>
+
+    {{-- The account already holds the student number, so registering again
+         would be refused; the email is corrected here instead. --}}
+    <form class="form" method="POST" action="{{ route('verification.email.update') }}">
+        @csrf
+        @method('PUT')
+        <x-form.input name="email" label="Wrong email? Enter the right one" type="email" maxlength="255" required
+                      autocomplete="email" hint="We'll send a new link there. The old link stops working." />
+        <x-ui.button>Change email</x-ui.button>
+    </form>
 @endsection

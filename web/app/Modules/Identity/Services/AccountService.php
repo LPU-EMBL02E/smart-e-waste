@@ -139,6 +139,32 @@ class AccountService
     }
 
     /**
+     * An unconfirmed student corrects the email they registered with, then gets
+     * a new confirmation link. Only for an account not yet confirmed: the
+     * caller checks, as for sendConfirmationEmail().
+     *
+     * The student is signed in with the account's password, so it is theirs;
+     * unlike an admin's change in update(), their session stays. The old link
+     * stops working by itself, because Laravel ties it to the address. Password
+     * links are keyed by email, so those for the old address are deleted.
+     *
+     * @return bool whether the new confirmation email was sent; the new address
+     *              is kept either way
+     */
+    public function changeUnconfirmedEmail(User $user, string $email): bool
+    {
+        $previousEmail = $user->email;
+
+        DB::transaction(function () use ($user, $email, $previousEmail) {
+            $user->forceFill(['email' => $email])->save();
+
+            $this->deletePasswordLinks($previousEmail);
+        });
+
+        return $this->sendConfirmationEmail($user);
+    }
+
+    /**
      * Set a password from an emailed link. Refuses a wrong or expired token, an
      * unknown email and an inactive account alike, so a refusal reveals nothing
      * about the account (API_Design.md §7.2, web/docs/ACCOUNT-MANAGEMENT.md).

@@ -56,7 +56,7 @@ class EmailConfirmationGateTest extends TestCase
             ->all();
 
         $this->assertEqualsCanonicalizing(
-            ['logout', 'verification.notice', 'verification.verify', 'verification.send'],
+            ['logout', 'verification.notice', 'verification.verify', 'verification.send', 'verification.email.update'],
             $ungated,
         );
     }
