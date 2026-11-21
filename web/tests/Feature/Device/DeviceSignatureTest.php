@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Device;
 
+use App\Modules\Deposits\Models\DepositSession;
+use App\Modules\Deposits\Support\SessionStatus;
 use App\Modules\Devices\Models\Device;
 use App\Modules\Identity\Models\User;
 use App\Modules\Rewards\Models\RewardRule;
@@ -153,6 +155,60 @@ class DeviceSignatureTest extends TestCase
         $this->deviceGet($this->device, '/api/v1/device/config')->assertOk();
 
         $this->assertTrue($this->device->fresh()->last_seen_at->equalTo(now()));
+    }
+
+    /**
+     * Content-Type is not signed. A request changed in transit to text/plain,
+     * with its own fields in the query string, must still be read from the
+     * signed body: here actuator_ok stays false, so nothing is credited.
+     */
+    public function test_it_reads_input_only_from_the_signed_body_whatever_the_content_type(): void
+    {
+        RewardRule::factory()->create();
+        $session = DepositSession::factory()->for($this->device)->accepted()->create();
+        $path = "/api/v1/device/sessions/{$session->id}/complete";
+
+        $this->sendTampered($path, '{"actuator_ok":false,"cycle_ms":3200}', 'actuator_ok=1&cycle_ms=1', 'text/plain')
+            ->assertOk()
+            ->assertJsonPath('transaction_id', null)
+            ->assertJsonPath('points_awarded', 0);
+
+        $this->assertSame(SessionStatus::Failed, $session->fresh()->status);
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseCount('point_ledger', 0);
+    }
+
+    /**
+     * The query string is not signed either (API_Design.md §3.2), so a field
+     * added there never reaches the controller, even beside a JSON body.
+     */
+    public function test_it_ignores_fields_in_the_query_string(): void
+    {
+        RewardRule::factory()->create();
+        $student = User::factory()->create();
+        $body = json_encode(['qr_token' => $student->qrCredential->token]);
+
+        $this->sendTampered('/api/v1/device/sessions', $body, 'fw=9.9.9', 'application/json')->assertCreated();
+
+        $this->assertNull($this->device->fresh()->firmware_version);
+    }
+
+    /**
+     * Signs $body and $path as the bin would, then sends them with a query
+     * string and Content-Type that were not signed, as a machine in the middle
+     * on the LAN could.
+     */
+    private function sendTampered(string $path, string $body, string $query, string $contentType): TestResponse
+    {
+        $timestamp = (string) now()->getTimestamp();
+
+        return $this->call('POST', "{$path}?{$query}", server: [
+            'HTTP_X_DEVICE_CODE' => $this->device->device_code,
+            'HTTP_X_TIMESTAMP' => $timestamp,
+            'HTTP_X_SIGNATURE' => hash_hmac('sha256', "{$timestamp}\nPOST\n{$path}\n{$body}", self::SECRET),
+            'CONTENT_TYPE' => $contentType,
+            'HTTP_ACCEPT' => 'application/json',
+        ], content: $body);
     }
 
     /** Sends a request with a given X-Signature, as a bin would. */

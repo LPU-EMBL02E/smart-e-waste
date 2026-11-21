@@ -83,7 +83,28 @@ class VerifyDeviceSignature
 
         $request->attributes->set('device', $device);
 
+        $this->keepOnlySignedInput($request);
+
         return $next($request);
+    }
+
+    /**
+     * Makes the signed body the only input a controller can read.
+     *
+     * The signature covers the path and the raw body, not the query string or
+     * the Content-Type header (§3.2). Laravel would otherwise add query fields
+     * to the input, and read a body that is not labelled JSON as no input at
+     * all. A machine in the middle on plain HTTP could then keep a valid
+     * signature and supply its own fields, such as `actuator_ok`. No device
+     * endpoint uses a query string, and every body is JSON (§3.1), so a bin's
+     * own requests read exactly as before.
+     */
+    private function keepOnlySignedInput(Request $request): void
+    {
+        $request->headers->set('Content-Type', 'application/json');
+        $request->query->replace();
+        $request->files->replace();
+        $request->request = $request->json();
     }
 
     /**
