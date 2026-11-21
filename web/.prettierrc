@@ -1,0 +1,15 @@
+{
+    "singleQuote": true,
+    "printWidth": 120,
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": "docs/wireframes/**",
+            "options": {
+                "singleQuote": false,
+                "printWidth": 80,
+                "tabWidth": 2
+            }
+        }
+    ]
+}
