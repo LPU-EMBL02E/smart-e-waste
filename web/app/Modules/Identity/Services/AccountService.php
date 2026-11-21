@@ -10,6 +10,7 @@ use App\Modules\Identity\Support\LoginRefused;
 use App\Modules\Identity\Support\QrToken;
 use App\Modules\Identity\Support\UserImportFile;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -141,6 +142,32 @@ class AccountService
     public function sendConfirmationEmail(User $user): bool
     {
         return $this->attemptToSend(fn () => $user->sendEmailVerificationNotification());
+    }
+
+    /**
+     * Confirm an email from the link in the confirmation email, whoever opens
+     * it. API_Design.md §7.2, P57.
+     *
+     * The `signed` middleware has already checked the signature and expiry.
+     * The hash ties the link to the address it was sent to, so a link for an
+     * address since changed confirms nothing. A link already used is fine.
+     *
+     * @return User|null the confirmed account, or null if the link doesn't
+     *                   match one
+     */
+    public function confirmEmailFromLink(string $userId, string $hash): ?User
+    {
+        $user = User::find($userId);
+
+        if ($user === null || ! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            return null;
+        }
+
+        if (! $user->hasVerifiedEmail() && $user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
+
+        return $user;
     }
 
     /**

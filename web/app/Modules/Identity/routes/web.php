@@ -24,6 +24,12 @@ use Illuminate\Support\Facades\Route;
 // A browser preference, so it works signed in or not, confirmed or not (P52).
 Route::post('theme', ThemeController::class)->name('theme.update');
 
+// The link in the confirmation email works on any device, signed in or not:
+// its signature and the address hash are the proof (§7.2, P57).
+Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware('signed')
+    ->name('verification.verify');
+
 // ----------------------------------------------------------------- guest
 // The pages are sent with Cache-Control: no-store, so Back after signing in
 // asks the server again and the reset page's token is not cached (P53).
@@ -52,17 +58,14 @@ Route::middleware(['guest', 'cache.headers:no_store'])->group(function () {
 });
 
 // ------------------------------------------------------ signed in, unconfirmed
-// Open before the email is confirmed: the confirmation routes (§7.2), and the
-// way out, so nobody is trapped by the gate. Not cached, like every signed-in
+// Open before the email is confirmed: the confirmation page, resending and
+// correcting the email (§7.2), and the way out, so nobody is trapped by the gate. Not cached, like every signed-in
 // page (P55).
 Route::middleware(['auth', 'cache.headers:no_store'])->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
-    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware('signed')
-        ->name('verification.verify');
     Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
         ->middleware('throttle:'.config('ewaste.confirmation_resends_per_minute').',1,confirmation-resend')
         ->name('verification.send');

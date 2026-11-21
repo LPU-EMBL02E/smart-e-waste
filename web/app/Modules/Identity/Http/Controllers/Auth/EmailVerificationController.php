@@ -4,18 +4,19 @@ namespace App\Modules\Identity\Http\Controllers\Auth;
 
 use App\Modules\Identity\Http\Requests\ChangeUnconfirmedEmailRequest;
 use App\Modules\Identity\Services\AccountService;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
  * Email confirmation, through Laravel's built-in verification.
  * API_Design.md §7.2, P46, P48, System_Plan.md §4.
  *
- * These four routes are the only signed-in pages an unconfirmed user can open.
- * Laravel's `signed` middleware and EmailVerificationRequest refuse a changed,
- * expired or someone else's link with a 403.
+ * The page, resending and correcting the email are the only signed-in pages an
+ * unconfirmed user can open. The link itself needs no session (P57): Laravel's
+ * `signed` middleware refuses a changed or expired link with a 403, and so does
+ * verify() for a link that no longer matches an account.
  */
 class EmailVerificationController
 {
@@ -34,13 +35,30 @@ class EmailVerificationController
     }
 
     /**
-     * GET /email/verify/{id}/{hash}, the link in the email.
+     * GET /email/verify/{id}/{hash}, the link in the email. It confirms its
+     * account on any device and never changes who is signed in (P57).
      */
-    public function verify(EmailVerificationRequest $request): RedirectResponse
+    public function verify(Request $request, string $id, string $hash): RedirectResponse
     {
-        $request->fulfill();
+        $confirmed = $this->accounts->confirmEmailFromLink($id, $hash) ?? abort(403);
+        $current = $request->user();
 
-        return redirect()->route('home')->with('status', 'Your email is confirmed.');
+        if ($current === null) {
+            return redirect()->route('login')->with('status', 'Your email is confirmed. Sign in to continue.');
+        }
+
+        if ($current->is($confirmed)) {
+            // The signed-in copy predates the confirmation; keep it in step.
+            Auth::setUser($confirmed);
+
+            return redirect()->route($current->homeRouteName())->with('status', 'Your email is confirmed.');
+        }
+
+        // Someone else is signed in here. Their own unconfirmed account would
+        // bounce /home to the confirmation page and lose the message.
+        return redirect()
+            ->route($current->hasVerifiedEmail() ? $current->homeRouteName() : 'verification.notice')
+            ->with('status', "{$confirmed->email} is confirmed. You're still signed in as {$current->email}.");
     }
 
     /**
