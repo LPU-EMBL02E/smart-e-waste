@@ -1,7 +1,9 @@
 {{--
-    GET /profile. API_Design.md §7.3, P32, P48; all-pages-wireframe.html S3.
+    GET /profile. API_Design.md §7.3, §7.6 ("Change own details", "Change own
+    password"), P32, P48, P50; all-pages-wireframe.html S3.
 
-    Details are read-only until §10 question 3 is decided.
+    The password form uses its own error bag, so a wrong current password shows
+    beside the form that was sent.
 --}}
 @extends('layouts.app')
 
@@ -32,13 +34,30 @@
         <div class="section">
             <section class="section">
                 <h2>Your details</h2>
+                <form class="form" method="POST" action="{{ route('profile.update') }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="form-row">
+                        <x-form.input name="first_name" label="First name" maxlength="100" required autocomplete="given-name"
+                                      :value="$user->first_name" />
+                        <x-form.input name="last_name" label="Last name" maxlength="100" required autocomplete="family-name"
+                                      :value="$user->last_name" />
+                    </div>
+                    <x-form.input name="email" label="Email" type="email" maxlength="255" required autocomplete="email"
+                                  :value="$user->email" hint="A new email has to be confirmed before you can use your account again." />
+                    @unless ($user->isAdmin())
+                        <x-form.input name="student_number" label="Student number" maxlength="50" required
+                                      :value="$user->student_number" />
+                        <x-form.select name="organization_id" label="Organization" required
+                                       :value="$user->organization_id" :options="$organizations->pluck('name', 'id')"
+                                       hint="Your points count towards this organization on the leaderboard." />
+                    @endunless
+                    <x-form.input name="current_password" label="Current password" type="password" :optional="false"
+                                  autocomplete="current-password" hint="Needed only if you change your email." />
+                    <x-ui.button variant="primary">Save details</x-ui.button>
+                </form>
+
                 <dl class="details-list">
-                    <dt>Name</dt>
-                    <dd>{{ $user->fullName() }}</dd>
-                    <dt>Email</dt>
-                    <dd>{{ $user->email }}</dd>
-                    <dt>Student number</dt>
-                    <dd>{{ $user->student_number ?? '—' }}</dd>
                     <dt>Role</dt>
                     <dd>{{ ucfirst($user->role) }}</dd>
                     <dt>Member since</dt>
@@ -62,10 +81,23 @@
                 @endif
             </section>
 
-            {{-- Forgot password is a guest page, so a signed-in user has to sign out to reach it. --}}
-            <p class="small muted">
-                To change your details, contact an admin. To change your password, sign out and use Forgot password.
-            </p>
+            <section class="section">
+                <h2>Change password</h2>
+                <form class="form" method="POST" action="{{ route('profile.password.update') }}">
+                    @csrf
+                    @method('PUT')
+                    <x-form.input name="current_password" bag="password" label="Current password" type="password" required
+                                  autocomplete="current-password" />
+                    <div class="form-row">
+                        <x-form.input name="password" bag="password" label="New password" type="password" minlength="8" required
+                                      autocomplete="new-password" hint="At least 8 characters." />
+                        <x-form.input name="password_confirmation" bag="password" label="Confirm new password" type="password"
+                                      minlength="8" required autocomplete="new-password" />
+                    </div>
+                    <x-ui.button variant="primary" aria-describedby="password-change-hint">Change password</x-ui.button>
+                </form>
+                <p class="hint" id="password-change-hint">This signs you out everywhere else.</p>
+            </section>
         </div>
     </div>
 @endsection

@@ -20,10 +20,8 @@ use Illuminate\View\View;
  * is NULL and the account cannot sign in. No default password is ever assigned
  * or emailed (System_Plan.md §4).
  *
- * Link lifetime is Laravel's `passwords.users.expire` in config/auth.php.
- * TODO(team): API_Design.md §10 question 4 — Laravel's documented default is 60
- * minutes. Decide whether that is long enough for a new account's set-password
- * email, given a student who misses it has to use "Forgot password".
+ * Link lifetime is Laravel's `passwords.users.expire` in config/auth.php: a
+ * week for both emails (API_Design.md §7.2, P51).
  */
 class NewPasswordController
 {
