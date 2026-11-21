@@ -53,8 +53,9 @@ Route::middleware(['guest', 'cache.headers:no_store'])->group(function () {
 
 // ------------------------------------------------------ signed in, unconfirmed
 // Open before the email is confirmed: the confirmation routes (§7.2), and the
-// way out, so nobody is trapped by the gate.
-Route::middleware('auth')->group(function () {
+// way out, so nobody is trapped by the gate. Not cached, like every signed-in
+// page (P55).
+Route::middleware(['auth', 'cache.headers:no_store'])->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])

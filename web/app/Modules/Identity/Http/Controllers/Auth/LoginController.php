@@ -64,6 +64,8 @@ class LoginController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        // The browser deletes what it stored for the site (API_Design.md §7.1,
+        // P55). Not "cookies": that would delete the theme cookie too (P52).
+        return redirect()->route('login')->header('Clear-Site-Data', '"cache", "storage"');
     }
 }
