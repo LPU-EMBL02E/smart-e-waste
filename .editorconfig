@@ -13,7 +13,9 @@ indent_size = 4
 [*.{cpp,h,hpp,ino}]
 indent_size = 2
 
-[*.{yml,yaml,json,js,ts,css,scss}]
+# JS, CSS and JSON use the 4-space default, as the web app's files do
+# (web/.prettierrc). YAML stays at 2.
+[*.{yml,yaml}]
 indent_size = 2
 
 [*.py]
@@ -24,6 +26,11 @@ trim_trailing_whitespace = false
 
 [*.ini]
 indent_size = 4
+
+# The design prototypes' scripts and stylesheet were written in Prettier's
+# default 2-space style and keep it (the override in web/.prettierrc).
+[web/docs/wireframes/*.{js,css}]
+indent_size = 2
 
 [Makefile]
 indent_style = tab
