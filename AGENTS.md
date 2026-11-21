@@ -261,6 +261,7 @@ Run what applies to your change. All must pass.
 ./scripts/check-swappability.sh              # always
 python3 tools/simulator/test_vectors.py      # always
 cd web && ./vendor/bin/pint --test           # web/
+cd web && npx prettier --check resources vite.config.js "docs/wireframes/*.{js,css}"   # web/
 cd web && php artisan test                   # web/
 ruff format --check tools/ && ruff check tools/   # tools/
 ```
