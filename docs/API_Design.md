@@ -612,6 +612,15 @@ pages themselves and the rules behind them come from the plan.
 - A guest who opens a signed-in page is redirected to `/login`. A student who
   opens an `/admin` route gets 403.
 - A user can only see their own transactions, redemptions and notifications.
+- **Signed-in pages are not cached.** Every response behind sign-in is sent
+  with `Cache-Control: no-store` **[P55]**, as OWASP ASVS 5.0 V14.3.2 asks.
+  That covers the confirmation pages of Section 7.2, every student and `/admin`
+  page, and the live summary of Section 7.5. After signing out, Back can't show
+  a student's QR code or an admin's lists from the browser's memory.
+- `POST /logout` also sends `Clear-Site-Data: "cache", "storage"`, as the OWASP
+  Session Management Cheat Sheet recommends, so the browser deletes what it
+  stored for the site before. It leaves out `"cookies"`, which would also delete
+  the theme cookie (P52); the server ends the session itself.
 - The Module column says which module's `routes/web.php` holds the route.
 
 ### 7.2 Guest routes
@@ -1162,8 +1171,9 @@ written as if each is accepted.
 | P50 | Own account | A signed-in user can change their own name, email and password; a student can also change their student number and organization. Changing the email or the password needs the current password, ends the account's other sessions and deletes its password links. A changed email must be confirmed again. Both forms are limited to 6 a minute per user |
 | P51 | Password link lifetime | 7 days (10080 minutes) for both the set-password and the forgot-password email. The email confirmation link keeps Laravel's 60 minutes |
 | P52 | Theme | Light, dark or the device's setting, chosen from a control on every page and kept per browser in a `theme` cookie for 365 days. No account column. The dark palette is in `web/docs/DESIGN.md` §3 |
-| P53 | Guest pages not cached | `GET /register`, `/login`, `/forgot-password` and `/reset-password/{token}` are sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). The redirects from the guest `POST` routes and every other page keep Laravel's default, `no-cache, private` |
+| P53 | Guest pages not cached | `GET /register`, `/login`, `/forgot-password` and `/reset-password/{token}` are sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). The redirects from the guest `POST` routes keep Laravel's default, `no-cache, private`. Signed-in pages are covered by P55 |
 | P54 | Accounts never confirmed | Deleted 7 days after registration (`ewaste.unconfirmed_account_days`) by an hourly scheduled task, with their QR credential, sessions and password links, so the email and student number are free again. `users.first_confirmed_at` marks an account confirmed at least once; it is never deleted this way. The confirmation page and email show the deadline |
+| P55 | Signed-in pages not cached | Every signed-in response, the confirmation pages included, is sent with `Cache-Control: no-store` (OWASP ASVS 5.0 V14.3.2). `POST /logout` sends `Clear-Site-Data: "cache", "storage"`, without `"cookies"` so the theme cookie stays |
 
 ---
 
