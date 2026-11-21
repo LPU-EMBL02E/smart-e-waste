@@ -29,7 +29,8 @@
                                 <strong>Out of stock</strong>
                             @endif
                         </p>
-                        <a class="text-link" href="{{ route('rewards.show', $reward) }}">View reward</a>
+                        {{-- The name makes each link distinct when a screen reader lists them. --}}
+                        <a class="text-link reward-link" href="{{ route('rewards.show', $reward) }}">View reward<span class="sr-only">: {{ $reward->name }}</span></a>
                     </article>
                 @endforeach
             </div>

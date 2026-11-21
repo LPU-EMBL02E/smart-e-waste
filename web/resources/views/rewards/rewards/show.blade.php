@@ -31,20 +31,24 @@
         <x-ui.panel title="Redeem">
             @if ($reward->stock_quantity < 1)
                 <div class="actions">
-                    <x-ui.button variant="primary" disabled>Redeem reward</x-ui.button>
-                    <p class="small">Out of stock.</p>
+                    <x-ui.button variant="primary" disabled aria-describedby="redeem-reason">Redeem reward</x-ui.button>
+                    <p class="small" id="redeem-reason">Out of stock.</p>
                 </div>
             @elseif ($balance < $reward->points_cost)
                 <div class="actions">
-                    <x-ui.button variant="primary" disabled>Redeem reward</x-ui.button>
-                    <p class="small">You need @points($reward->points_cost - $balance) more to redeem this.</p>
+                    <x-ui.button variant="primary" disabled aria-describedby="redeem-reason">Redeem reward</x-ui.button>
+                    <p class="small" id="redeem-reason">You need @points($reward->points_cost - $balance) more to redeem this.</p>
                 </div>
             @else
+                {{-- The most the page can see is affordable and in stock. A hint only:
+                     RedemptionService re-checks both under its lock. --}}
+                @php($mostAffordable = min($reward->stock_quantity, intdiv($balance, $reward->points_cost)))
+
                 <form class="form" method="POST" action="{{ route('redemptions.store') }}">
                     @csrf
                     <input type="hidden" name="reward_id" value="{{ $reward->id }}">
-                    <x-form.input name="quantity" label="Quantity" type="number" step="1" min="1" required :value="1"
-                                  hint="Whole number, 1 or more." />
+                    <x-form.input name="quantity" label="Quantity" type="number" step="1" min="1" :max="$mostAffordable" required :value="1"
+                                  :hint="'Whole number, 1 to '.$mostAffordable.'. That is as many as your points and the stock allow.'" />
                     <x-ui.button variant="primary">Redeem reward</x-ui.button>
                 </form>
             @endif
