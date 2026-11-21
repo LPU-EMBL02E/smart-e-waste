@@ -86,6 +86,7 @@
                         <td>{{ $reading->panel_open ? 'Open' : 'Closed' }}</td>
                         <td>
                             @if ($reading->fault_code)
+                                <x-ui.pill tone="danger">@faultlabel($reading->fault_code->value)</x-ui.pill>
                                 <code>{{ $reading->fault_code->value }}</code>
                             @else
                                 None

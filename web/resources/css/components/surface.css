@@ -135,6 +135,9 @@
     background: var(--color-lavender-wash);
     font-family: var(--font-mono);
     overflow-wrap: anywhere;
+    /* Selects the whole secret at once: no copy script (DESIGN.md §10), no
+       half-selected secret typed into the portal. */
+    user-select: all;
 }
 
 /* A notification row. Unread is marked in text and weight as well as the fill. */
