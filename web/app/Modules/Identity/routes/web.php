@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('theme', ThemeController::class)->name('theme.update');
 
 // ----------------------------------------------------------------- guest
-Route::middleware('guest')->group(function () {
+// The pages are sent with Cache-Control: no-store, so Back after signing in
+// asks the server again and the reset page's token is not cached (P53).
+Route::middleware(['guest', 'cache.headers:no_store'])->group(function () {
     Route::get('login', [LoginController::class, 'show'])->name('login');
     Route::post('login', [LoginController::class, 'store']);
 
