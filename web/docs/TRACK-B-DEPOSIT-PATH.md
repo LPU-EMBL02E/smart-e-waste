@@ -262,6 +262,23 @@ trait):
 3. Check the database after `replay-complete`: one transaction and one `EARN`
    row (`API_Design.md` §8).
 
+**Result, 21 Nov 2026: passed.** Run with `php artisan serve` on a local
+MariaDB 11.8.6, a bin registered as `BIN-01`, and one student:
+
+- `deposit`, `telemetry` and `config` (exit code 0).
+- All seven scenarios: `replay-complete`, `duplicate-session`,
+  `expired-session` (`--timeout-wait 95`), `actuator-failure`, `bad-signature`,
+  `clock-skew` and `unsigned-time` (exit code 0).
+- After `replay-complete`: one transaction and one `EARN` row for the session,
+  which is `COMPLETED`. `actuator-failure` and `duplicate-session` credited
+  nothing.
+- By hand: telemetry at 96% full, then `POST /sessions`, answered 409
+  `BIN_FULL`; after a reading at 17.5%, a deposit went through. With the rule's
+  `daily_points_cap` set to the points already earned that day,
+  `POST /sessions` answered 429 `DAILY_LIMIT_REACHED`.
+
+The raw output is in the pull request that added this note.
+
 ---
 
 ## Views
