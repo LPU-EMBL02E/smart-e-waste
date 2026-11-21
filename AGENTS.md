@@ -112,8 +112,8 @@ fails review.
 |---|---|---|
 | PHP (`web/`) | Laravel Pint, `laravel` preset | `cd web && ./vendor/bin/pint` |
 | Python (`tools/`) | ruff | `ruff format tools/ && ruff check tools/` |
-| JS / CSS | Prettier | `npx prettier --write <files>` |
-| Everything | `.editorconfig` | UTF-8, LF, final newline, 4 spaces (2 for C++/JS/CSS/YAML/JSON) |
+| JS / CSS | Prettier, the version pinned in `web/package.json`, settings in `web/.prettierrc` | `cd web && npx prettier --write <files>` |
+| Everything | `.editorconfig` | UTF-8, LF, final newline, 4 spaces (2 for C++, YAML, and the prototype JS and CSS in `web/docs/wireframes/`) |
 
 C++ formatting, and the bin station's Python, are in
 [`firmware/AGENTS.md`](firmware/AGENTS.md).
