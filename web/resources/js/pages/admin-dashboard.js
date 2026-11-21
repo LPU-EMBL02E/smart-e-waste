@@ -9,7 +9,7 @@
 const root = document.querySelector('[data-dashboard]');
 
 if (root) {
-    const { summaryUrl, binUrl, redemptionsUrl, reviewUrl, timeZone } = root.dataset;
+    const { summaryUrl, binUrl, redemptionsUrl, reviewUrl, loginUrl, timeZone } = root.dataset;
     const pollMs = Number(root.dataset.pollMs);
 
     const status = root.querySelector('[data-dashboard-status]');
@@ -156,6 +156,20 @@ if (root) {
         status.replaceChildren(message);
     };
 
+    // A signed-out admin would otherwise see "Could not refresh" forever, with
+    // no hint that signing in again is the fix.
+    const showSignedOut = () => {
+        const message = document.createElement('div');
+        const link = document.createElement('a');
+
+        message.className = 'feedback';
+        message.textContent = `Could not refresh: you've been signed out. Showing the last known data from ${generatedAt.textContent} (${timeZone}). `;
+        link.href = loginUrl;
+        link.textContent = 'Sign in again';
+        message.append(link);
+        status.replaceChildren(message);
+    };
+
     const showRecovery = () => {
         if (failed) {
             failed = false;
@@ -165,10 +179,17 @@ if (root) {
 
     // One request at a time: the next is scheduled only after this one ends.
     // Skipped while the tab is hidden, so a forgotten tab doesn't keep the Pi busy.
+    // A 401 stops the poll: every later request would fail the same way.
     const poll = async () => {
         if (!document.hidden) {
             try {
                 const response = await fetch(summaryUrl, { headers: { Accept: 'application/json' } });
+
+                if (response.status === 401) {
+                    showSignedOut();
+
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
