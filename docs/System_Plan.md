@@ -412,8 +412,8 @@ needs the website login, which is why the bin asks for no password or PIN.
 
 | Role | Pages |
 |---|---|
-| Student | Register, confirm email, login, set or reset password, profile and QR, points balance, transaction history, organization info, leaderboard, rewards, redeem, my redemptions, notifications |
-| Admin | Dashboard with live summary, users (with CSV import and resending the set-password email), organizations, transactions and void, total collected weight, bins with fill history, service-panel state and faults, device registration, rewards, redemption fulfilment and cancellation, points rate, organization leaderboard, reports, notifications |
+| Student | Register, confirm email, login, set or reset password, profile and QR, change own details and password, points balance, transaction history, organization info, leaderboard, rewards, redeem, my redemptions, notifications |
+| Admin | Dashboard with live summary, change own name, email and password, users (with CSV import and resending the set-password email), organizations, transactions and void, total collected weight, bins with fill history, service-panel state and faults, device registration, rewards, redemption fulfilment and cancellation, points rate, organization leaderboard, reports, notifications |
 
 **Leaderboard scope:** the user leaderboard includes everyone (students and
 admins; those are the only two roles). The organization leaderboard counts
