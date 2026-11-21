@@ -41,7 +41,8 @@ that needs attention.
 - **Lavender directs attention.** Reserve the strongest lavender for primary
   actions, selected navigation, and one focal panel where it helps the task.
 - **White does most of the work.** Aim for roughly three quarters of the visible
-  surface to remain white. This is a composition guide, not a pixel quota.
+  surface to remain white. This is a composition guide, not a pixel quota. In
+  the dark theme the dark `paper` does the same work (§3, "Dark theme").
 - **Structure earns its place.** Add a border to group content or identify a
   control. Use spacing and headings before adding another box.
 
@@ -60,7 +61,8 @@ into an equally prominent card.
 ## 3. Color system
 
 Use these token names in design files and implementation. These are the six
-base colors; do not introduce nearby shades for individual pages.
+base colors; do not introduce nearby shades for individual pages. The dark theme
+gives the same tokens dark values ("Dark theme" below); it adds no new roles.
 
 | Token | Hex | Role |
 | --- | --- | --- |
@@ -70,6 +72,7 @@ base colors; do not introduce nearby shades for individual pages.
 | `lavender-strong` | `#A78BFA` | Primary button hover/pressed fill; small emphasis areas |
 | `lavender-wash` | `#F5F1FF` | Selected navigation and quiet table headers |
 | `muted` | `#595463` | Supporting text on white or lavender-wash only |
+| `on-lavender` | `#000000` | Text and icons on a `lavender` or `lavender-strong` fill. Black in both themes |
 
 Lavender is a background color, not a body-text color. Put **black text** on
 lavender and lavender-strong. Do not use white or muted text on either fill.
@@ -106,6 +109,47 @@ Recheck contrast if opacity, backgrounds, or colors change.
 | Success / paper | 7.13:1 |
 | Warning / paper | 7.09:1 |
 | Danger / paper | 6.47:1 |
+
+### Dark theme
+
+A visitor chooses **Device**, **Light** or **Dark** from the theme control in the
+sidebar and on the sign-in pages. Device follows the operating system's setting.
+The choice is kept per browser (API_Design.md §7.6, "Choose a theme", P52).
+
+The look stays the same: flat lavender fills, outlines and hard shadows in
+`ink`, one focal panel. Only the values below change; `lavender`,
+`lavender-strong` and `on-lavender` keep their light values.
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `paper` | `#FFFFFF` | `#16141C` |
+| `ink` | `#000000` | `#F3F0FA` |
+| `lavender-wash` | `#F5F1FF` | `#2A2440` |
+| `muted` | `#595463` | `#B6B0C4` |
+| `success` | `#166534` | `#6FDC9A` |
+| `warning` | `#92400E` | `#F2B45A` |
+| `danger` | `#B91C1C` | `#FF8F87` |
+
+- In the dark theme `ink` is light, so text on a lavender fill must use
+  `on-lavender`, never `ink`: light text on lavender is about 1.6:1.
+- The QR code stays black on white in both themes, so scanners read it (§7).
+- Implement each token once, as `light-dark(light, dark)`, and let the page's
+  `color-scheme` choose. Don't write a second set of component rules for dark.
+
+Dark text pairs, calculated as above:
+
+| Foreground / background | Contrast |
+| --- | --- |
+| Ink / paper | 16.21:1 |
+| Ink / lavender-wash | 13.09:1 |
+| On-lavender / lavender | 11.38:1 |
+| On-lavender / lavender-strong | 7.72:1 |
+| Muted / paper | 8.69:1 |
+| Muted / lavender-wash | 7.02:1 |
+| Success / paper | 10.76:1 |
+| Warning / paper | 9.95:1 |
+| Danger / paper | 8.28:1 |
+| Danger / lavender-wash | 6.69:1 |
 
 ## 4. Typography
 
@@ -289,7 +333,7 @@ required by this guide.
 | --- | --- |
 | Login and password pages | One quiet form; lavender primary action. Preserve the API contract's account-safe error messaging. |
 | Student home | Emphasize available points, then QR access, rewards, and recent transactions. Distinguish balance from leaderboard points earned. |
-| Profile and QR | Give the QR image an unobstructed black-on-white area. Preserve the renderer's quiet zone; never recolor, round, crop, overlay, or decorate the code. Explain the documented effect of regenerating it beside that action. |
+| Profile and QR | Give the QR image an unobstructed black-on-white area, in both themes. Preserve the renderer's quiet zone; never recolor, round, crop, overlay, or decorate the code. Explain the documented effect of regenerating it beside that action. |
 | Rewards and redemptions | Put point cost beside the reward name and action. Label pending, fulfilled, and cancelled records distinctly according to the contract. Show the server's reason when an action is unavailable. |
 | Histories and leaderboards | Favor aligned rows, units, and pagination. Label the ranking metric explicitly; do not present spendable balance as points earned. |
 | Admin dashboard | Prioritize bins and work requiring attention. Use a compact summary band for documented totals, then flat tables; no decorative charts. |

@@ -113,6 +113,9 @@ return [
     // PUT /profile and PUT /profile/password, each per user. API_Design.md P50.
     'own_account_changes_per_minute' => 6,
 
+    // How long a chosen light or dark theme is remembered. API_Design.md P52.
+    'theme_cookie_days' => 365,
+
     // The admin FirstAdminSeeder creates. System_Plan.md §7, step 5. The email
     // has no default, so the repository carries no personal address.
     'first_admin' => [

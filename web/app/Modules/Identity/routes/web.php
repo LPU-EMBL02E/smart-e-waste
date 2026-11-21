@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Identity module — web routes. API_Design.md §7.2, §7.3 and §7.4.
+ * Identity module — web routes. API_Design.md §7.2, §7.3, §7.4 and P52.
  *
  * The four password routes keep Laravel's own route NAMES. `password.reset` in
  * particular must not be renamed: Laravel's reset notification builds its link
@@ -17,7 +17,12 @@ use App\Modules\Identity\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Modules\Identity\Http\Controllers\Auth\RegisterController;
 use App\Modules\Identity\Http\Controllers\ProfileController;
 use App\Modules\Identity\Http\Controllers\RootController;
+use App\Modules\Identity\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
+
+// -------------------------------------------------------------- everyone
+// A browser preference, so it works signed in or not, confirmed or not (P52).
+Route::post('theme', ThemeController::class)->name('theme.update');
 
 // ----------------------------------------------------------------- guest
 Route::middleware('guest')->group(function () {

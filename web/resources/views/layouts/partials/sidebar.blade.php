@@ -27,6 +27,7 @@
         <div class="sidebar-foot">
             <p class="sidebar-user">{{ auth()->user()->fullName() }}</p>
             @include('layouts.partials.logout')
+            @include('layouts.partials.theme')
         </div>
     </details>
 </aside>

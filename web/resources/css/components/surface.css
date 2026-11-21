@@ -53,6 +53,7 @@
 /* The one focal panel on a page: static, so no hover and no pointer. */
 .points-panel {
     background: var(--color-lavender);
+    color: var(--color-on-lavender);
     box-shadow: var(--shadow-focal);
 }
 
@@ -66,7 +67,7 @@
 }
 
 .points-panel .tile-foot {
-    color: var(--color-ink);
+    color: var(--color-on-lavender);
 }
 
 .points-unit {
@@ -120,10 +121,12 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Black on white, with the renderer's quiet zone left alone. DESIGN.md §7. */
+/* Black on white, with the renderer's quiet zone left alone. DESIGN.md §7.
+   The light scheme keeps it white in the dark theme too, for the scanner. */
 .qr-code {
     width: 15rem;
     max-width: 100%;
+    color-scheme: light;
     background: var(--color-paper);
 }
 

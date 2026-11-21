@@ -30,6 +30,7 @@
     border: 2px solid var(--color-ink);
     border-radius: var(--radius-control);
     background: var(--color-lavender);
+    color: var(--color-on-lavender);
     font-weight: 800;
 }
 
@@ -206,4 +207,65 @@
     .nav-link:hover {
         background: var(--color-lavender-wash);
     }
+}
+
+/*
+ * The theme control: three options in one outlined row. DESIGN.md §3, "Dark
+ * theme". The current option is bold and underlined as well as filled.
+ */
+.theme-switch fieldset {
+    display: grid;
+    gap: var(--spacing-1);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.theme-switch legend {
+    padding: 0;
+    color: var(--color-muted);
+    font-size: var(--text-small);
+}
+
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+}
+
+.theme-option {
+    min-height: var(--size-target);
+    padding-inline: var(--spacing-2);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: var(--text-small);
+    cursor: pointer;
+}
+
+.theme-option + .theme-option {
+    border-left: 2px solid var(--color-ink);
+}
+
+.theme-option[aria-pressed='true'] {
+    background: var(--color-lavender-wash);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .theme-option:hover {
+        background: var(--color-lavender-wash);
+    }
+}
+
+/* Its own row under the name and Sign out. */
+.sidebar-foot .theme-switch {
+    flex-basis: 100%;
+}
+
+.site-header .theme-switch {
+    min-width: 13rem;
 }
