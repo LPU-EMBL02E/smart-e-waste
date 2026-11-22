@@ -6,9 +6,9 @@
 @section('content')
     <h1>New reward</h1>
 
-    <form class="app-form" method="POST" action="{{ route('admin.rewards.store') }}">
+    <form method="POST" action="{{ route('admin.rewards.store') }}">
         @csrf
         @include('rewards.admin.rewards._form')
-        <button class="button primary" type="submit">Create</button>
+        <button type="submit">Create</button>
     </form>
 @endsection

@@ -8,5 +8,5 @@
 
     @include('deposits.transactions._table')
 
-    {{ $transactions->links('pagination.portal') }}
+    {{ $transactions->links() }}
 @endsection

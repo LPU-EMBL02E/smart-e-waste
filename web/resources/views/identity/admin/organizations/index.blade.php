@@ -6,23 +6,22 @@
 @section('content')
     <h1>Organizations</h1>
 
-    <p><a class="button primary" href="{{ route('admin.organizations.create') }}">New organization</a></p>
+    <p><a href="{{ route('admin.organizations.create') }}">New organization</a></p>
 
-    <div class="table-region" role="region" tabindex="0" aria-label="Records">
-        <table class="data-table">
+    <div style="overflow-x: auto">
+        <table>
             <thead>
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Code</th>
-                    <th scope="col">Description</th>
-                    <th scope="col">Status</th>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Description</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($organizations as $organization)
                     <tr>
-                        <td><a href="{{ route('admin.organizations.edit', $organization) }}">{{ $organization->name }}</a>
-                        </td>
+                        <td><a href="{{ route('admin.organizations.edit', $organization) }}">{{ $organization->name }}</a></td>
                         <td>{{ $organization->code }}</td>
                         <td>{{ $organization->description ?? '—' }}</td>
                         <td>{{ $organization->is_active ? 'Active' : 'Inactive' }}</td>
@@ -36,5 +35,5 @@
         </table>
     </div>
 
-    {{ $organizations->links('pagination.portal') }}
+    {{ $organizations->links() }}
 @endsection

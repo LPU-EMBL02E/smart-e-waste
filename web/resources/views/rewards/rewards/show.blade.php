@@ -15,7 +15,7 @@
         <p>{{ $reward->description }}</p>
     @endif
 
-    <dl class="details-list">
+    <dl>
         <dt>Cost</dt>
         <dd>{{ $reward->points_cost }} points each</dd>
         <dt>In stock</dt>
@@ -29,19 +29,15 @@
     @elseif ($balance < $reward->points_cost)
         <p>You need {{ $reward->points_cost - $balance }} more points to redeem this.</p>
     @else
-        <form class="app-form" method="POST" action="{{ route('redemptions.store') }}">
+        <form method="POST" action="{{ route('redemptions.store') }}">
             @csrf
             <input type="hidden" name="reward_id" value="{{ $reward->id }}">
-            <p class="form-field">
+            <p>
                 <label for="quantity">Quantity</label>
-                <input class="form-control"
-                    @error('quantity') aria-invalid="true" aria-describedby="quantity-error" @enderror id="quantity"
-                    name="quantity" type="number" step="1" min="1" required value="{{ old('quantity', 1) }}">
-                @error('quantity')
-                    <span class="field-error" id="quantity-error">{{ $message }}</span>
-                @enderror
+                <input id="quantity" name="quantity" type="number" step="1" min="1" required
+                       value="{{ old('quantity', 1) }}">
             </p>
-            <button class="button primary" type="submit">Redeem</button>
+            <button type="submit">Redeem</button>
         </form>
     @endif
 

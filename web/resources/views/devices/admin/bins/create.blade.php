@@ -6,9 +6,9 @@
 @section('content')
     <h1>Register a bin</h1>
 
-    <form class="app-form" method="POST" action="{{ route('admin.bins.store') }}">
+    <form method="POST" action="{{ route('admin.bins.store') }}">
         @csrf
         @include('devices.admin.bins._form')
-        <button class="button primary" type="submit">Register and issue a secret</button>
+        <button type="submit">Register and issue a secret</button>
     </form>
 @endsection

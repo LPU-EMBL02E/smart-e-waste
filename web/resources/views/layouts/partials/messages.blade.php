@@ -1,14 +1,12 @@
-{{-- Persistent results and an error summary. DESIGN.md §§8–9. --}}
+{{-- The flash message and the validation errors, shared by all three shells. --}}
 @if (session('status'))
-    <div class="feedback success-feedback" role="status">{{ session('status') }}</div>
+    <p role="status">{{ session('status') }}</p>
 @endif
+
 @if ($errors->any())
-    <div class="feedback error-feedback" role="alert">
-        <strong>Please check the following:</strong>
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
+    <ul role="alert">
+        @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
 @endif

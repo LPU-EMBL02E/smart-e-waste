@@ -6,17 +6,17 @@
 @section('content')
     <h1>Rewards</h1>
 
-    <p><a class="button primary" href="{{ route('admin.rewards.create') }}">New reward</a></p>
+    <p><a href="{{ route('admin.rewards.create') }}">New reward</a></p>
 
-    <div class="table-region" role="region" tabindex="0" aria-label="Records">
-        <table class="data-table">
+    <div style="overflow-x: auto">
+        <table>
             <thead>
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Cost</th>
-                    <th scope="col" class="numeric">In stock</th>
-                    <th scope="col">Shown to students</th>
-                    <th scope="col">Actions</th>
+                    <th>Name</th>
+                    <th>Cost</th>
+                    <th>In stock</th>
+                    <th>Shown to students</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -24,7 +24,7 @@
                     <tr>
                         <td>{{ $reward->name }}</td>
                         <td>{{ $reward->points_cost }} points</td>
-                        <td class="numeric">{{ $reward->stock_quantity }}</td>
+                        <td>{{ $reward->stock_quantity }}</td>
                         <td>{{ $reward->is_active ? 'Yes' : 'No' }}</td>
                         <td><a href="{{ route('admin.rewards.edit', $reward) }}">Edit</a></td>
                     </tr>
@@ -37,5 +37,5 @@
         </table>
     </div>
 
-    {{ $rewards->links('pagination.portal') }}
+    {{ $rewards->links() }}
 @endsection

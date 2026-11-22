@@ -12,21 +12,21 @@
 @section('content')
     <h1>Leaderboard</h1>
 
-    <div class="table-region" role="region" tabindex="0" aria-label="Records">
-        <table class="data-table">
+    <div style="overflow-x: auto">
+        <table>
             <thead>
                 <tr>
-                    <th scope="col" class="numeric">Rank</th>
-                    <th scope="col">Name</th>
-                    <th scope="col" class="numeric">Points earned</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Points earned</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
                     <tr>
-                        <td class="numeric">{{ $loop->iteration }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         <td>{{ $user->fullName() }}</td>
-                        <td class="numeric">{{ $user->points_earned }}</td>
+                        <td>{{ $user->points_earned }}</td>
                     </tr>
                 @empty
                     <tr>
