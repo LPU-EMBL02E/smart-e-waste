@@ -8,7 +8,7 @@
     <div class="wrap">
         <header class="site-header">
             <a class="brand" href="{{ route('login') }}">
-                <span class="brand-mark" aria-hidden="true">EW</span>
+                <span class="brand-mark" aria-hidden="true"><img src="{{ asset('images/ecocircuit-logo.png') }}" alt="" width="40" height="40"></span>
                 {{ config('app.name') }}
             </a>
             <span class="small muted">Campus web portal</span>

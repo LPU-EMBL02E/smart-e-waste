@@ -14,6 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="{{ $theme === \App\Modules\Identity\Support\Theme::System ? 'light dark' : $theme->value }}">
     <title>@yield('title') · {{ config('app.name') }}</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     @vite('resources/css/app.css')
     @stack('scripts')
 </head>

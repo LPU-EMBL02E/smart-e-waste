@@ -11,7 +11,7 @@
 <aside class="sidebar">
     <div class="sidebar-brand">
         <a class="brand" href="{{ route($isAdminPortal ? 'admin.dashboard' : 'home') }}">
-            <span class="brand-mark" aria-hidden="true">EW</span>
+            <span class="brand-mark" aria-hidden="true"><img src="{{ asset('images/ecocircuit-logo.png') }}" alt="" width="40" height="40"></span>
             <span class="brand-copy">
                 <strong>{{ config('app.name') }}</strong>
                 <small>{{ $isAdminPortal ? 'Admin portal' : 'Student portal' }}</small>
