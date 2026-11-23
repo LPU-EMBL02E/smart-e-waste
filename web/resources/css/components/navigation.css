@@ -29,9 +29,6 @@
     height: var(--size-target);
     border: 2px solid var(--color-ink);
     border-radius: var(--radius-control);
-    background: var(--color-lavender);
-    color: var(--color-on-lavender);
-    font-weight: 800;
     overflow: hidden;
 }
 

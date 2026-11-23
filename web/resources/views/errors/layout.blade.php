@@ -11,7 +11,7 @@
     <div class="wrap">
         <header class="site-header">
             <span class="brand">
-                <span class="brand-mark" aria-hidden="true"><img src="{{ asset('images/ecocircuit-logo.png') }}" alt="" width="40" height="40"></span>
+                <x-ui.brand-mark />
                 {{ config('app.name') }}
             </span>
         </header>
