@@ -22,7 +22,8 @@ resources/views/
   layouts/                base -> portal -> app | admin, and guest
   layouts/partials/       sidebar, navigation, flash messages
   components/ui/          <x-ui.*>: button, pill, meter, tile, focal-panel, panel,
-                          table, empty, page-heading, nav-link, icon
+                          table, empty, page-heading, nav-link, icon,
+                          brand-mark
   components/form/        <x-form.*>: input, textarea, select, checkbox, field
   vendor/pagination/      the pager
   errors/                 403, 404, 419, 429, 500, 503
