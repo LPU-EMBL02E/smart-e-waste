@@ -33,6 +33,10 @@
 
 #include <Arduino.h>
 
+#include <atomic>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
 #include "../include/config.hpp"
 #include "fault_code.hpp"
 #include "modules/actuator.hpp"
@@ -54,6 +58,9 @@ namespace {
 Settings settings;
 Api api{settings};
 Station station{settings};
+// Isolated client for the armed keepalive: it must not share p_client, the
+// event buffers or NVS reads with the station the main loop uses.
+Station stationKeepalive{settings};
 Interlock interlock;
 Actuator actuator{interlock};
 QrScanner qrScanner{station};
@@ -85,6 +92,8 @@ constexpr const char* MESSAGE_TRY_AGAIN =
     "Something went wrong. Please try again.";
 constexpr const char* MESSAGE_TAKE_ITEM =
     "Please take your item from the tray.";
+constexpr const char* MESSAGE_ITEM_GONE =
+    "Your item is no longer on the flap.";
 // The reason and MESSAGE_TAKE_ITEM, with room to spare.
 constexpr size_t MESSAGE_LENGTH = 160;
 
@@ -97,7 +106,19 @@ bool panelOpenedSinceFault = false;
 FaultCode stationFault = FaultCode::None;
 
 bool binFull = false;
-bool scannerArmed = false;
+std::atomic<bool> scannerArmed{false};
+// Keepalive task state. The task only pings GET /health; it never polls
+// /events and never sets faults, so it cannot drain the queue or mask a
+// station fault the main loop owns.
+std::atomic<unsigned long> keepaliveHeartbeatMs{0};
+TaskHandle_t keepaliveTask = nullptr;
+// Main-loop progress and the lease a blocking device call gets while armed.
+// deviceCallOverrun is sticky: once a call outlives its lease the keepalive
+// stays off until a successful disarm and a fresh readyCheck re-arm.
+std::atomic<unsigned long> mainLoopProgressMs{0};
+std::atomic<bool> deviceCallActive{false};
+std::atomic<unsigned long> deviceCallStartMs{0};
+std::atomic<bool> deviceCallOverrun{false};
 // A new reference at boot and after each transfer or return (§11.6).
 bool referenceNeeded = true;
 bool calibrationApplied = false;
@@ -125,6 +146,65 @@ void setStationFault(FaultCode fault) {
   Serial.printf("fault: bin station %s\n", fault == FaultCode::None
                                                ? "answers again"
                                                : faultCodeName(fault));
+}
+
+/** The keepalive task is alive only while it keeps touching its heartbeat. */
+bool keepaliveReady() {
+  return keepaliveTask != nullptr &&
+         millis() - keepaliveHeartbeatMs.load() <= STATION_KEEPALIVE_STALE_MS;
+}
+
+/**
+ * Whether the armed keepalive may ping the station this pass. It runs only
+ * while the scanner is armed, never after an overrun, and only while the main
+ * loop is making progress or a blocking device call is still inside its
+ * lease. Once the lease expires the overrun flag stays set, so a late return
+ * cannot make the keepalive look healthy again by itself.
+ */
+bool keepaliveAllowed(unsigned long now) {
+  if (!scannerArmed.load() || deviceCallOverrun.load()) {
+    return false;
+  }
+  if (deviceCallActive.load()) {
+    if (now - deviceCallStartMs.load() > DEVICE_CALL_LEASE_MS) {
+      deviceCallOverrun.store(true);
+      return false;
+    }
+    return true;
+  }
+  return now - mainLoopProgressMs.load() <= MAIN_LOOP_PROGRESS_MS;
+}
+
+/** FreeRTOS task on the non-loop core: GET /health only, never /events. */
+void stationKeepaliveTask(void*) {
+  for (;;) {
+    keepaliveHeartbeatMs.store(millis());
+    if (keepaliveAllowed(millis())) {
+      Station::Health health{};
+      stationKeepalive.health(health, STATION_KEEPALIVE_TIMEOUT_MS);
+    }
+    vTaskDelay(pdMS_TO_TICKS(STATION_KEEPALIVE_MS));
+  }
+}
+
+/** Marks the start of a blocking device call made while the scanner is armed. */
+void beginDeviceCall() {
+  if (!scannerArmed.load()) {
+    return;
+  }
+  deviceCallStartMs.store(millis());
+  deviceCallActive.store(true);
+}
+
+/** Clears the call lease; an overrun stays set until disarm and re-arm. */
+void endDeviceCall() {
+  if (!deviceCallActive.load()) {
+    return;
+  }
+  if (millis() - deviceCallStartMs.load() > DEVICE_CALL_LEASE_MS) {
+    deviceCallOverrun.store(true);
+  }
+  deviceCallActive.store(false);
 }
 
 void latchFault(FaultCode fault) {
@@ -236,9 +316,16 @@ void showState(Shown state) {
 }
 
 void disarmScanner() {
-  if (scannerArmed) {
-    qrScanner.disarm();
-    scannerArmed = false;
+  if (!scannerArmed.load()) {
+    return;
+  }
+  const Station::Result result = qrScanner.disarm();
+  scannerArmed.store(false);
+  if (result == Station::Result::Ok) {
+    // A confirmed disarm is the recovery the overrun flag was waiting for.
+    deviceCallOverrun.store(false);
+  } else {
+    setStationFault(stationFaultFor(result));
   }
 }
 
@@ -269,20 +356,28 @@ bool updatePanel() {
   return open;
 }
 
-/** Applies the server's calibration when it is new (API_Design.md §5.2). */
-void applyCalibration() {
+/**
+ * Applies the server's calibration when it is new (API_Design.md §5.2).
+ * False means the scale is not running the calibration the server just sent —
+ * missing, unchanged-but-never-applied, or refused — so a deposit must not
+ * weigh with it.
+ */
+bool applyCalibration() {
   const Api::Calibration& calibration = api.calibration();
-  if (!calibration.present ||
-      (calibrationApplied &&
-       calibration.calibratedAt == appliedCalibrationAt)) {
-    return;
+  if (!calibration.present) {
+    return false;
   }
-  if (scale.applyCalibration(calibration.weightOffset,
-                             calibration.weightScaleFactor)) {
-    calibrationApplied = true;
-    appliedCalibrationAt = calibration.calibratedAt;
-    Serial.println("scale: calibration applied");
+  if (calibrationApplied && calibration.calibratedAt == appliedCalibrationAt) {
+    return true;
   }
+  if (!scale.applyCalibration(calibration.weightOffset,
+                              calibration.weightScaleFactor)) {
+    return false;
+  }
+  calibrationApplied = true;
+  appliedCalibrationAt = calibration.calibratedAt;
+  Serial.println("scale: calibration applied");
+  return true;
 }
 
 /** Asks the bin station what is working and sets its fault (§11.2). True
@@ -312,6 +407,12 @@ bool checkStation(Station::Health& health) {
  */
 void sendTelemetry() {
   lastTelemetryMs = millis();
+  // While armed, the device calls below can block for HTTP_TIMEOUT_MS each.
+  // The lease lets the keepalive cover them, but only up to DEVICE_CALL_LEASE_MS.
+  const bool leased = scannerArmed.load();
+  if (leased) {
+    beginDeviceCall();
+  }
   Station::Health health{};
   checkStation(health);
   if (api.fetchConfig() == Api::Result::Ok) {
@@ -320,16 +421,19 @@ void sendTelemetry() {
 
   const float distance = binLevel.readDistanceMm();
   telemetryDue = false;
+  Api::BinStatus status{};
+  if (distance >= 0 &&
+      api.sendTelemetry(distance, panelOpen, currentFault(), status) ==
+          Api::Result::Ok) {
+    binFull = status.full;
+  }
+  if (leased) {
+    endDeviceCall();
+  }
   if (distance < 0) {
     // distance_mm is required, so there is nothing to send until the sensor
     // answers; the next try is on the interval.
     Serial.println("telemetry: not sent, the bin level sensor did not answer");
-    return;
-  }
-  Api::BinStatus status{};
-  if (api.sendTelemetry(distance, panelOpen, currentFault(), status) ==
-      Api::Result::Ok) {
-    binFull = status.full;
   }
 }
 
@@ -471,6 +575,20 @@ void runDeposit(const String& qrToken) {
   feedback.showWelcome(session.displayName.c_str());
   feedback.clearCancel();
 
+  // Fresh calibration before weighing: the reported weight depends on it, and
+  // the scanner is already disarmed so this cannot interrupt armed polling.
+  const Api::Result configResult = api.fetchConfig();
+  if (configResult != Api::Result::Ok) {
+    api.cancelSession(session.sessionId);
+    endWithoutTransfer(messageFor(configResult));
+    return;
+  }
+  if (!applyCalibration()) {
+    api.cancelSession(session.sessionId);
+    endWithoutTransfer(MESSAGE_OUT_OF_SERVICE);
+    return;
+  }
+
   // 3. Weigh.
   feedback.show(Feedback::Screen::Weighing);
   const unsigned long sessionStartMs = millis();
@@ -520,6 +638,22 @@ void runDeposit(const String& qrToken) {
     return;
   }
 
+  // Weigh once more after the check: verify can take seconds, and the item
+  // may have been lifted or swapped while the station was looking.
+  const Scale::Reading weighed = scale.readStable();
+  if (weighed.samples == 0) {
+    api.cancelSession(session.sessionId);
+    endWithoutTransfer(MESSAGE_OUT_OF_SERVICE);
+    return;
+  }
+  if (!weighed.stable || weighed.grams <= SCALE_EMPTY_TOLERANCE_G) {
+    api.cancelSession(session.sessionId);
+    endWithoutTransfer(
+        messageFor(weighed.stable ? "NO_ITEM" : "WEIGHT_UNSTABLE"));
+    return;
+  }
+  reading = weighed;
+
   // 5. Deposit. The server decides.
   if (updatePanel()) {
     endForPanel(session.sessionId, true);
@@ -536,6 +670,21 @@ void runDeposit(const String& qrToken) {
   }
   Serial.printf("deposit: accepted, %.2f g\n", reading.grams);
   feedback.showAccepted(reading.grams, deposit.pointsPreview);
+
+  // The server accepted the deposit, but the flap can still be emptied
+  // before the actuator runs. If it is, do not move anything and do not send
+  // `complete`: the session stays ACCEPTED for the server's admin review.
+  // The actuator was never attempted, so there is no actuator_ok to report.
+  const Scale::Reading stillThere = scale.readStable();
+  if (stillThere.samples == 0 || !stillThere.stable ||
+      stillThere.grams <= SCALE_EMPTY_TOLERANCE_G) {
+    telemetryDue = true;
+    feedback.problem();
+    feedback.showProblem(MESSAGE_ITEM_GONE);
+    feedback.beepLong();
+    startHold();
+    return;
+  }
 
   // 6. Transfer. An open panel now leaves the session ACCEPTED with no
   // `complete`, which the server lists for an admin to review.
@@ -601,9 +750,21 @@ void setup() {
   scale.begin();
   verifier.begin();
   binLevel.begin();
+  station.begin();
+  stationKeepalive.begin();
 
   if (!api.begin()) {
     feedback.problem();
+  }
+
+  // The keepalive pings GET /health only while the scanner is armed. If the
+  // task cannot be created the bin must not arm: fail closed, not masked.
+  if (xTaskCreatePinnedToCore(stationKeepaliveTask, "station-ka",
+                              STATION_KEEPALIVE_STACK, nullptr,
+                              STATION_KEEPALIVE_PRIORITY, &keepaliveTask,
+                              STATION_KEEPALIVE_CORE) != pdPASS) {
+    keepaliveTask = nullptr;
+    Serial.println("keepalive: task create failed, arming disabled");
   }
 
   // The ESP32 has no clock. Nothing can be signed until this succeeds.
@@ -624,6 +785,7 @@ void setup() {
 }
 
 void loop() {
+  mainLoopProgressMs.store(millis());
   updatePanel();
   if (telemetryDue || millis() - lastTelemetryMs >= TELEMETRY_INTERVAL_MS) {
     sendTelemetry();
@@ -635,23 +797,40 @@ void loop() {
     holding = false;
   }
 
-  if (!scannerArmed) {
+  if (!scannerArmed.load()) {
     if (!readyCheck()) {
+      return;
+    }
+    if (deviceCallOverrun.load()) {
+      // A blocking call outlived its lease while armed. Confirm the station
+      // scanner is disarmed before re-arming so queued scans cannot replay.
+      const Station::Result recovered = qrScanner.disarm();
+      if (recovered != Station::Result::Ok) {
+        setStationFault(stationFaultFor(recovered));
+        return;
+      }
+      deviceCallOverrun.store(false);
+    }
+    if (!keepaliveReady()) {
+      showState(Shown::OutOfService);
       return;
     }
     if (!qrScanner.arm()) {
       setStationFault(stationFaultFor(Station::Result::Error));
       return;
     }
-    scannerArmed = true;
+    scannerArmed.store(true);
     feedback.clearCancel();
     lastPollMs = millis();
     showState(Shown::Ready);
     return;
   }
 
-  // Armed: stop at once if the bin stops being ready.
-  if (panelOpen || currentFault() != FaultCode::None || binFull) {
+  // Armed: stop at once if the bin stops being ready or a device call
+  // outlived its lease. The overrun disarms first; readyCheck() re-arms only
+  // after a confirmed disarm and a fresh keepalive heartbeat.
+  if (deviceCallOverrun.load() || panelOpen ||
+      currentFault() != FaultCode::None || binFull) {
     disarmScanner();
     return;
   }

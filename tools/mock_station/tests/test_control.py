@@ -8,7 +8,7 @@ from pathlib import Path
 
 from mock_station.check import run_check
 from mock_station.control import Control, apply_control_command
-from mock_station.errors import CameraUnavailable, ValidationError
+from mock_station.errors import CameraUnavailable, ScannerUnavailable, ValidationError
 
 from tests.helpers import make_app
 
@@ -36,6 +36,17 @@ class ControlCommandTests(unittest.TestCase):
         self.assertEqual(
             app.event_queue.take_all(), [{"type": "touch", "action": "cancel"}]
         )
+
+    def test_set_scanner_disarm_failures(self) -> None:
+        app = make_app()
+        app.scanner.arm()
+        result = apply(app, {"set_scanner_disarm_failures": 1})
+        self.assertEqual(result, {"disarm_failures": 1})
+        with self.assertRaises(ScannerUnavailable):
+            app.scanner.disarm()
+        self.assertTrue(app.scanner.armed)
+        self.assertTrue(app.scanner.disarm())
+        self.assertFalse(app.scanner.armed)
 
     def test_set_available(self) -> None:
         app = make_app()

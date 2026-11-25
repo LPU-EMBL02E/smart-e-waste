@@ -51,11 +51,22 @@ class Station {
 
   explicit Station(Settings& settings) : p_settings(settings) {}
 
+  /**
+   * Caches the station base URL once so later calls do not read NVS. Call
+   * after Settings is provisioned and before the first request. A second
+   * Station instance may then answer /health from the keepalive task without
+   * sharing this instance's client or event state.
+   */
+  bool begin() {
+    p_baseUrl = p_settings.stationBaseUrl();
+    return !p_baseUrl.isEmpty();
+  }
+
   /** What is working on the bin station. */
-  Result health(Health& out) {
+  Result health(Health& out, unsigned long timeoutMs = STATION_TIMEOUT_MS) {
     JsonDocument reply;
     const Result result =
-        p_exchange("GET", "/health", nullptr, STATION_TIMEOUT_MS, reply);
+        p_exchange("GET", "/health", nullptr, timeoutMs, reply);
     if (result != Result::Ok) {
       return result;
     }
@@ -235,7 +246,7 @@ class Station {
     }
 
     char url[sp_URL_LENGTH];
-    const String baseUrl = p_settings.stationBaseUrl();
+    const String& baseUrl = p_baseUrl;
     const int urlLength = snprintf(url, sizeof(url), "%s%s%s", baseUrl.c_str(),
                                    sp_PATH_PREFIX, endpoint);
     if (baseUrl.isEmpty() || urlLength >= static_cast<int>(sizeof(url))) {
@@ -292,8 +303,10 @@ class Station {
     return Result::Error;
   }
 
-  // Where the bin station is.
+  // Where the bin station is. p_baseUrl is cached by begin() so the
+  // keepalive task never reads NVS while the main loop may be writing it.
   Settings& p_settings;
+  String p_baseUrl;
   WiFiClient p_client;
   char p_lastErrorCode[sp_ERROR_CODE_LENGTH] = "";
 

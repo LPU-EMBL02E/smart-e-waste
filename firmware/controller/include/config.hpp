@@ -99,6 +99,23 @@ constexpr unsigned long STATION_VERIFY_TIMEOUT_MS = 5000;
 // TODO(team): API_Design.md §10 question 5 — the event poll interval is not
 // set. It must be shorter than the bin station's controller timeout (§11.9).
 constexpr unsigned long STATION_EVENT_POLL_MS = 250;
+// A second Station instance pings GET /health this often while the scanner is
+// armed, so a blocked device request cannot look like a dead controller to
+// §11.9. Its own timeout is shorter than STATION_TIMEOUT_MS so one health call
+// cannot consume the watchdog margin by itself. Both are bench values.
+constexpr unsigned long STATION_KEEPALIVE_MS = 1000;
+constexpr unsigned long STATION_KEEPALIVE_TIMEOUT_MS = 1000;
+// The task updates this before each health call. If it goes stale the task is
+// not keeping up, and the bin must not arm.
+constexpr unsigned long STATION_KEEPALIVE_STALE_MS = 5000;
+constexpr unsigned int STATION_KEEPALIVE_STACK = 8192;
+constexpr int STATION_KEEPALIVE_PRIORITY = 1;
+constexpr int STATION_KEEPALIVE_CORE = 0;
+// The main loop must show progress this often or the keepalive stops. A
+// blocking device call gets DEVICE_CALL_LEASE_MS before the same happens;
+// after that the bin disarms and re-arms rather than mask a stalled loop.
+constexpr unsigned long MAIN_LOOP_PROGRESS_MS = 5000;
+constexpr unsigned long DEVICE_CALL_LEASE_MS = 20000;
 
 // ------------------------------------------------------------------- network
 // API_Design.md §3.6: fail closed before a deposit, retry after one. Once the

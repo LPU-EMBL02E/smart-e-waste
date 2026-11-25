@@ -70,6 +70,18 @@ def apply_control_command(
             raise ValidationError("inject_touch must be 'cancel'.")
         return {"queued": event_queue.put_touch(action)}
 
+    if "set_scanner_disarm_failures" in command:
+        scanner = components.scanner
+        if not hasattr(scanner, "set_disarm_failures"):
+            raise ValidationError("scanner does not support disarm failures.")
+        scanner.set_disarm_failures(
+            _int(
+                command["set_scanner_disarm_failures"],
+                "set_scanner_disarm_failures",
+            )
+        )
+        return {"disarm_failures": scanner.describe().get("disarm_failures", 0)}
+
     if "set_available" in command:
         values = _require_dict(command["set_available"], "set_available")
         allowed = {"scanner", "camera", "model"}
