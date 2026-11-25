@@ -74,8 +74,10 @@ on this Pi but is not built yet; see step 13.
 **Hardware** (`System_Plan.md` §2)
 
 - Raspberry Pi 4 Model B, 4 GB, with the official 5 V 3 A power supply.
-- A 2.5" SATA SSD (120–256 GB) in a USB 3.0-to-SATA adapter whose chipset
-  supports booting the Pi. The Pi boots from the SSD; there is no SD card.
+- Two high-endurance microSD cards (32–64 GB, A1 or A2 rated): one the Pi
+  boots from, and a spare for the disk image (step 17). Use cards rated for
+  continuous recording; ordinary cards wear out quickly under a database
+  (`System_Plan.md` §2).
 - A heatsink and fan on the Pi. It sits in a closed bin and also runs the
   e-waste model.
 - The bin's dedicated router, with an internet uplink for the tunnel and email.
@@ -96,7 +98,7 @@ Raspberry Pi Imager.
 ## 3. Install the operating system
 
 1. In Raspberry Pi Imager, choose **Raspberry Pi 4**, then **Raspberry Pi OS
-   Lite (64-bit)** (Trixie, Debian 13), and the SSD as the storage.
+   Lite (64-bit)** (Trixie, Debian 13), and the microSD card as the storage.
 2. Open the OS customisation settings and set:
    - **Hostname**, for example `ewaste`. The Pi is then also reachable as
      `ewaste.local` on the bin's network.
@@ -106,13 +108,11 @@ Raspberry Pi Imager.
      UTC regardless: its database connection is pinned to `+00:00`.
    - **Services:** enable SSH, with public-key authentication only, and paste
      your public key.
-3. Write the image, put the SSD on one of the Pi's **blue USB 3.0 ports**, and
-   power it on **with no SD card in the Pi**.
+3. Write the image, put the card in the Pi's microSD slot, and power it on.
 
-**If the Pi doesn't boot from the SSD**, its bootloader doesn't try USB yet. Boot
-it once from a temporary SD card, run `sudo rpi-eeprom-update -a`, then
-`sudo raspi-config` → Advanced Options → Boot Order → USB Boot. Remove the SD
-card and try again (`System_Plan.md` §7, step 1).
+**Always shut the Pi down before unplugging it:** `sudo poweroff`, then wait for
+the green light to stop flashing. Cutting power while MariaDB is writing is the
+most common way an SD card gets corrupted (`System_Plan.md` §2).
 
 **Give the Pi a fixed address.** In the router's settings, reserve an IP address
 for the Pi (a DHCP reservation), for example `192.168.50.10`. The bin is
@@ -572,7 +572,7 @@ sudo crontab -e
 ```
 
 - **Copy the dumps off the Pi** regularly, for example with `rsync` to another
-  computer. A backup on the same SSD doesn't survive the SSD failing.
+  computer. A backup on the same card doesn't survive the card failing.
 - **Restore** into an empty `ewaste` database:
   `gunzip -c ewaste-2026-11-22.sql.gz | sudo mariadb ewaste`.
 - **A handover dump** needs one change: delete the first line if it starts with
@@ -583,14 +583,17 @@ sudo crontab -e
 **2. A copy of `.env`**, kept somewhere safe off the Pi. Without its `APP_KEY`,
 the device secrets in a dump can't be read.
 
-**3. A full disk image** of the configured Pi. Shut the Pi down, connect the SSD
-to another Linux computer, find its device name with `lsblk`, and copy it:
+**3. A full disk image** of the configured Pi. Shut the Pi down, put its card
+in a card reader on another Linux computer, find its device name with `lsblk`,
+and copy it:
 
 ```bash
 sudo dd if=/dev/sdX of=ewaste-pi.img bs=4M status=progress
 ```
 
-Writing that image to a new SSD gives back the whole configured Pi.
+Write that image to the spare card with Raspberry Pi Imager (**Use custom**) and
+keep the spare with the Pi. If the card fails, swap in the spare and restore the
+latest dump. Make a new image after each update (step 18).
 
 ---
 

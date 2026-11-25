@@ -45,7 +45,7 @@ station only answers the controller's requests.
 |---|---|---|
 | Controller | ESP32-S3-DevKitC-1, N8R2 (8 MB flash, 2 MB quad PSRAM) | Wi-Fi to the Pi |
 | Server and bin station | Raspberry Pi 4 Model B, 4 GB | Wi-Fi to the controller and to phones |
-| Pi storage | 2.5" SATA SSD, 120–256 GB, in a USB 3.0-to-SATA adapter whose chipset supports Pi USB boot. The Pi boots from it; there is no SD card | Pi, USB 3.0 port |
+| Pi storage | High-endurance microSD card, 32–64 GB, A1 or A2 rated. The Pi boots from it; there is no SSD | Pi, microSD slot |
 | User identification | GM865 barcode and QR scanner, USB virtual serial, command-triggered | Pi, USB |
 | Item verification | Arducam IMX519 16 MP autofocus camera above the flap, lit by a 12 V white LED strip. The bin station checks that an item is there, then runs an e-waste model on the Pi's CPU (Section 8.3) | Pi, CSI. LED strip switched by the controller |
 | Weight | 5 kg bar load cell and HX711 amplifier, powered from the controller's 3.3 V | Controller |
@@ -88,16 +88,18 @@ station only answers the controller's requests.
   image.
 - The controller uses ADC1 (GPIO 1) for current sense because ADC2 can't be read
   while Wi-Fi is on.
-- **The Pi runs from an SSD, not an SD card,** because MariaDB writes on every
-  deposit and page view and an SD card wears out and corrupts more easily on a
-  power cut. An NVMe drive in a USB enclosure is not used: it draws more than the
-  Pi's USB ports can reliably supply.
-- The SSD draws about 0.5–0.9 A from the Pi's USB ports, which share about 1.2 A
-  with the scanner and touch panel. Count it in the 5.2 V budget, and add a hub
-  powered from the 5.2 V rail if the Pi reports under-voltage.
-- USB 3.0 gives off noise in the 2.4 GHz band the controller uses. Keep the SSD's
-  cable short and the SSD away from the Pi's antenna, and fix the SSD in place so
-  it can't shake loose.
+- **The Pi runs from a microSD card, with no SSD.** MariaDB writes on every
+  deposit and page view, and an SD card wears out faster than an SSD and
+  corrupts more easily on a power cut. So:
+  - Use a **high-endurance** card, the kind rated for continuous recording, not
+    an ordinary one. A1 or A2 rating, 32–64 GB.
+  - Shut the Pi down with `sudo poweroff` before cutting its power. A power cut
+    while MariaDB is writing is the main way an SD card gets corrupted.
+  - Keep a **spare card** with the full disk image of the configured Pi
+    written to it (Section 7, step 9), so a failed card is a card swap, then
+    restoring the latest database dump.
+- The card draws its power from the Pi's own supply, not the USB ports, so the
+  USB ports' shared 1.2 A goes only to the scanner and touch panel.
 
 **Pin map for the ESP32-S3.**
 
@@ -124,9 +126,9 @@ module's flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED
 pin of the board revision in use (38 or 48).
 
 **Open hardware items** (Section 10): the current-sense wiring and the interlock
-are in the manual but not on the schematic, and the SSD and its adapter are in
-neither. Nor are the slot, the flap and its pivot, the return tray, the flap
-level sensor and the Pi's cooling. Current sense is needed before
+are in the manual but not on the schematic. The slot, the flap and its pivot,
+the return tray, the flap level sensor and the Pi's cooling are in neither.
+Current sense is needed before
 `actuator_ok` means anything: wire the BTS7960's `R_IS` and `L_IS` outputs through
 a load resistor sized so GPIO 1 never sees more than 3.1 V at the actuator's stall
 current.
@@ -157,7 +159,7 @@ No fabrication begins before Checkpoint 1 approval.
 | **Data** | MariaDB 11.8 LTS, InnoDB | Persistent storage, atomic commits, foreign keys |
 | | Eloquent models + migrations | Schema, defined in code (no hand-written `schema.sql`) |
 | | `mariadb-dump` (MariaDB's `mysqldump`) | Routine backups |
-| | Full Pi disk image, booted from USB SSD | Disaster recovery if boot media fails |
+| | Full Pi disk image, on a spare microSD card | Disaster recovery if the card fails |
 | **External Services** | Cloudflare Tunnel (`cloudflared` as a systemd service) | Dashboard reachable beyond the local network until handover |
 | | A domain | Stable Tunnel hostname; makes either handover path a DNS change |
 | | Gmail SMTP (a team Gmail account) | Email delivery until handover, replaced by the university's SMTP afterwards |
@@ -616,10 +618,8 @@ LAN address and `SESSION_SECURE_COOKIE=false`, and rehearse switching to it once
 before the final demonstration.
 
 **Setup, native (no Docker):**
-1. Flash Raspberry Pi OS Lite 64-bit (Trixie) to the SSD with Raspberry Pi Imager
-   and boot from it, with no SD card in the Pi. A Pi whose bootloader does not yet
-   try USB needs one boot from a temporary SD card first: `sudo rpi-eeprom-update -a`,
-   then `raspi-config` → Advanced Options → Boot Order → USB Boot.
+1. Flash Raspberry Pi OS Lite 64-bit (Trixie) to a high-endurance microSD card
+   with Raspberry Pi Imager and boot the Pi from it.
 2. `apt install nginx mariadb-server php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-xml php8.4-curl php8.4-bcmath`
 3. `CREATE DATABASE ewaste CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
    with a dedicated MariaDB user — not `root`.
@@ -633,8 +633,9 @@ before the final demonstration.
 6. Compile Tailwind via Vite on a dev machine; deploy the built assets.
 7. Add the scheduler's cron entry: `* * * * * php /path/to/artisan schedule:run`.
 8. Set up `cloudflared` as a systemd service with a named tunnel on the domain.
-9. Schedule `mariadb-dump` backups (MariaDB's `mysqldump`); keep a full disk image
-   of the configured Pi, and a copy of `.env` (it holds `APP_KEY`) somewhere safe.
+9. Schedule `mariadb-dump` backups (MariaDB's `mysqldump`) and copy them off the
+   Pi; keep a full disk image of the configured Pi, written to a spare microSD
+   card, and a copy of `.env` (it holds `APP_KEY`) somewhere safe.
 10. Set up the bin station (Section 8.3):
     `apt install python3-picamera2 python3-numpy python3-serial python3-onnxruntime chromium cage`,
     copy the e-waste model file to the path in the station's settings file,
@@ -1028,16 +1029,10 @@ points rate).
 - [ ] Add the actuator current-sense wiring (BTS7960 `R_IS`/`L_IS` to GPIO 1,
       with a load resistor) and the service-panel interlock to the schematic,
       and assign the interlock pin (Section 2).
-- [ ] Add the SSD and its USB-to-SATA adapter to the hardware manual and the
-      schematic, on a USB 3.0 port, and count its current in the 5.2 V budget
-      (Section 2).
 - [ ] Add the slot, the flap and its pivot, the return tray, the flap level
       sensor and its pin, and the Pi's heatsink and fan to the hardware manual
       and the schematic. Count the fan in the 5.2 V budget, and check that the
       actuator suits the flap (Section 2).
-- [ ] Check the Pi-to-controller Wi-Fi with the SSD running. If USB 3.0 noise
-      causes dropped requests, decide between an Ethernet cable from the Pi to
-      the router and putting the Pi on the router's 5 GHz band (Section 2).
 - [ ] Verify the ESP32-S3 pin map on the bench (Section 2).
 - [ ] Set on the bench: the actuator's end-of-stroke and jam current thresholds,
       stroke timeout and rest time (Section 8.2), and the camera's lens position,

@@ -109,7 +109,7 @@ Four rules hold the whole thing together:
 
 | Layer | Choice |
 |---|---|
-| Host | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit, booted from USB SSD |
+| Host | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit, booted from a microSD card |
 | Server | Nginx + PHP 8.4-FPM, native via `apt`; no Docker |
 | App | Laravel 13, Blade, Tailwind (built with Vite on a dev machine) |
 | Data | MariaDB 11.8 LTS, InnoDB, `utf8mb4`, every timestamp in UTC |
@@ -234,10 +234,9 @@ code:
 - The hardware weight limit — `config/ewaste.php` has no value for it yet
   (`API_Design.md` P37).
 - Hardware items for the hardware team: the actuator current-sense wiring and
-  the service-panel interlock pin, and the SSD with its adapter, on the
-  schematic; the slot, the flap and its pivot, the return tray, the flap level
-  sensor and the Pi's cooling, in the manual and the schematic; the ESP32-S3 pin
-  map verified on the bench (`System_Plan.md` §10).
+  the service-panel interlock pin, on the schematic; the slot, the flap and its
+  pivot, the return tray, the flap level sensor and the Pi's cooling, in the
+  manual and the schematic; the ESP32-S3 pin map verified on the bench (`System_Plan.md` §10).
 - The e-waste model: the network, the training pictures, and the error rates to
   reach, approved by the instructor (`System_Plan.md` §8.3).
 - Bench values: the actuator's current thresholds, stroke timeout and rest time,

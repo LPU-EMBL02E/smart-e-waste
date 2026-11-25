@@ -11,7 +11,7 @@ Section references are to the files in `docs/`.
 ## 1. Install the web app
 
 Needs PHP 8.4 and Composer on the machine doing the install. The Pi boots from
-its SSD (`System_Plan.md` §7, step 1). On the Pi:
+its microSD card (`System_Plan.md` §7, step 1). On the Pi:
 
 ```bash
 sudo apt install php8.4-cli php8.4-fpm php8.4-mysql php8.4-mbstring \
