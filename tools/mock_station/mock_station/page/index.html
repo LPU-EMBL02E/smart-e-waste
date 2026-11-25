@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock Bin Station Control</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+  body { margin: 0; padding: 1rem; max-width: 70rem; }
+  h1 { font-size: 1.25rem; }
+  section { border: 1px solid #8884; border-radius: .5rem; padding: .75rem; margin-block: .75rem; }
+  label { display: inline-flex; gap: .35rem; align-items: center; margin-right: .75rem; }
+  input, select, button { font: inherit; padding: .35rem .5rem; }
+  button { cursor: pointer; }
+  pre { background: #8881; padding: .75rem; border-radius: .5rem; overflow: auto; white-space: pre-wrap; }
+  .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
+  .note { color: #888; font-size: .9rem; }
+</style>
+</head>
+<body>
+<h1>Mock Bin Station Control</h1>
+<p class="note">Test control only. This page is not part of the station API and must stay on localhost unless you understand the exposure.</p>
+
+<section>
+  <h2>Status</h2>
+  <div class="row">
+    <button id="refresh">Refresh</button>
+    <span id="lastUpdate" class="note"></span>
+  </div>
+  <pre id="state">loading…</pre>
+</section>
+
+<section>
+  <h2>Components</h2>
+  <div class="row">
+    <label><input type="checkbox" id="scanner_available" checked> scanner available</label>
+    <label><input type="checkbox" id="camera_available" checked> camera available</label>
+    <label><input type="checkbox" id="model_available" checked> model loaded</label>
+    <button id="apply_available">Apply availability</button>
+  </div>
+</section>
+
+<section>
+  <h2>Camera scenario</h2>
+  <div class="row">
+    <label>changed pixels <input id="changed_pixels" type="number" min="0" value="256"></label>
+    <button id="camera_item">Item present</button>
+    <button id="camera_empty">Empty flap</button>
+    <button id="camera_apply">Apply pixels/failures</button>
+    <label>capture failures <input id="capture_failures" type="number" min="0" value="0"></label>
+    <label>reference failures <input id="reference_failures" type="number" min="0" value="0"></label>
+  </div>
+  <div class="row" style="margin-top:.5rem">
+    <button id="reference_capture">Capture reference</button>
+    <button id="reference_clear">Clear reference</button>
+    <button id="reference_fail_next">Fail next reference</button>
+  </div>
+</section>
+
+<section>
+  <h2>Model scenario</h2>
+  <div class="row">
+    <label>probability <input id="model_probability" type="number" min="0" max="1" step="0.01" value="0.93"></label>
+    <label>result
+      <select id="model_result">
+        <option value="">unchanged</option>
+        <option value="pass">pass</option>
+        <option value="fail">fail</option>
+      </select>
+    </label>
+    <label>failures <input id="model_failures" type="number" min="0" value="0"></label>
+    <button id="model_apply">Apply model</button>
+  </div>
+</section>
+
+<section>
+  <h2>Events</h2>
+  <div class="row">
+    <label>QR token <input id="qr_token" type="text" maxlength="64" placeholder="student QR token"></label>
+    <button id="inject_qr">Inject QR</button>
+    <button id="inject_cancel">Inject Cancel touch</button>
+  </div>
+  <p class="note">QR injection only queues while the scanner is armed. Arm it through <code>PUT /station/v1/scanner</code> or the controller.</p>
+</section>
+
+<script>
+const stateEl = document.getElementById('state');
+const lastEl = document.getElementById('lastUpdate');
+
+function text(id, value) { document.getElementById(id).textContent = value; }
+
+async function send(command) {
+  const response = await fetch('/control/command', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(command),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || !body || body.ok !== true) {
+    const message = body && body.error ? body.error.message : `HTTP ${response.status}`;
+    alert(`Control command failed: ${message}`);
+  }
+  refresh();
+}
+
+async function refresh() {
+  try {
+    const response = await fetch('/control/state', { cache: 'no-store' });
+    const state = await response.json();
+    stateEl.textContent = JSON.stringify(state, null, 2);
+    lastEl.textContent = `updated ${new Date().toLocaleTimeString()}`;
+    text('scanner_available', state.scanner.available);
+    text('camera_available', state.camera.available);
+    text('model_available', state.model.loaded);
+  } catch (error) {
+    stateEl.textContent = `state unavailable: ${error}`;
+  }
+}
+
+document.getElementById('refresh').addEventListener('click', refresh);
+document.getElementById('apply_available').addEventListener('click', () => send({
+  set_available: {
+    scanner: document.getElementById('scanner_available').checked,
+    camera: document.getElementById('camera_available').checked,
+    model: document.getElementById('model_available').checked,
+  },
+}));
+document.getElementById('camera_item').addEventListener('click', () => send({ set_camera: { item: true } }));
+document.getElementById('camera_empty').addEventListener('click', () => send({ set_camera: { empty: true } }));
+document.getElementById('camera_apply').addEventListener('click', () => send({ set_camera: {
+  changed_pixels: Number(document.getElementById('changed_pixels').value),
+  capture_failures: Number(document.getElementById('capture_failures').value),
+  reference_failures: Number(document.getElementById('reference_failures').value),
+}}));
+document.getElementById('reference_capture').addEventListener('click', () => send({ set_reference: { action: 'capture' } }));
+document.getElementById('reference_clear').addEventListener('click', () => send({ set_reference: { action: 'clear' } }));
+document.getElementById('reference_fail_next').addEventListener('click', () => send({ set_reference: { action: 'fail_next' } }));
+document.getElementById('model_apply').addEventListener('click', () => {
+  const command = { set_model: {
+    probability: Number(document.getElementById('model_probability').value),
+    failures: Number(document.getElementById('model_failures').value),
+  } };
+  const result = document.getElementById('model_result').value;
+  if (result) command.set_model.result = result;
+  send(command);
+});
+document.getElementById('inject_qr').addEventListener('click', () => {
+  const token = document.getElementById('qr_token').value.trim();
+  if (token) send({ inject_qr: token });
+});
+document.getElementById('inject_cancel').addEventListener('click', () => send({ inject_touch: 'cancel' }));
+
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>
