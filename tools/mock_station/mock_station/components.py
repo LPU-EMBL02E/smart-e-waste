@@ -32,6 +32,7 @@ class SimulatedScanner:
         self._events = events
         self._open = available
         self._armed = False
+        self._disarm_failures = 0
 
     @property
     def armed(self) -> bool:
@@ -52,7 +53,13 @@ class SimulatedScanner:
         self._armed = True
         return True
 
+    def set_disarm_failures(self, count: int) -> None:
+        self._disarm_failures = max(0, count)
+
     def disarm(self) -> bool:
+        if self._disarm_failures > 0:
+            self._disarm_failures -= 1
+            raise ScannerUnavailable("Simulated scanner disarm failed.")
         self._armed = False
         return True
 
@@ -67,6 +74,7 @@ class SimulatedScanner:
             "type": "simulated",
             "available": self._open,
             "armed": self._armed,
+            "disarm_failures": self._disarm_failures,
         }
 
 
@@ -84,6 +92,9 @@ class UnavailableScanner:
 
     def disarm(self) -> bool:
         return True
+
+    def set_disarm_failures(self, count: int) -> None:
+        return None
 
     def inject_token(self, token: str) -> bool:
         return False

@@ -29,10 +29,9 @@ class QrScanner {
   /** Starts scanning. False if the bin station did not arm the scanner. */
   bool arm() { return p_station.setScannerArmed(true) == Station::Result::Ok; }
 
-  /** Stops scanning. */
-  bool disarm() {
-    return p_station.setScannerArmed(false) == Station::Result::Ok;
-  }
+  /** Stops scanning. The result matters: a failed disarm leaves the bin
+   *  station's armed state unknown, so the caller must not pretend it stopped. */
+  Station::Result disarm() { return p_station.setScannerArmed(false); }
 
   /** The scanned token, if one was collected by Station::pollEvents(). */
   bool takeToken(String& token) { return p_station.takeToken(token); }

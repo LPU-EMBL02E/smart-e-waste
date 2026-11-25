@@ -74,6 +74,20 @@ class ScannerTests(ApiTestCase):
         status, obj, _ = request(base, "PUT", "/station/v1/scanner", {"armed": True})
         self.assert_error(status, obj, "SCANNER_UNAVAILABLE", 503)
 
+    def test_disarm_failure_returns_503_and_stays_armed(self) -> None:
+        app, base = self.start()
+        request(base, "PUT", "/station/v1/scanner", {"armed": True})
+        app.components.scanner.set_disarm_failures(1)
+
+        status, obj, _ = request(base, "PUT", "/station/v1/scanner", {"armed": False})
+        self.assert_error(status, obj, "SCANNER_UNAVAILABLE", 503)
+        self.assertTrue(app.scanner.armed)
+
+        status, obj, _ = request(base, "PUT", "/station/v1/scanner", {"armed": False})
+        self.assertEqual(status, 200)
+        self.assertEqual(obj, {"armed": False})
+        self.assertFalse(app.scanner.armed)
+
     def test_scanner_rejects_non_boolean_armed(self) -> None:
         _, base = self.start()
         for body in ({}, {"armed": "yes"}, {"armed": 1}):
