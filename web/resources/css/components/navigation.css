@@ -180,7 +180,7 @@
 
 .nav-link[aria-current='page'] {
     border-color: var(--color-ink);
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
     font-weight: 700;
 }
 
@@ -241,7 +241,7 @@
 
 @media (hover: hover) and (pointer: fine) {
     .nav-link:hover {
-        background: var(--color-lavender-wash);
+        background: var(--color-accent-wash);
     }
 }
 
@@ -285,7 +285,7 @@
 }
 
 .theme-option[aria-pressed='true'] {
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
     font-weight: 700;
     text-decoration: underline;
     text-underline-offset: 0.2em;
@@ -293,7 +293,7 @@
 
 @media (hover: hover) and (pointer: fine) {
     .theme-option:hover {
-        background: var(--color-lavender-wash);
+        background: var(--color-accent-wash);
     }
 }
 

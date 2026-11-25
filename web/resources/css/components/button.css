@@ -18,13 +18,13 @@
 }
 
 .button-primary {
-    background: var(--color-lavender);
-    color: var(--color-on-lavender);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
     box-shadow: var(--shadow-button);
 }
 
 .button-primary:not(:disabled):active {
-    background: var(--color-lavender-strong);
+    background: var(--color-accent-strong);
     box-shadow: var(--shadow-button-pressed);
     transform: translate(2px, 2px);
 }
@@ -55,11 +55,11 @@
 
 @media (hover: hover) and (pointer: fine) {
     .button:not(:disabled):hover {
-        background: var(--color-lavender-wash);
+        background: var(--color-accent-wash);
     }
 
     .button-primary:not(:disabled):hover {
-        background: var(--color-lavender-strong);
+        background: var(--color-accent-strong);
     }
 }
 

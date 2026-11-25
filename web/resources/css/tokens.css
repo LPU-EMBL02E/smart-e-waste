@@ -7,20 +7,22 @@
  *
  * Each colour is light-dark(light, dark): the root's color-scheme picks one
  * (base.css), so the light and dark palettes stay in one place. DESIGN.md §3,
- * "Dark theme". on-lavender is text on a lavender fill and stays black in both.
+ * "Dark theme". The accent is Lyceum of the Philippines University red, with
+ * its gray for muted text; on-accent is text on an accent fill and stays white
+ * in both themes.
  */
 @theme {
     --color-*: initial;
-    --color-paper: light-dark(#ffffff, #16141c);
-    --color-ink: light-dark(#000000, #f3f0fa);
-    --color-lavender: #c4b5fd;
-    --color-lavender-strong: #a78bfa;
-    --color-lavender-wash: light-dark(#f5f1ff, #2a2440);
-    --color-on-lavender: #000000;
-    --color-muted: light-dark(#595463, #b6b0c4);
+    --color-paper: light-dark(#ffffff, #161618);
+    --color-ink: light-dark(#000000, #f2f2f3);
+    --color-accent: #a6192e;
+    --color-accent-strong: #8a1325;
+    --color-accent-wash: light-dark(#fbeef0, #3a1c22);
+    --color-on-accent: #ffffff;
+    --color-muted: light-dark(#5f6062, #b4b5b8);
     --color-success: light-dark(#166534, #6fdc9a);
     --color-warning: light-dark(#92400e, #f2b45a);
-    --color-danger: light-dark(#b91c1c, #ff8f87);
+    --color-danger: light-dark(#b42318, #ff8f87);
 
     --font-*: initial;
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

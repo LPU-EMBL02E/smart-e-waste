@@ -5,7 +5,7 @@
     border: 2px solid var(--color-ink);
     border-left-width: 4px;
     border-radius: var(--radius-control);
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
 }
 
 .note {

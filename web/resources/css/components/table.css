@@ -27,7 +27,7 @@
 
 /* Headers wrap between words only when the columns need the room, so a wide table fits before it scrolls. */
 .data-table th {
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
     font-weight: 600;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .pager-item[aria-current='page'] {
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
     font-weight: 700;
 }
 
@@ -118,6 +118,6 @@
 
 @media (hover: hover) and (pointer: fine) {
     a.pager-item:hover {
-        background: var(--color-lavender-wash);
+        background: var(--color-accent-wash);
     }
 }
