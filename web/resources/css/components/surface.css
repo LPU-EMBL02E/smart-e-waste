@@ -52,8 +52,8 @@
 
 /* The one focal panel on a page: static, so no hover and no pointer. */
 .points-panel {
-    background: var(--color-lavender);
-    color: var(--color-on-lavender);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
     box-shadow: var(--shadow-focal);
 }
 
@@ -67,7 +67,7 @@
 }
 
 .points-panel .tile-foot {
-    color: var(--color-on-lavender);
+    color: var(--color-on-accent);
 }
 
 .points-unit {
@@ -140,7 +140,7 @@
     padding: var(--spacing-3);
     border: 2px solid var(--color-ink);
     border-radius: var(--radius-control);
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
     font-family: var(--font-mono);
     overflow-wrap: anywhere;
     /* Selects the whole secret at once: no copy script (DESIGN.md §10), no
@@ -160,7 +160,7 @@
 }
 
 .notification-unread {
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
 }
 
 .notification-copy {

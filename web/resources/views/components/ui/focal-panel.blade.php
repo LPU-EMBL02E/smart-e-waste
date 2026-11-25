@@ -1,5 +1,5 @@
 {{--
-    The page's one lavender focal panel, with a static hard shadow.
+    The page's one accent focal panel, with a static hard shadow.
     design-system.html #panels. Give the unit separately so it can sit smaller.
 --}}
 @props(['label', 'unit' => null, 'foot' => null])

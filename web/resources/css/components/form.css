@@ -52,7 +52,7 @@
 }
 
 .field-input[readonly] {
-    background: var(--color-lavender-wash);
+    background: var(--color-accent-wash);
 }
 
 textarea.field-input {

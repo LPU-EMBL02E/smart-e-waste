@@ -1,6 +1,7 @@
 # Smart E-Waste UI Design Guide
 
-Minimalist neobrutalism in lavender, white, and black.
+Minimalist neobrutalism in Lyceum of the Philippines University (LPU) red,
+white, and black, with LPU gray for supporting text.
 
 This guide is for UI designers and frontend developers building the student and
 admin web interfaces. Use it for mockups, Blade components, and visual review.
@@ -30,7 +31,7 @@ website; it does not prescribe the bin's screens or touch behavior.
 ## 2. Visual direction
 
 **Make it feel like a clear collection receipt: bold totals, legible records,
-and a lavender stamp of emphasis.** Students should quickly find their points,
+and a red stamp of emphasis.** Students should quickly find their points,
 QR code, and rewards. Administrators should quickly spot bin status and work
 that needs attention.
 
@@ -38,7 +39,7 @@ that needs attention.
   and one dominant action per task. Keep everyday data easy to scan.
 - **Neobrutalism controls the accents.** Use black outlines, bold type, squared
   shapes, and hard offset shadows. Keep everything aligned and upright.
-- **Lavender directs attention.** Reserve the strongest lavender for primary
+- **Red directs attention.** Reserve the `accent` red for primary
   actions, selected navigation, and one focal panel where it helps the task.
 - **White does most of the work.** Aim for roughly three quarters of the visible
   surface to remain white. This is a composition guide, not a pixel quota. In
@@ -52,7 +53,7 @@ into an equally prominent card.
 
 | Use | Avoid |
 | --- | --- |
-| Flat lavender fills, white surfaces, black text | Gradients, glass effects, glow, textured backgrounds |
+| Flat red fills, white surfaces, black text | Gradients, glass effects, glow, textured backgrounds |
 | A few hard shadows that establish hierarchy | Blurred shadows, floating cards everywhere |
 | Straight edges with small, consistent rounding | Pill buttons, large rounded containers, tilted cards |
 | Real totals, units, dates, and clear action labels | Decorative counters, fake charts, invented impact claims |
@@ -68,16 +69,19 @@ gives the same tokens dark values ("Dark theme" below); it adds no new roles.
 | --- | --- | --- |
 | `paper` | `#FFFFFF` | Page background, fields, tables, and ordinary panels |
 | `ink` | `#000000` | Main text, borders, icons, hard shadows, and focus outlines |
-| `lavender` | `#C4B5FD` | Primary buttons and the focal summary panel |
-| `lavender-strong` | `#A78BFA` | Primary button hover/pressed fill; small emphasis areas |
-| `lavender-wash` | `#F5F1FF` | Selected navigation and quiet table headers |
-| `muted` | `#595463` | Supporting text on white or lavender-wash only |
-| `on-lavender` | `#000000` | Text and icons on a `lavender` or `lavender-strong` fill. Black in both themes |
+| `accent` | `#A6192E` | LPU red. Primary buttons and the focal summary panel |
+| `accent-strong` | `#8A1325` | Primary button hover/pressed fill; small emphasis areas |
+| `accent-wash` | `#FBEEF0` | Selected navigation and quiet table headers |
+| `muted` | `#5F6062` | LPU gray. Supporting text on white or accent-wash only |
+| `on-accent` | `#FFFFFF` | Text and icons on an `accent` or `accent-strong` fill. White in both themes |
 
-Lavender is a background color, not a body-text color. Put **black text** on
-lavender and lavender-strong. Do not use white or muted text on either fill.
-Lavender alone is too faint against white to identify a control: keep its black
-border. Inline links are black and underlined.
+LPU publishes red and gray as its colors but no exact values; these shades are
+chosen to read as LPU red and gray while meeting the contrast pairs below.
+
+Red is a background color, not a body-text color. Put **white text**
+(`on-accent`) on accent and accent-strong. Do not use black, ink or muted text
+on either fill: black on accent is about 2.8:1. Keep the black border on red
+controls so their shape stays as clear as on other controls. Inline links are black and underlined.
 
 ### Semantic accents
 
@@ -88,10 +92,12 @@ label; use the semantic color for their text, border, and optional icon.
 | --- | --- | --- |
 | `success` | `#166534` | A server-confirmed successful or fulfilled outcome |
 | `warning` | `#92400E` | Pending work, review, or attention |
-| `danger` | `#B91C1C` | Errors, failures, and destructive-action emphasis |
+| `danger` | `#B42318` | Errors, failures, and destructive-action emphasis |
 
-Neutral or unknown information uses ink on paper or lavender-wash. Lavender
-does not mean success. Never infer business status from a color or invent a new
+Neutral or unknown information uses ink on paper or accent-wash. Red does not
+mean danger: `danger` is a warmer, orange-leaning red, used only as text and
+borders with a written label, never as a fill, so it doesn't read as a primary
+action. Accent red does not mean success either. Never infer business status from a color or invent a new
 status to fit a badge. Use the documented state and a readable label.
 
 ### Approved text pairs
@@ -102,13 +108,15 @@ Recheck contrast if opacity, backgrounds, or colors change.
 | Foreground / background | Contrast |
 | --- | --- |
 | Ink / paper | 21.00:1 |
-| Ink / lavender | 11.38:1 |
-| Ink / lavender-strong | 7.72:1 |
-| Muted / paper | 7.31:1 |
-| Muted / lavender-wash | 6.58:1 |
+| Ink / accent-wash | 18.59:1 |
+| On-accent / accent | 7.50:1 |
+| On-accent / accent-strong | 9.54:1 |
+| Muted / paper | 6.29:1 |
+| Muted / accent-wash | 5.57:1 |
 | Success / paper | 7.13:1 |
 | Warning / paper | 7.09:1 |
-| Danger / paper | 6.47:1 |
+| Danger / paper | 6.57:1 |
+| Danger / accent-wash | 5.82:1 |
 
 ### Dark theme
 
@@ -116,22 +124,24 @@ A visitor chooses **Device**, **Light** or **Dark** from the theme control in th
 sidebar and on the sign-in pages. Device follows the operating system's setting.
 The choice is kept per browser (API_Design.md §7.6, "Choose a theme", P52).
 
-The look stays the same: flat lavender fills, outlines and hard shadows in
-`ink`, one focal panel. Only the values below change; `lavender`,
-`lavender-strong` and `on-lavender` keep their light values.
+The look stays the same: flat red fills, outlines and hard shadows in
+`ink`, one focal panel. Only the values below change; `accent`,
+`accent-strong` and `on-accent` keep their light values.
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `paper` | `#FFFFFF` | `#16141C` |
-| `ink` | `#000000` | `#F3F0FA` |
-| `lavender-wash` | `#F5F1FF` | `#2A2440` |
-| `muted` | `#595463` | `#B6B0C4` |
+| `paper` | `#FFFFFF` | `#161618` |
+| `ink` | `#000000` | `#F2F2F3` |
+| `accent-wash` | `#FBEEF0` | `#3A1C22` |
+| `muted` | `#5F6062` | `#B4B5B8` |
 | `success` | `#166534` | `#6FDC9A` |
 | `warning` | `#92400E` | `#F2B45A` |
-| `danger` | `#B91C1C` | `#FF8F87` |
+| `danger` | `#B42318` | `#FF8F87` |
 
-- In the dark theme `ink` is light, so text on a lavender fill must use
-  `on-lavender`, never `ink`: light text on lavender is about 1.6:1.
+- Text on a red fill always uses `on-accent`, never `ink`, so one rule works in
+  both themes: in the light theme `ink` is black, about 2.8:1 on accent.
+- On the dark `paper` the red fill itself is dark, so the `ink` outline is what
+  marks a red control's edge and the meter's level. Keep it.
 - The QR code stays black on white in both themes, so scanners read it (§7).
 - Implement each token once, as `light-dark(light, dark)`, and let the page's
   `color-scheme` choose. Don't write a second set of component rules for dark.
@@ -140,16 +150,16 @@ Dark text pairs, calculated as above:
 
 | Foreground / background | Contrast |
 | --- | --- |
-| Ink / paper | 16.21:1 |
-| Ink / lavender-wash | 13.09:1 |
-| On-lavender / lavender | 11.38:1 |
-| On-lavender / lavender-strong | 7.72:1 |
-| Muted / paper | 8.69:1 |
-| Muted / lavender-wash | 7.02:1 |
-| Success / paper | 10.76:1 |
-| Warning / paper | 9.95:1 |
-| Danger / paper | 8.28:1 |
-| Danger / lavender-wash | 6.69:1 |
+| Ink / paper | 16.15:1 |
+| Ink / accent-wash | 13.71:1 |
+| On-accent / accent | 7.50:1 |
+| On-accent / accent-strong | 9.54:1 |
+| Muted / paper | 8.81:1 |
+| Muted / accent-wash | 7.48:1 |
+| Success / paper | 10.65:1 |
+| Warning / paper | 9.85:1 |
+| Danger / paper | 8.20:1 |
+| Danger / accent-wash | 6.96:1 |
 
 ## 4. Typography
 
@@ -246,7 +256,7 @@ Desktop
 | | Available points                 |   [View QR code]     |
 | | {balance} pts                    |   Browse rewards     |
 | +----------------------------------+                     |
-|   hard shadow; lavender fill                             |
+|   hard shadow; red fill                                  |
 |                                                          |
 | Recent transactions                                      |
 | Date              Weight         Points         Status   |
@@ -268,7 +278,7 @@ than placing each row in a separate shadowed card.
 
 | Variant | Appearance | Use |
 | --- | --- | --- |
-| Primary | Lavender, ink text/border, 3px hard shadow | Main task action |
+| Primary | Accent red, on-accent (white) text, ink border, 3px hard shadow | Main task action |
 | Secondary | White, ink text/border, no shadow | Supporting action |
 | Text link | Ink, underlined, no box | Navigation within content |
 | Destructive | White, danger text/border, no shadow | Documented void/cancel or other destructive action |
@@ -279,11 +289,11 @@ actions. Keep one primary action per form or coherent task group.
 
 | State | Required treatment |
 | --- | --- |
-| Hover | Primary fill becomes lavender-strong; secondary becomes lavender-wash |
+| Hover | Primary fill becomes accent-strong; secondary becomes accent-wash |
 | Pressed | Enabled primary moves 2px down/right and shadow becomes 1px; immediate feedback |
 | Keyboard focus | 3px ink outline with 3px offset on the light surfaces; no movement or delayed focus |
 | Disabled | White fill, muted text, no shadow or movement; native disabled state and a nearby reason |
-| Selected navigation | Lavender-wash, ink outline or side rule, stronger text, and `aria-current="page"` |
+| Selected navigation | Accent-wash, ink outline or side rule, stronger text, and `aria-current="page"` |
 
 Gate hover effects with `(hover: hover) and (pointer: fine)`. Focus must remain
 visible alongside hover, pressed, or selected styling. Avoid global opacity for
@@ -310,7 +320,7 @@ enabled action on an unavailable feature.
 
 ### Tables, rewards, and status
 
-Use real table headings, a caption or accessible name, lavender-wash header
+Use real table headings, a caption or accessible name, accent-wash header
 cells, and white body rows. Give cells 12–16px padding. Keep status text visible;
 never make a row's meaning available only on hover. Lists remain paginated.
 
@@ -331,7 +341,7 @@ required by this guide.
 
 | Page group | Visual priority and guardrails |
 | --- | --- |
-| Login and password pages | One quiet form; lavender primary action. Preserve the API contract's account-safe error messaging. |
+| Login and password pages | One quiet form; red primary action. Preserve the API contract's account-safe error messaging. |
 | Student home | Emphasize available points, then QR access, rewards, and recent transactions. Distinguish balance from leaderboard points earned. |
 | Profile and QR | Give the QR image an unobstructed black-on-white area, in both themes. Preserve the renderer's quiet zone; never recolor, round, crop, overlay, or decorate the code. Explain the documented effect of regenerating it beside that action. |
 | Rewards and redemptions | Put point cost beside the reward name and action. Label pending, fulfilled, and cancelled records distinctly according to the contract. Show the server's reason when an action is unavailable. |
@@ -394,7 +404,7 @@ page conforms; verify the implemented experience.
   the approved text pairs above exceed 4.5:1. Check helper text and placeholders
   too. See [W3C text contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).
 - Essential control boundaries, state indicators, and meaningful icons need
-  3:1 against adjacent colors. Keep the black outline on lavender controls and
+  3:1 against adjacent colors. Keep the black outline on red controls and
   meters. See [W3C non-text contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html).
 - Use 44×44px minimum targets for buttons, pagination, and navigation controls
   as this project's comfortable touch standard. Inline prose links are exempt
@@ -447,7 +457,7 @@ Review at 320px, 390px, 768px, and 1280px widths, plus zoom and keyboard checks.
 Use the repository's applicable formatting and verification commands for the
 implementation; a design file alone cannot validate a rendered page.
 
-- [ ] White dominates; lavender has a clear purpose; the main task reads first.
+- [ ] White dominates; red has a clear purpose; the main task reads first.
 - [ ] Colors, type scale, spacing, borders, corners, and shadows match this guide.
 - [ ] Ordinary tables and forms remain quiet; static content does not look clickable.
 - [ ] Buttons, links, labels, errors, and unavailable actions are understandable.
