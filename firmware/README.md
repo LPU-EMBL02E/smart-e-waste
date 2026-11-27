@@ -17,8 +17,7 @@ JSON API (`API_Design.md` §11). Everything else at the bin is wired to the
 controller.
 
 > `camera/` and `display/` in this folder are not part of the design: the bin
-> station in `station/` takes over their jobs. The controller code still targets
-> the NodeMCU pin map. Both are reworked to match this file.
+> station in `station/` takes over their jobs.
 
 ## Building
 
@@ -88,11 +87,27 @@ The full contract is `API_Design.md` §11. In short, the controller:
   copies the answer into the `deposit` call;
 - asks for a new `reference` image of the empty flap at boot and after each
   transfer or return, with the flap level and the LED strip on;
-- names each screen change with `screen`.
+- names each screen change with `screen`;
+- while the scanner is armed, calls `health` from a separate task on the other
+  core, so a slow call to the web app can't trip the bin station's controller
+  timeout (§11.9). It stops when the main loop stalls or a device call outlives
+  its lease; the controller then disarms, and arms again only once the bin
+  station confirms the disarm. If the task isn't running, the bin doesn't arm.
+
+**Fresh weights.** After a session opens, the controller fetches the config
+again and applies its calibration; with no calibration, or none it can apply, it
+cancels the session. After `verify` passes it weighs again and sends that
+reading, and just before the transfer it checks the item is still on the flap.
+If it isn't, nothing moves and no `complete` is sent: the session stays
+`ACCEPTED` for an admin to review (`System_Plan.md` §8.2).
 
 **No answer means no deposit.** If the bin station does not answer, or `verify`
 returns an error, the controller cancels the session and returns the item; the
 flap never tips toward the bin.
+
+**Testing without the Pi.** `tools/mock_station/` answers the same six
+endpoints with simulated parts and a control page for injecting scans, touches
+and failures. Point the controller's bin station URL at it in the setup portal.
 
 ## The actuator and the flap
 
