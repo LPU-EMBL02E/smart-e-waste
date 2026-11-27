@@ -133,7 +133,9 @@ change.
   `Database_Schema.md` (`weight_g`, `points_delta`, `SESSION_NOT_FOUND`). Units go
   in the name (`_g`, `_mm`, `_ms`, `_s`).
 - **No magic numbers.** PHP settings go in `config/ewaste.php`; firmware
-  constants go in `include/config.hpp`; pins only in `include/pins.hpp`.
+  constants go in `include/config.hpp`; the board's pins only in
+  `include/pinlayout.hpp`, and what the bin wires to them only in
+  `include/pins.hpp`.
 - **English, plain wording**, in code, comments, commits, and UI text.
 
 ### 4.3 PHP / Laravel (`web/`)

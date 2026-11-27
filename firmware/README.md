@@ -2,8 +2,8 @@
 
 Two programs:
 
-- `controller/`, on the ESP32-S3-DevKitC-1 (N8R2). `docs/System_Plan.md` §2 and
-  §8.2. The rest of this file is about it.
+- `controller/`, on a YD-ESP32-S3 (N8R2), a copy of the ESP32-S3-DevKitC-1.
+  `docs/System_Plan.md` §2 and §8.2. The rest of this file is about it.
 - `station/`, the bin station: Python on the Pi, run as a systemd service.
   `docs/System_Plan.md` §8.3 and `docs/API_Design.md` §11. Not started yet; the
   build spec is [docs/TRACK-E-BIN-STATION.md](docs/TRACK-E-BIN-STATION.md).
@@ -42,7 +42,9 @@ git.
 
 ## Pin map
 
-Every pin number is in `controller/include/pins.hpp` and nowhere else. The map is
+Every pin number is in `controller/include/pinlayout.hpp`, named after the
+board's pins (`GPIO4`, `USB_D_PLUS`), and nowhere else; `controller/include/pins.hpp`
+assigns the bin's signals to those names. The map is
 in `System_Plan.md` §2. Things to keep in mind:
 
 - **Actuator current sense is on GPIO 1, an ADC1 pin.** ADC2 can't be read while
@@ -52,11 +54,26 @@ in `System_Plan.md` §2. Things to keep in mind:
 - The driver's enable and PWM lines have 10 kΩ pull-downs, so the actuator stays
   off while the board boots or resets.
 - Leave alone: GPIO 0, 3, 45 and 46 (boot strapping), 19 and 20 (USB), 26 to 32
-  (flash and PSRAM), 43 and 44 (the USB-to-serial port), and the RGB LED pin of
-  the board revision in use (38 or 48).
+  (flash and PSRAM), 43 and 44 (the USB-to-serial port), and 48 (the RGB LED).
+  The board is a YD-ESP32-S3, a copy of the DevKitC-1 with the RGB LED on
+  GPIO 48; see [docs/ESP32-S3.md](docs/ESP32-S3.md).
 
 **TODO(team):** the service-panel interlock and the flap level sensor have no pin
 yet, and the current-sense wiring is not on the schematic (`System_Plan.md` §10).
+
+## Reference sheets
+
+In `docs/`. They add detail for the firmware; `docs/` at the repository root
+wins if the two disagree.
+
+- [ESP32-S3.md](docs/ESP32-S3.md): the controller board, its pin header and
+  what to know when wiring it.
+- [ACTUATOR.md](docs/ACTUATOR.md): the linear actuator that tips the flap, and
+  what is still to be measured on the bench.
+- [TRACK-E-BIN-STATION.md](docs/TRACK-E-BIN-STATION.md): the build spec for the
+  bin station.
+
+Open firmware work is listed in [TODO.md](TODO.md).
 
 ---
 
