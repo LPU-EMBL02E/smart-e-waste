@@ -411,7 +411,7 @@
             function settings() {
               return (
                 title('Settings', 'Review the interface and this demo session.') +
-                `<div class="grid cols">${card(secTitle('Appearance') + '<p>Lavender and white</p><p class="hint">The shared campus design applies throughout this prototype.</p>')}${card(secTitle('Session') + '<p class="muted small">This mock login has no real authentication. Logging out returns you to the demo sign-in page.</p><div class="actions"><button class="btn" id="settingsLogout">Log out</button></div>')}</div>`
+                `<div class="grid cols">${card(secTitle('Appearance') + '<p>LPU red and white</p><p class="hint">The shared campus design applies throughout this prototype.</p>')}${card(secTitle('Session') + '<p class="muted small">This mock login has no real authentication. Logging out returns you to the demo sign-in page.</p><div class="actions"><button class="btn" id="settingsLogout">Log out</button></div>')}</div>`
               );
             }
 
@@ -473,7 +473,7 @@
               );
             }
             function sidebar() {
-              return `<details class="sidebar" id="sidebar" open><summary class="nav-summary" id="menuToggle">Student navigation</summary><div class="brand"><div class="brand-icon" aria-hidden="true">EW</div><div class="brand-copy"><strong>Smart E-Waste</strong><small>Student portal</small></div></div><nav class="nav" aria-label="Student pages">${['dashboard', 'profile', 'points', 'history', 'organization', 'leaderboard', 'rewards', 'redemption', 'notifications', 'settings'].map((p) => `<button class="${state.page === p ? 'active' : ''}" data-go="${p}" ${state.page === p ? 'aria-current="page"' : ''}><span class="symbol">${p === 'notifications' ? bellIcon(state.notifications.filter((n) => !n.read).length, true) : navIcon(p)}</span><span class="label">${titles[p]}</span></button>`).join('')}</nav><div class="side-bottom"><button class="logout" id="logout"><span class="symbol">${navIcon('logout')}</span><span class="label">Log out</span></button></div></details>`;
+              return `<details class="sidebar" id="sidebar" open><summary class="nav-summary" id="menuToggle">Student navigation</summary><div class="brand"><div class="brand-icon" aria-hidden="true"><img src="ecocircuit-logo.png" alt="" width="40" height="40"></div><div class="brand-copy"><strong>EcoCircuit</strong><small>Student portal</small></div></div><nav class="nav" aria-label="Student pages">${['dashboard', 'profile', 'points', 'history', 'organization', 'leaderboard', 'rewards', 'redemption', 'notifications', 'settings'].map((p) => `<button class="${state.page === p ? 'active' : ''}" data-go="${p}" ${state.page === p ? 'aria-current="page"' : ''}><span class="symbol">${p === 'notifications' ? bellIcon(state.notifications.filter((n) => !n.read).length, true) : navIcon(p)}</span><span class="label">${titles[p]}</span></button>`).join('')}</nav><div class="side-bottom"><button class="logout" id="logout"><span class="symbol">${navIcon('logout')}</span><span class="label">Log out</span></button></div></details>`;
             }
 
             function app() {
