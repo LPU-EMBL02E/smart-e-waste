@@ -208,6 +208,11 @@ Copy the e-waste model file to the path in the bin station's settings file. It
 is trained on a dev machine, never on the Pi. It runs as a systemd service, and Chromium shows its screen page in kiosk mode
 under `cage`. Enter its address in the controller's setup portal.
 
+Until then, `tools/mock_station/` answers the same API with simulated parts, so
+the controller can be tested on a laptop. Enter the laptop's address in the
+controller's setup portal instead. How to run it and drive it from its control
+page is in `tools/mock_station/README.md`.
+
 ---
 
 ## 8. What is not built yet
@@ -218,8 +223,9 @@ admin, the admin user and organization pages and the profile page work, and ever
 page uses the styled interface. The reports page says its contents aren't decided
 (`docs/API_Design.md` §10 question 2). `php artisan test` covers what is built.
 
-The firmware modules are headers with stub bodies, and the bin station is not
-started.
+The controller firmware runs the deposit sequence and builds, but has not
+been tested on the bench yet (`firmware/README.md`). The bin station is not
+started; `tools/mock_station/` stands in for it.
 
 `README.md` §"State of the repository" lists what is real, what is a skeleton,
 and the decisions still open from `docs`.
