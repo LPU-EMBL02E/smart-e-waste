@@ -62,7 +62,7 @@ in the demo. All dashboard balances and activity remain illustrative fixtures.
 ## Shared wireframe implementation
 
 The [shared access wireframe](wireframes/access-wireframe.html) is now the guest
-entry for both existing dashboard prototypes. It uses the lavender, white and
+entry for both existing dashboard prototypes. It uses the LPU red, white and
 black design guide and includes email/password sign-in, rejection and attempt-limit
 feedback, password recovery and its generic acknowledgement, the shared setup/reset
 form, validation, a labelled demo result, unusable links, access denial and a
@@ -122,7 +122,7 @@ checkout has no `web/vendor/`; no PHP application files were changed.
 All three prototypes now load [one shared stylesheet](wireframes/wireframe.css),
 following [DESIGN.md](DESIGN.md). This covers 20 admin screens, 11 student views
 and 11 access states, including registration and password setup/recovery. The
-stylesheet owns the exact lavender/white/black palette, native font, type sizes,
+stylesheet owns the exact red/white/black palette, native font, type sizes,
 spacing, borders, buttons, fields, statuses and responsive shells. The student
 points panel is the focal accent; operational admin tables stay flat and readable.
 The student home table spans the content width so its columns remain readable.
@@ -133,7 +133,7 @@ Tables have named, focusable scroll regions, numeric alignment and a mobile scro
 hint. Headings follow the active page, forms retain persistent labels, and keyboard
 focus and reduced motion follow the guide. The existing reward confirmation uses
 a native dialog with Cancel/Escape support, and feedback remains inline instead of
-disappearing on a timer. The Settings reference uses the shared lavender/white theme.
+disappearing on a timer. The Settings reference uses the shared red/white theme.
 
 Admin controls that only represented future actions are disabled and explained in
 the prototype banner. The existing BIN-01 and transaction detail examples are
@@ -162,6 +162,20 @@ schema or authoritative source-document changes are included. Laravel tests and
 Pint remain unavailable without `web/vendor/`; screen-reader and browser zoom
 testing remain follow-ups. These files are prototypes; production account approval
 and audit contracts still require the human team's implementation and review.
+
+## Theme and logo update — 27 November
+
+The prototypes follow the web app's move from lavender to Lyceum of the
+Philippines University red (`DESIGN.md` §3). `wireframe.css`, and the copies of
+it inlined in `design-system.html` and `EcoCircuit_Admin_Dashboard_v2.html`, use
+the `accent`, `accent-strong`, `accent-wash` and `on-accent` tokens in place of
+the `lavender-*` ones: white text on red fills, LPU gray for muted text and the
+warmer `danger` red. `design-system.html` documents the dark-theme values from
+`DESIGN.md` but its samples stay in the light theme. The "EW" badge is replaced
+by the EcoCircuit logo beside the app name, from a copy of the app's 80px logo
+kept next to the prototypes (`wireframes/ecocircuit-logo.png`), since the local
+preview server serves only `web/docs/`. The browser checks above were not re-run
+for this change.
 
 ## Sources and scope
 
@@ -298,7 +312,7 @@ Laravel routes and templates in the following order:
    new policy or endpoint in a mockup.
 2. **Human UI designer:** produce the shared guest entry and three guest forms,
    their error/success states, and both role destinations first; then connect the
-   existing user/organization tools. Use the lavender/white/black design system,
+   existing user/organization tools. Use the red/white/black design system,
    persistent labels, visible keyboard focus and mobile layouts from [DESIGN.md](DESIGN.md).
 3. **Human frontend implementer:** build the existing guest/student/admin Blade
    shells and agreed view files using Tailwind and ordinary CSRF-protected forms.

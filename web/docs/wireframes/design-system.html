@@ -27,13 +27,14 @@
                 line-height: 1.5;
                 --paper: #ffffff;
                 --ink: #000000;
-                --lavender: #c4b5fd;
-                --lavender-strong: #a78bfa;
-                --lavender-wash: #f5f1ff;
-                --muted: #595463;
+                --accent: #a6192e;
+                --accent-strong: #8a1325;
+                --accent-wash: #fbeef0;
+                --on-accent: #ffffff;
+                --muted: #5f6062;
                 --success: #166534;
                 --warning: #92400e;
-                --danger: #b91c1c;
+                --danger: #b42318;
                 --gutter: 1rem;
                 color: var(--ink);
                 background: var(--paper);
@@ -118,12 +119,12 @@
             }
             button.primary,
             .button.primary {
-                background: var(--lavender);
-                color: var(--ink);
+                background: var(--accent);
+                color: var(--on-accent);
                 box-shadow: 3px 3px 0 var(--ink);
             }
             .primary:not(:disabled):active {
-                background: var(--lavender-strong);
+                background: var(--accent-strong);
                 transform: translate(2px, 2px);
                 box-shadow: 1px 1px 0 var(--ink);
             }
@@ -153,7 +154,7 @@
                 color: var(--ink);
             }
             input[readonly] {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             input[type="checkbox"] {
                 width: 1.25rem;
@@ -237,7 +238,7 @@
             }
             .demo-banner,
             .wf-page-head {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
                 border-bottom: 2px solid var(--ink);
                 padding: 0.75rem var(--gutter);
                 font-size: 0.875rem;
@@ -268,10 +269,20 @@
                 flex: 0 0 auto;
                 width: 2.75rem;
                 height: 2.75rem;
-                background: var(--lavender);
                 border: 2px solid var(--ink);
                 border-radius: 0.25rem;
                 font-weight: 800;
+            }
+            .brand-mark,
+            .brand-icon {
+                overflow: hidden;
+            }
+            .brand-mark img,
+            .brand-icon img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
             }
             .brand-copy strong,
             .brand-copy small,
@@ -287,7 +298,7 @@
                 font-weight: 400;
             }
             .avatar {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .tag,
             .pill,
@@ -387,7 +398,7 @@
             .nav button.active,
             .wf-sidebar .wf-nav.active {
                 border-color: var(--ink);
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
                 font-weight: 700;
             }
             .symbol {
@@ -474,8 +485,8 @@
                 padding-inline: 0.125rem;
                 border: 2px solid var(--ink);
                 border-radius: 0.25rem;
-                background: var(--lavender);
-                color: var(--ink);
+                background: var(--accent);
+                color: var(--on-accent);
                 font-size: 0.875rem;
                 font-weight: 800;
                 line-height: 1.25;
@@ -594,7 +605,8 @@
                 overflow-wrap: anywhere;
             }
             .points-panel {
-                background: var(--lavender);
+                background: var(--accent);
+                color: var(--on-accent);
                 box-shadow: 4px 4px 0 var(--ink);
             }
             .points-panel .stat-num {
@@ -603,7 +615,7 @@
             }
             .points-panel .stat-foot,
             .points-panel .stat-label {
-                color: var(--ink);
+                color: var(--on-accent);
             }
             .points-unit {
                 font-size: 1rem;
@@ -643,7 +655,7 @@
                 vertical-align: top;
             }
             th {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
                 font-weight: 600;
                 white-space: nowrap;
             }
@@ -694,7 +706,7 @@
                 max-width: 65ch;
             }
             .notification.unread {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .notification h3 {
                 margin-bottom: 0.5rem;
@@ -748,7 +760,7 @@
                 border: 2px solid var(--ink);
                 border-left-width: 4px;
                 border-radius: 0.25rem;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .toast {
                 margin-bottom: 1.5rem;
@@ -768,7 +780,7 @@
             }
             .progress > div {
                 height: 100%;
-                background: var(--lavender);
+                background: var(--accent);
             }
             .filters {
                 display: flex;
@@ -802,7 +814,7 @@
                 font-variant-numeric: tabular-nums;
             }
             .rank-row.you {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .rank-n {
                 font-weight: 800;
@@ -867,7 +879,7 @@
                 padding: 1rem;
                 border: 2px solid var(--ink);
                 border-radius: 0.25rem;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .ph {
                 display: grid;
@@ -878,7 +890,7 @@
             .cellph {
                 display: inline-block;
                 min-height: 0.5rem;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .cellph[colspan] {
                 display: table-cell;
@@ -889,10 +901,10 @@
             }
             .bar {
                 border: 2px solid var(--ink);
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .bar > * {
-                background: var(--lavender);
+                background: var(--accent);
             }
             .wf-canvas .field + .field {
                 margin-top: 1.5rem;
@@ -959,7 +971,7 @@
             }
             .flow-node.head {
                 font-weight: 700;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .flow-node.pub {
                 border-style: dashed;
@@ -986,7 +998,7 @@
                 border-style: dashed;
             }
             .legend .fill {
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .wrap {
                 width: min(80rem, calc(100% - var(--gutter) * 2));
@@ -1175,7 +1187,7 @@
                 .portal-notes {
                     display: grid;
                     gap: 1rem;
-                    border-top: 4px solid var(--lavender);
+                    border-top: 4px solid var(--accent);
                     margin-top: 2rem;
                     padding-top: 1.5rem;
                 }
@@ -1203,11 +1215,11 @@
             @media (hover: hover) and (pointer: fine) {
                 button:not(:disabled):hover,
                 .button:not(:disabled):hover {
-                    background: var(--lavender-wash);
+                    background: var(--accent-wash);
                 }
                 button.primary:not(:disabled):hover,
                 .button.primary:not(:disabled):hover {
-                    background: var(--lavender-strong);
+                    background: var(--accent-strong);
                 }
             }
             @media (prefers-reduced-motion: reduce) {
@@ -1242,7 +1254,7 @@
                 left: 0;
                 top: 0;
                 bottom: 0;
-                background: var(--lavender-strong);
+                background: var(--accent-strong);
                 border-right: 2px solid var(--ink);
             }
             .meter.none i {
@@ -1290,7 +1302,7 @@
                 font-family:
                     ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                 font-size: 0.875em;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
                 padding: 0 4px;
             }
             .ds-code {
@@ -1373,7 +1385,7 @@
             .ds-space span {
                 display: block;
                 height: 24px;
-                background: var(--lavender);
+                background: var(--accent);
                 border: 2px solid var(--ink);
                 box-sizing: content-box;
             }
@@ -1401,17 +1413,17 @@
             .ds-box-sq {
                 border-width: 1px;
                 border-radius: 0;
-                background: var(--lavender-wash);
+                background: var(--accent-wash);
             }
             .ds-box-s3 {
                 box-shadow: 3px 3px 0 var(--ink);
-                background: var(--lavender);
+                background: var(--accent);
             }
             .ds-box-s4 {
                 box-shadow: 4px 4px 0 var(--ink);
             }
             .ds-lav {
-                background: var(--lavender);
+                background: var(--accent);
             }
             .ds-icons {
                 display: grid;
@@ -1492,7 +1504,7 @@
                 border-radius: 4px;
                 padding: 16px;
             }
-            .ds-brandcard img {
+            .ds-brandcard > img {
                 border: 2px solid var(--ink);
                 border-radius: 4px;
                 flex: 0 0 auto;
@@ -1631,9 +1643,15 @@
         <div class="ds-layout">
             <aside class="ds-side">
                 <div class="brand ds-brandrow">
-                    <span class="brand-mark" aria-hidden="true">EW</span>
+                    <span class="brand-mark" aria-hidden="true"
+                        ><img
+                            src="ecocircuit-logo.png"
+                            alt=""
+                            width="40"
+                            height="40"
+                    /></span>
                     <span class="brand-copy"
-                        ><strong>Smart E-Waste</strong
+                        ><strong>EcoCircuit</strong
                         ><small>Design system</small></span
                     >
                 </div>
@@ -1662,8 +1680,9 @@
                     <p class="eyebrow">Smart E-Waste web app</p>
                     <h1>Design system</h1>
                     <p class="ds-lead">
-                        Minimalist neobrutalism in lavender, white and black.
-                        This page shows the colors, type, spacing, components
+                        Minimalist neobrutalism in Lyceum of the Philippines
+                        University (LPU) red, white and black, with LPU gray for
+                        supporting text. This page shows the colors, type, spacing, components
                         and rules that the Student and Admin pages use. Every
                         sample below is drawn with the shared
                         <code>wireframe.css</code>, so what you see is what the
@@ -1676,7 +1695,7 @@
                         </div>
                         <div>
                             <dt>Theme</dt>
-                            <dd>Light only: lavender, white, black</dd>
+                            <dd>Light, dark or the device's setting; red, white, black</dd>
                         </div>
                         <div>
                             <dt>Typeface</dt>
@@ -1699,10 +1718,12 @@
                 <section id="color" class="ds-section">
                     <h2>Color</h2>
                     <p class="ds-note">
-                        Six base colors and three meaning colors. Do not add
+                        Seven base colors and three meaning colors. Do not add
                         nearby shades for individual pages. White does most of
                         the work: about three quarters of a screen should stay
-                        white.
+                        white. LPU publishes red and gray as its colors but no
+                        exact values; these shades read as LPU red and gray and
+                        meet the contrast pairs below.
                     </p>
                     <h3>Base colors</h3>
                     <div class="ds-swatches">
@@ -1712,10 +1733,7 @@
                                 style="background: var(--paper)"
                             ></div>
                             <strong>paper</strong><code>#FFFFFF</code>
-                            <span
-                                >Page background, fields, tables, ordinary
-                                panels</span
-                            >
+                            <span>Page background, fields, tables, ordinary panels</span>
                         </div>
                         <div class="ds-sw">
                             <div
@@ -1723,45 +1741,47 @@
                                 style="background: var(--ink)"
                             ></div>
                             <strong>ink</strong><code>#000000</code>
-                            <span
-                                >Text, borders, icons, hard shadows, focus
-                                outlines</span
-                            >
+                            <span>Text, borders, icons, hard shadows, focus outlines</span>
                         </div>
                         <div class="ds-sw">
                             <div
                                 class="ds-chip"
-                                style="background: var(--lavender)"
+                                style="background: var(--accent)"
                             ></div>
-                            <strong>lavender</strong><code>#C4B5FD</code>
-                            <span>Primary buttons and the one focal panel</span>
+                            <strong>accent</strong><code>#A6192E</code>
+                            <span>LPU red. Primary buttons and the one focal panel</span>
                         </div>
                         <div class="ds-sw">
                             <div
                                 class="ds-chip"
-                                style="background: var(--lavender-strong)"
+                                style="background: var(--accent-strong)"
                             ></div>
-                            <strong>lavender-strong</strong><code>#A78BFA</code>
-                            <span>Primary button hover and pressed fill</span>
+                            <strong>accent-strong</strong><code>#8A1325</code>
+                            <span>Primary button hover and pressed fill; meter level</span>
                         </div>
                         <div class="ds-sw">
                             <div
                                 class="ds-chip"
-                                style="background: var(--lavender-wash)"
+                                style="background: var(--accent-wash)"
                             ></div>
-                            <strong>lavender-wash</strong><code>#F5F1FF</code>
+                            <strong>accent-wash</strong><code>#FBEEF0</code>
                             <span>Selected navigation and table headers</span>
+                        </div>
+                        <div class="ds-sw">
+                            <div
+                                class="ds-chip"
+                                style="background: var(--on-accent)"
+                            ></div>
+                            <strong>on-accent</strong><code>#FFFFFF</code>
+                            <span>Text and icons on an accent or accent-strong fill</span>
                         </div>
                         <div class="ds-sw">
                             <div
                                 class="ds-chip"
                                 style="background: var(--muted)"
                             ></div>
-                            <strong>muted</strong><code>#595463</code>
-                            <span
-                                >Supporting text on white or lavender-wash
-                                only</span
-                            >
+                            <strong>muted</strong><code>#5F6062</code>
+                            <span>LPU gray. Supporting text on white or accent-wash only</span>
                         </div>
                     </div>
 
@@ -1773,10 +1793,7 @@
                                 style="background: var(--success)"
                             ></div>
                             <strong>success</strong><code>#166534</code>
-                            <span
-                                >A server-confirmed successful or fulfilled
-                                result</span
-                            >
+                            <span>A server-confirmed successful or fulfilled result</span>
                         </div>
                         <div class="ds-sw">
                             <div
@@ -1791,10 +1808,8 @@
                                 class="ds-chip"
                                 style="background: var(--danger)"
                             ></div>
-                            <strong>danger</strong><code>#B91C1C</code>
-                            <span
-                                >Errors, failures and destructive actions</span
-                            >
+                            <strong>danger</strong><code>#B42318</code>
+                            <span>Errors, failures and destructive actions</span>
                         </div>
                     </div>
 
@@ -1838,30 +1853,42 @@
                                         <span
                                             class="ds-pair"
                                             style="
-                                                background: var(--lavender);
+                                                background: var(--accent-wash);
                                                 color: var(--ink);
                                             "
                                             >Aa</span
                                         >
                                     </td>
-                                    <td>ink on lavender</td>
-                                    <td class="numeric">11.38 : 1</td>
+                                    <td>ink on accent-wash</td>
+                                    <td class="numeric">18.59 : 1</td>
                                 </tr>
                                 <tr>
                                     <td>
                                         <span
                                             class="ds-pair"
                                             style="
-                                                background: var(
-                                                    --lavender-strong
-                                                );
-                                                color: var(--ink);
+                                                background: var(--accent);
+                                                color: var(--on-accent);
                                             "
                                             >Aa</span
                                         >
                                     </td>
-                                    <td>ink on lavender-strong</td>
-                                    <td class="numeric">7.72 : 1</td>
+                                    <td>on-accent on accent</td>
+                                    <td class="numeric">7.50 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span
+                                            class="ds-pair"
+                                            style="
+                                                background: var(--accent-strong);
+                                                color: var(--on-accent);
+                                            "
+                                            >Aa</span
+                                        >
+                                    </td>
+                                    <td>on-accent on accent-strong</td>
+                                    <td class="numeric">9.54 : 1</td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -1875,23 +1902,21 @@
                                         >
                                     </td>
                                     <td>muted on paper</td>
-                                    <td class="numeric">7.31 : 1</td>
+                                    <td class="numeric">6.29 : 1</td>
                                 </tr>
                                 <tr>
                                     <td>
                                         <span
                                             class="ds-pair"
                                             style="
-                                                background: var(
-                                                    --lavender-wash
-                                                );
+                                                background: var(--accent-wash);
                                                 color: var(--muted);
                                             "
                                             >Aa</span
                                         >
                                     </td>
-                                    <td>muted on lavender-wash</td>
-                                    <td class="numeric">6.58 : 1</td>
+                                    <td>muted on accent-wash</td>
+                                    <td class="numeric">5.57 : 1</td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -1933,16 +1958,166 @@
                                         >
                                     </td>
                                     <td>danger on paper</td>
-                                    <td class="numeric">6.47 : 1</td>
+                                    <td class="numeric">6.57 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span
+                                            class="ds-pair"
+                                            style="
+                                                background: var(--accent-wash);
+                                                color: var(--danger);
+                                            "
+                                            >Aa</span
+                                        >
+                                    </td>
+                                    <td>danger on accent-wash</td>
+                                    <td class="numeric">5.82 : 1</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <p class="ds-note">
-                        Lavender is a background color, not a text color. Put
-                        black text on lavender and lavender-strong, and keep the
-                        black border on lavender controls. Light theme only:
-                        there is no dark mode.
+                        Red is a background color, not a text color. Put white
+                        text (<code>on-accent</code>) on accent and
+                        accent-strong, never black: black on accent is about
+                        2.8 : 1. Keep the black border on red controls.
+                        <code>danger</code> is a warmer red used only as text
+                        and borders with a written label, never as a fill, so
+                        it does not read as a primary action.
+                    </p>
+
+                    <h3>Dark theme</h3>
+                    <p class="ds-note">
+                        Signed-in pages and the sign-in pages offer Light, Dark
+                        and Device (API_Design.md §7.6, P52). The look stays the
+                        same; only these values change. <code>accent</code>,
+                        <code>accent-strong</code> and <code>on-accent</code>
+                        keep their light values. The prototypes on this page are
+                        drawn in the light theme.
+                    </p>
+                    <div
+                        class="table-wrap"
+                        role="region"
+                        tabindex="0"
+                        aria-label="Dark theme values"
+                    >
+                        <table>
+                            <caption class="hidden">
+                                Dark theme values
+                            </caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Token</th>
+                                    <th scope="col">Light</th>
+                                    <th scope="col">Dark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>paper</code></td>
+                                    <td><code>#FFFFFF</code></td>
+                                    <td><code>#161618</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>ink</code></td>
+                                    <td><code>#000000</code></td>
+                                    <td><code>#F2F2F3</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>accent-wash</code></td>
+                                    <td><code>#FBEEF0</code></td>
+                                    <td><code>#3A1C22</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>muted</code></td>
+                                    <td><code>#5F6062</code></td>
+                                    <td><code>#B4B5B8</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>success</code></td>
+                                    <td><code>#166534</code></td>
+                                    <td><code>#6FDC9A</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>warning</code></td>
+                                    <td><code>#92400E</code></td>
+                                    <td><code>#F2B45A</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>danger</code></td>
+                                    <td><code>#B42318</code></td>
+                                    <td><code>#FF8F87</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        class="table-wrap"
+                        role="region"
+                        tabindex="0"
+                        aria-label="Dark theme text pairs"
+                    >
+                        <table>
+                            <caption class="hidden">
+                                Dark theme text pairs
+                            </caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Text / background</th>
+                                    <th scope="col" class="numeric">
+                                        Contrast
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ink on paper</td>
+                                    <td class="numeric">16.15 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>ink on accent-wash</td>
+                                    <td class="numeric">13.71 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>on-accent on accent</td>
+                                    <td class="numeric">7.50 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>on-accent on accent-strong</td>
+                                    <td class="numeric">9.54 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>muted on paper</td>
+                                    <td class="numeric">8.81 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>muted on accent-wash</td>
+                                    <td class="numeric">7.48 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>success on paper</td>
+                                    <td class="numeric">10.65 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>warning on paper</td>
+                                    <td class="numeric">9.85 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>danger on paper</td>
+                                    <td class="numeric">8.20 : 1</td>
+                                </tr>
+                                <tr>
+                                    <td>danger on accent-wash</td>
+                                    <td class="numeric">6.96 : 1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="ds-note">
+                        On the dark paper the red fill is itself dark, so the
+                        ink outline marks a red control's edge and the meter's
+                        level. The QR code stays black on white in both themes.
                     </p>
                 </section>
 
@@ -2401,7 +2576,7 @@
                         <div class="ds-demo">
                             <button class="primary">Redeem reward</button>
                             <span class="meta"
-                                >Primary · lavender, 3px shadow</span
+                                >Primary · red, white text, 3px shadow</span
                             >
                         </div>
                         <div class="ds-demo">
@@ -2455,8 +2630,8 @@
                                 <tr>
                                     <td>Hover</td>
                                     <td>
-                                        Primary becomes lavender-strong;
-                                        secondary becomes lavender-wash. Only on
+                                        Primary becomes accent-strong;
+                                        secondary becomes accent-wash. Only on
                                         a mouse.
                                     </td>
                                 </tr>
@@ -2484,7 +2659,7 @@
                                 <tr>
                                     <td>Selected navigation</td>
                                     <td>
-                                        Lavender-wash, ink outline, bold text,
+                                        Accent-wash, ink outline, bold text,
                                         <code>aria-current="page"</code>.
                                     </td>
                                 </tr>
@@ -2673,7 +2848,7 @@
                         </div>
                     </div>
                     <p class="ds-note">
-                        One lavender focal panel per page, with a static hard
+                        One red focal panel per page, with white text and a static hard
                         shadow. It has no hover and no pointer cursor. Ordinary
                         tiles stay flat.
                     </p>
@@ -2727,7 +2902,7 @@
                     <h2>Tables</h2>
                     <p class="ds-note">
                         Real table headings, a caption or accessible name,
-                        lavender-wash header cells and white rows. Wide tables
+                        accent-wash header cells and white rows. Wide tables
                         scroll inside their own box, never the whole page. Lists
                         stay paginated.
                     </p>
@@ -2810,10 +2985,14 @@
                             <div class="wf-logo">
                                 <div class="brand">
                                     <span class="brand-mark" aria-hidden="true"
-                                        >EW</span
-                                    >
+                                        ><img
+                                            src="ecocircuit-logo.png"
+                                            alt=""
+                                            width="40"
+                                            height="40"
+                                    /></span>
                                     <span class="brand-copy"
-                                        ><strong>Smart E-Waste</strong
+                                        ><strong>EcoCircuit</strong
                                         ><small>Student portal</small></span
                                     >
                                 </div>
@@ -2903,10 +3082,14 @@
                             <div class="wf-logo">
                                 <div class="brand">
                                     <span class="brand-mark" aria-hidden="true"
-                                        >EW</span
-                                    >
+                                        ><img
+                                            src="ecocircuit-logo.png"
+                                            alt=""
+                                            width="40"
+                                            height="40"
+                                    /></span>
                                     <span class="brand-copy"
-                                        ><strong>Smart E-Waste</strong
+                                        ><strong>EcoCircuit</strong
                                         ><small>Admin portal</small></span
                                     >
                                 </div>
@@ -2936,7 +3119,7 @@
                         </div>
                     </div>
                     <p class="ds-note">
-                        Selected item: lavender-wash fill, ink outline, bold
+                        Selected item: accent-wash fill, ink outline, bold
                         text and
                         <code>aria-current="page"</code>. Count badges are plain
                         numbers.
@@ -2950,7 +3133,7 @@
                         until you leave the page. No auto-dismiss timer.
                     </div>
                     <div class="note">
-                        <strong>Note.</strong> Banners are lavender-wash with a
+                        <strong>Note.</strong> Banners are accent-wash with a
                         4px left rule and a black border. They carry
                         information, not decoration.
                     </div>
@@ -3028,13 +3211,18 @@
                     <div class="ds-brand">
                         <div class="ds-brandcard">
                             <span class="brand-mark" aria-hidden="true"
-                                >EW</span
-                            >
+                                ><img
+                                    src="ecocircuit-logo.png"
+                                    alt=""
+                                    width="40"
+                                    height="40"
+                            /></span>
                             <div>
-                                <strong>EW mark</strong>
+                                <strong>Brand mark</strong>
                                 <p class="meta">
-                                    In the current wireframes. Lavender square,
-                                    2px border, 4px corners, 44px.
+                                    The logo in a 44px square with a 2px ink
+                                    border and 4px corners, beside the app name.
+                                    Decorative: the name next to it is the text.
                                 </p>
                             </div>
                         </div>
@@ -3048,11 +3236,12 @@
                             <div>
                                 <strong>EcoCircuit logo</strong>
                                 <p class="meta">
-                                    The team's chosen logo (slide 5). It uses
-                                    blue, green and dark purple, which are
-                                    outside this palette. Use on the web pages
-                                    is waiting for the Software Project Head's
-                                    decision.
+                                    In the sidebar, on the sign-in and error
+                                    pages, and as the tab icon. Its blue, green
+                                    and dark purple are outside this palette;
+                                    show it as it is, never recolored. The page
+                                    sends an 80px copy, twice the size it is
+                                    shown at.
                                 </p>
                             </div>
                         </div>
@@ -3080,8 +3269,8 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        Flat lavender fills, white surfaces,
-                                        black text
+                                        Flat red fills, white surfaces, black
+                                        text
                                     </td>
                                     <td>
                                         Gradients, glass effects, glow, textured

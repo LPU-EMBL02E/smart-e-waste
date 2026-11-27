@@ -13,9 +13,9 @@
 -->
 <style>
   :root {
-    --paper: #ffffff; --ink: #000000; --lavender: #c4b5fd; --lavender-strong: #a78bfa;
-    --lavender-wash: #f5f1ff; --muted: #595463; --success: #166534; --warning: #92400e;
-    --danger: #b91c1c; --canvas: #ececf0;
+    --paper: #ffffff; --ink: #000000; --accent: #a6192e; --accent-strong: #8a1325;
+    --accent-wash: #fbeef0; --on-accent: #ffffff; --muted: #5f6062; --success: #166534;
+    --warning: #92400e; --danger: #b42318; --canvas: #ececf0;
     --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   }
@@ -36,7 +36,7 @@
   .doc-head p { margin: 0; font-size: 0.875rem; color: var(--muted); }
   .toggles { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.875rem; font-weight: 600; }
   .toggles label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; }
-  .toggles input { width: 18px; height: 18px; accent-color: var(--lavender-strong); }
+  .toggles input { width: 18px; height: 18px; accent-color: var(--accent-strong); }
   .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; }
   .index { position: sticky; top: 74px; max-height: calc(100vh - 74px); overflow: auto; padding: 16px; background: var(--paper);
            border-right: 2px solid var(--ink); font-size: 0.875rem; }
@@ -44,7 +44,7 @@
   .index h2:first-child { margin-top: 0; }
   .index ul { list-style: none; margin: 0; padding: 0; }
   .index a { display: flex; gap: 8px; text-decoration: none; padding: 3px 6px; border-radius: 4px; }
-  .index a:hover { background: var(--lavender-wash); }
+  .index a:hover { background: var(--accent-wash); }
   .index b { min-width: 2.4em; font-variant-numeric: tabular-nums; }
   main.doc { padding: 24px 32px 96px; min-width: 0; }
   @media (max-width: 900px) {
@@ -64,7 +64,7 @@
 
   .screen { margin: 0 0 40px; scroll-margin-top: 90px; }
   .screen-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 8px; }
-  .screen-head .sid { font-weight: 800; background: var(--lavender); border: 2px solid var(--ink); border-radius: 4px; padding: 0 8px; }
+  .screen-head .sid { font-weight: 800; background: var(--accent); color: var(--on-accent); border: 2px solid var(--ink); border-radius: 4px; padding: 0 8px; }
   .screen-head h3 { margin: 0; font-size: 1.25rem; }
   .screen-head .route { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
   .screen-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
@@ -89,7 +89,7 @@
   .chrome .dots i { width: 9px; height: 9px; border: 1.5px solid var(--ink); border-radius: 50%; display: block; }
   .chrome .url { flex: 1; font-family: var(--mono); font-size: 0.75rem; border: 1.5px solid var(--ink); border-radius: 4px; padding: 1px 8px; background: var(--paper);
                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chrome .state { font-size: 0.72rem; font-weight: 700; border: 1.5px solid var(--ink); border-radius: 3px; padding: 0 6px; background: var(--lavender-wash); white-space: nowrap; }
+  .chrome .state { font-size: 0.72rem; font-weight: 700; border: 1.5px solid var(--ink); border-radius: 3px; padding: 0 6px; background: var(--accent-wash); white-space: nowrap; }
 
   /* ---------- inside a page ---------- */
   .pg { font-size: 15px; }
@@ -108,7 +108,7 @@
   .shell-student header { padding: 10px 24px; border-bottom: 2px solid var(--ink); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
   .snav { display: flex; flex-wrap: wrap; gap: 4px; font-size: 0.875rem; font-weight: 600; }
   .snav a, .anav a { text-decoration: none; padding: 6px 10px; border-radius: 4px; border: 2px solid transparent; display: inline-block; }
-  .snav a[aria-current], .anav a[aria-current] { background: var(--lavender-wash); border-color: var(--ink); }
+  .snav a[aria-current], .anav a[aria-current] { background: var(--accent-wash); border-color: var(--ink); }
   .snav .logout { margin-left: auto; }
   .smain { padding: 24px; max-width: 64rem; }
 
@@ -133,8 +133,8 @@
   /* controls */
   .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; border: 2px solid var(--ink); border-radius: 4px;
          background: var(--paper); font: 600 1rem/1.3 var(--font); color: var(--ink); text-decoration: none; cursor: pointer; text-align: center; }
-  .btn.primary { background: var(--lavender); box-shadow: 3px 3px 0 var(--ink); }
-  @media (hover: hover) and (pointer: fine) { .btn.primary:hover { background: var(--lavender-strong); } .btn:not(.primary):not([disabled]):hover { background: var(--lavender-wash); } }
+  .btn.primary { background: var(--accent); color: var(--on-accent); box-shadow: 3px 3px 0 var(--ink); }
+  @media (hover: hover) and (pointer: fine) { .btn.primary:hover { background: var(--accent-strong); } .btn:not(.primary):not([disabled]):hover { background: var(--accent-wash); } }
   .btn.primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
   .btn.danger { color: var(--danger); border-color: var(--danger); }
   .btn[disabled] { color: var(--muted); border-color: var(--muted); box-shadow: none; background: var(--paper); cursor: not-allowed; }
@@ -164,7 +164,7 @@
   .flash.bad { border-color: var(--danger); color: var(--danger); }
   .flash ul { margin: 6px 0 0; padding-left: 20px; font-weight: 400; }
 
-  .focal { background: var(--lavender); border: 2px solid var(--ink); border-radius: 4px; box-shadow: 4px 4px 0 var(--ink); padding: 20px 24px; margin: 0 4px 8px 0; }
+  .focal { background: var(--accent); color: var(--on-accent); border: 2px solid var(--ink); border-radius: 4px; box-shadow: 4px 4px 0 var(--ink); padding: 20px 24px; margin: 0 4px 8px 0; }
   .focal .k { font-weight: 600; }
   .focal .v { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .home-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: center; }
@@ -183,20 +183,20 @@
   .tscroll { overflow-x: auto; border: 2px solid var(--ink); border-radius: 4px; margin-bottom: 8px; }
   table.t { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
   table.t th, table.t td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ink); white-space: nowrap; vertical-align: top; }
-  table.t th { background: var(--lavender-wash); font-weight: 700; }
+  table.t th { background: var(--accent-wash); font-weight: 700; }
   table.t tr:last-child td { border-bottom: 0; }
   table.t .num { text-align: right; font-variant-numeric: tabular-nums; }
   table.t .wrap { white-space: normal; min-width: 14em; }
   .pager { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.875rem; margin: 8px 0 0; }
-  .pager span.cur { border: 2px solid var(--ink); background: var(--lavender-wash); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: 700; }
+  .pager span.cur { border: 2px solid var(--ink); background: var(--accent-wash); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: 700; }
   .pager a { border: 2px solid var(--ink); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; text-decoration: none; padding: 0 8px; }
 
   .badge { display: inline-block; font-size: 0.8rem; font-weight: 700; border: 1px solid currentColor; border-radius: 4px; padding: 1px 8px; background: var(--paper); white-space: nowrap; }
   .badge.ok { color: var(--success); } .badge.warn { color: var(--warning); } .badge.bad { color: var(--danger); } .badge.n { color: var(--ink); }
 
   .meter { display: inline-block; width: 90px; height: 14px; border: 2px solid var(--ink); border-radius: 2px; vertical-align: -2px; margin-right: 6px; background: var(--paper); position: relative; }
-  .meter b { position: absolute; inset: 0 auto 0 0; background: var(--lavender-strong); border-right: 2px solid var(--ink); }
-  .meter.full b { background: repeating-linear-gradient(45deg, var(--ink) 0 3px, var(--lavender-strong) 3px 7px); }
+  .meter b { position: absolute; inset: 0 auto 0 0; background: var(--accent-strong); border-right: 2px solid var(--ink); }
+  .meter.full b { background: repeating-linear-gradient(45deg, var(--ink) 0 3px, var(--accent-strong) 3px 7px); }
 
   .band { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--ink); border-radius: 4px; margin-bottom: 16px; }
   .band > div { padding: 12px 16px; border-right: 1px solid var(--ink); }
@@ -216,7 +216,7 @@
 
   .qr { width: 180px; height: 180px; padding: 14px; background: var(--paper); border: 2px solid var(--ink); }
   .qr svg { width: 100%; height: 100%; display: block; }
-  .secret { font-family: var(--mono); font-size: 0.95rem; word-break: break-all; border: 2px solid var(--ink); border-radius: 4px; padding: 12px; background: var(--lavender-wash); }
+  .secret { font-family: var(--mono); font-size: 0.95rem; word-break: break-all; border: 2px solid var(--ink); border-radius: 4px; padding: 12px; background: var(--accent-wash); }
   .ph { border: 1.5px dashed var(--muted); border-radius: 4px; padding: 24px; color: var(--muted); text-align: center; }
   .notif { border-bottom: 1px solid var(--ink); padding: 12px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: start; }
   .notif.unread .title { font-weight: 800; }
@@ -296,7 +296,7 @@
   <h2>About this file</h2>
   <ul>
     <li>One wireframe per page, plus the important states (errors, empty, refused, failed refresh). Links inside the frames jump to the target page, so you can click through each workflow.</li>
-    <li>Styled with the tokens in <code>web/docs/DESIGN.md</code>: white surfaces, black outlines, lavender for the main action and the focal panel.</li>
+    <li>Styled with the tokens in <code>web/docs/DESIGN.md</code>: white surfaces, black outlines, LPU red with white text for the main action and the focal panel.</li>
     <li>Numbered dots <span class="c">1</span> match the notes beside each frame. Turn notes off for a clean view; turn on <b>Phone width</b> to see every page at 390 px.</li>
     <li><span class="tag p">P28</span> = proposal in <code>API_Design.md</code> §9, not yet confirmed. <span class="tag q">Open</span> = no answer in the docs yet. All paths are <span class="tag p">P28</span>.</li>
     <li>Names, numbers and codes are made up. No point value, rate or cap is set by the plan.</li>
@@ -330,7 +330,7 @@
 
 <!-- =============================================================== GUEST -->
 <h2 class="group-title">Guest and account pages</h2>
-<p class="group-intro">Guest shell. One quiet form per page with a lavender main action. Module: Identity. API §7.2.</p>
+<p class="group-intro">Guest shell. One quiet form per page with a red main action. Module: Identity. API §7.2.</p>
 
 <section class="screen" id="G1">
   <div class="screen-head"><span class="sid">G1</span><h3>Log in</h3><span class="route">GET/POST /login · login</span></div>
@@ -1399,12 +1399,12 @@
         var nav = frame.dataset.nav === "none" ? "" : frame.dataset.nav === "signedout"
           ? '<nav aria-label="Account"><a href="#G1">Log out</a></nav>'
           : '<nav aria-label="Guest"><a href="#G1">Log in</a><a href="#G2">Register</a></nav>';
-        html = '<div class="pg shell-guest"><header><a class="brand" href="#G1">Smart E-Waste</a>' + nav +
+        html = '<div class="pg shell-guest"><header><a class="brand" href="#G1">EcoCircuit</a>' + nav +
           '</header><div class="gmain"><div class="gcard">' + content + "</div></div></div>";
       } else if (shell === "student") {
         var items = STUDENT.map(function (n) { return link(n[0], n[1], active); }).join("");
         if (frame.dataset.who === "admin") items += '<a href="#A1">Admin</a>';
-        html = '<div class="pg shell-student"><header><a class="brand" href="#S2">Smart E-Waste</a>' +
+        html = '<div class="pg shell-student"><header><a class="brand" href="#S2">EcoCircuit</a>' +
           '<nav class="snav" aria-label="Main">' + items + '<a class="logout" href="#G1">Log out</a></nav></header>' +
           '<div class="smain">' + content + "</div></div>";
       } else {
@@ -1413,7 +1413,7 @@
           ADMIN.map(function (g) {
             return '<div class="ag">' + g[0] + "</div>" + g[1].map(function (n) { return link(n[0], n[1], active); }).join("");
           }).join("");
-        html = '<div class="pg shell-admin"><aside><a class="brand" href="#A1">Smart E-Waste · Admin</a>' +
+        html = '<div class="pg shell-admin"><aside><a class="brand" href="#A1">EcoCircuit · Admin</a>' +
           '<nav class="anav" aria-label="Admin">' + groups + '</nav></aside><div class="amain">' + content + "</div></div>";
       }
       var state = frame.dataset.state ? '<span class="state">State: ' + frame.dataset.state + "</span>" : "";

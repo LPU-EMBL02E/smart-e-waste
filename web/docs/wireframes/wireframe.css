@@ -11,13 +11,14 @@
   line-height: 1.5;
   --paper: #ffffff;
   --ink: #000000;
-  --lavender: #c4b5fd;
-  --lavender-strong: #a78bfa;
-  --lavender-wash: #f5f1ff;
-  --muted: #595463;
+  --accent: #a6192e;
+  --accent-strong: #8a1325;
+  --accent-wash: #fbeef0;
+  --on-accent: #ffffff;
+  --muted: #5f6062;
   --success: #166534;
   --warning: #92400e;
-  --danger: #b91c1c;
+  --danger: #b42318;
   --gutter: 1rem;
   color: var(--ink);
   background: var(--paper);
@@ -102,12 +103,12 @@ button:disabled,
 }
 button.primary,
 .button.primary {
-  background: var(--lavender);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--on-accent);
   box-shadow: 3px 3px 0 var(--ink);
 }
 .primary:not(:disabled):active {
-  background: var(--lavender-strong);
+  background: var(--accent-strong);
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 var(--ink);
 }
@@ -137,7 +138,7 @@ textarea,
   color: var(--ink);
 }
 input[readonly] {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 input[type="checkbox"] {
   width: 1.25rem;
@@ -221,7 +222,7 @@ label span {
 }
 .demo-banner,
 .wf-page-head {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
   border-bottom: 2px solid var(--ink);
   padding: 0.75rem var(--gutter);
   font-size: 0.875rem;
@@ -252,10 +253,20 @@ label span {
   flex: 0 0 auto;
   width: 2.75rem;
   height: 2.75rem;
-  background: var(--lavender);
   border: 2px solid var(--ink);
   border-radius: 0.25rem;
   font-weight: 800;
+}
+.brand-mark,
+.brand-icon {
+  overflow: hidden;
+}
+.brand-mark img,
+.brand-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .brand-copy strong,
 .brand-copy small,
@@ -271,7 +282,7 @@ label span {
   font-weight: 400;
 }
 .avatar {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .tag,
 .pill,
@@ -371,7 +382,7 @@ label span {
 .nav button.active,
 .wf-sidebar .wf-nav.active {
   border-color: var(--ink);
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
   font-weight: 700;
 }
 .symbol {
@@ -458,8 +469,8 @@ label span {
   padding-inline: 0.125rem;
   border: 2px solid var(--ink);
   border-radius: 0.25rem;
-  background: var(--lavender);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 0.875rem;
   font-weight: 800;
   line-height: 1.25;
@@ -578,7 +589,8 @@ label span {
   overflow-wrap: anywhere;
 }
 .points-panel {
-  background: var(--lavender);
+  background: var(--accent);
+  color: var(--on-accent);
   box-shadow: 4px 4px 0 var(--ink);
 }
 .points-panel .stat-num {
@@ -587,7 +599,7 @@ label span {
 }
 .points-panel .stat-foot,
 .points-panel .stat-label {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .points-unit {
   font-size: 1rem;
@@ -627,7 +639,7 @@ td {
   vertical-align: top;
 }
 th {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -678,7 +690,7 @@ th.numeric {
   max-width: 65ch;
 }
 .notification.unread {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .notification h3 {
   margin-bottom: 0.5rem;
@@ -732,7 +744,7 @@ th.numeric {
   border: 2px solid var(--ink);
   border-left-width: 4px;
   border-radius: 0.25rem;
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .toast {
   margin-bottom: 1.5rem;
@@ -752,7 +764,7 @@ th.numeric {
 }
 .progress > div {
   height: 100%;
-  background: var(--lavender);
+  background: var(--accent);
 }
 .filters {
   display: flex;
@@ -786,7 +798,7 @@ th.numeric {
   font-variant-numeric: tabular-nums;
 }
 .rank-row.you {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .rank-n {
   font-weight: 800;
@@ -851,7 +863,7 @@ th.numeric {
   padding: 1rem;
   border: 2px solid var(--ink);
   border-radius: 0.25rem;
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .ph {
   display: grid;
@@ -862,7 +874,7 @@ th.numeric {
 .cellph {
   display: inline-block;
   min-height: 0.5rem;
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .cellph[colspan] {
   display: table-cell;
@@ -873,10 +885,10 @@ th.numeric {
 }
 .bar {
   border: 2px solid var(--ink);
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .bar > * {
-  background: var(--lavender);
+  background: var(--accent);
 }
 .wf-canvas .field + .field {
   margin-top: 1.5rem;
@@ -943,7 +955,7 @@ fieldset {
 }
 .flow-node.head {
   font-weight: 700;
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .flow-node.pub {
   border-style: dashed;
@@ -970,7 +982,7 @@ fieldset {
   border-style: dashed;
 }
 .legend .fill {
-  background: var(--lavender-wash);
+  background: var(--accent-wash);
 }
 .wrap {
   width: min(80rem, calc(100% - var(--gutter) * 2));
@@ -1159,7 +1171,7 @@ noscript p {
   .portal-notes {
     display: grid;
     gap: 1rem;
-    border-top: 4px solid var(--lavender);
+    border-top: 4px solid var(--accent);
     margin-top: 2rem;
     padding-top: 1.5rem;
   }
@@ -1187,11 +1199,11 @@ noscript p {
 @media (hover: hover) and (pointer: fine) {
   button:not(:disabled):hover,
   .button:not(:disabled):hover {
-    background: var(--lavender-wash);
+    background: var(--accent-wash);
   }
   button.primary:not(:disabled):hover,
   .button.primary:not(:disabled):hover {
-    background: var(--lavender-strong);
+    background: var(--accent-strong);
   }
 }
 @media (prefers-reduced-motion: reduce) {
