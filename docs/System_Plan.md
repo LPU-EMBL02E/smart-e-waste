@@ -1050,7 +1050,6 @@ points rate).
 **Build order:**
 - [ ] Add the two swappability checks to the repo: no vendor SDK imports in
       `app/`, and no `env()` outside `config/` (Section 8.1).
-- [ ] Write the OpenAPI spec for the seven device endpoints and serve via Swagger UI.
 - [ ] Collect pictures in the built bin, train the e-waste model, measure it on
       pictures kept out of training, and record its error rates (Section 8.3).
 - [ ] Build a device simulator that signs requests, to test retries, expired
