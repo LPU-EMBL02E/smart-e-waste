@@ -821,12 +821,12 @@ of the device API.
 
 | Step | Controller does | Screen | LED |
 |---|---|---|---|
-| 1. Ready | Checks the service panel is closed, no actuator fault is latched, no `complete` is pending, the actuator has rested, the flap is level and empty, the bin is not full and the bin station answers. An item already on the flap is returned first. Then arms the scanner | Idle | Green |
-| 2. Scan | On a scanned token, disarms the scanner and calls `POST /device/sessions` | Welcome | Amber |
+| 1. Ready | Checks the service panel is closed, no actuator fault is latched, no `complete` is pending, the actuator has rested, the flap is level and empty, the bin is not full, the bin station answers and the station keepalive is running (below). An item already on the flap is returned first. Then arms the scanner | Idle | Green |
+| 2. Scan | On a scanned token, disarms the scanner and calls `POST /device/sessions`. Then fetches `GET /device/config` again and applies its calibration, so the weight is measured with the server's latest values. If the config can't be fetched, or the bin has no calibration or the scale refuses it, cancels the session | Welcome | Amber |
 | 3. Weigh | Waits for the item to drop through the slot onto the flap and for a stable weight above zero, a Cancel touch, or the session timeout | Weighing | Amber |
-| 4. Verify | Switches the LED strip on, waits for the light to settle, asks the bin station for the camera check (presence, then the e-waste model), switches the strip off | Weighing | Amber |
+| 4. Verify | Switches the LED strip on, waits for the light to settle, asks the bin station for the camera check (presence, then the e-waste model), switches the strip off. Then weighs again, because the check takes seconds and the item may have been lifted or swapped meanwhile: no stable weight above zero cancels the session, and the new reading is the one sent to `deposit` | Weighing | Amber |
 | 5. Deposit | Calls `deposit`. A rejection ends the session and returns the item | Accepted, or problem | Amber, or red |
-| 6. Transfer | Extends the actuator to the end of its stroke, tipping the item into the bin, then brings the flap back to level | Accepted | Amber |
+| 6. Transfer | Checks the item is still on the flap, then extends the actuator to the end of its stroke, tipping the item into the bin, and brings the flap back to level. If the flap is empty, nothing moves and no `complete` is sent: the session stays `ACCEPTED` for an admin to review, and the screen says the item is no longer on the flap | Accepted | Amber |
 | 7. Complete | Calls `complete`, retrying and saving it if the server can't be reached | Done, or points pending | Green, or amber |
 | 8. Reset | Lights the empty flap and asks the bin station for a new reference image, sends telemetry, waits out the actuator's rest time | Idle | Green |
 | Return | Whenever a session ends without a transfer and the scale reads an item on the flap: after a rejected `deposit`, a Cancel touch, a timeout, or an unreachable server or bin station. Retracts the actuator to the end of its stroke, sliding the item out to the return tray, then brings the flap back to level, and goes on to step 8 | Problem, asking the student to take the item from the tray | Red |
@@ -859,6 +859,27 @@ station faults (`STATION_UNREACHABLE`, `CAMERA_UNAVAILABLE`, `MODEL_UNAVAILABLE`
 `SCANNER_UNAVAILABLE`) clear on their own when the bin station answers normally
 again. The controller reports the panel state and the current fault in its
 telemetry, sent at once on any change.
+
+**Station keepalive.** The bin station takes the controller for dead when no
+call comes for longer than its controller timeout (`API_Design.md` §11.9). While
+the scanner is armed, the controller's own device calls, such as telemetry and
+`GET /device/config`, can block for several seconds. So a separate task on the
+ESP32-S3's other core calls the bin station's `health` endpoint at a short
+interval while the scanner is armed, and does nothing else: it never reads
+`events` and never sets a fault.
+
+- It calls only while the main loop is making progress, or while a blocking
+  device call is still inside its lease. A call that outlives its lease stops the
+  keepalive and makes the controller disarm the scanner. It arms again only
+  after the bin station confirms the scanner is disarmed, so a scan queued in the
+  meantime can't open a session.
+- If the task can't be started, or stops updating, the bin does not arm and
+  shows out of service: fail closed.
+- A disarm the bin station does not confirm sets the matching bin station
+  fault, since the scanner's state is then unknown.
+
+The interval, the lease and the staleness limit are firmware constants set on
+the bench.
 
 **LEDs:** green when ready, amber while a deposit is in progress or points are
 pending, red for a problem, a fault or an open service panel.
@@ -963,9 +984,16 @@ as `python3-onnxruntime`.
 
 **Repository layout.** One Git repository with a folder for each
 program: `web/` for the Laravel app, `firmware/controller/` for the controller,
-`firmware/station/` for the bin station, `tools/simulator/` and `docs/`. The bin
-station sits under `firmware/` with the controller because the two are built,
-tested and changed together, through the API in `API_Design.md` §11.
+`firmware/station/` for the bin station, `tools/simulator/`, `tools/mock_station/`
+and `docs/`. The bin station sits under `firmware/` with the controller because
+the two are built, tested and changed together, through the API in
+`API_Design.md` §11.
+
+**Mock bin station.** `tools/mock_station/` answers the six bin station
+endpoints with simulated parts, so the controller can be tested before the real
+bin station exists. A control page on `localhost` injects scans, Cancel touches,
+check results and failures. It is a test tool, not the bin station: it holds no
+secret, never calls the web app and decides nothing about a deposit.
 
 ---
 
@@ -1023,6 +1051,11 @@ points rate).
       e-waste or not, and a tilting flap returns every rejected item to a tray
       (Sections 2, 8.2 and 8.3). Get the instructor's approval for this as the
       verification method (guidelines, Item Verification).
+- [ ] Uncalibrated bin: the controller still arms and opens a session, then
+      cancels it as out of service before weighing (Section 8.2).
+- [ ] Item removed after acceptance: if the flap is empty when the transfer
+      should start, nothing moves and the session stays `ACCEPTED` for admin
+      review, the same as a service panel opened at that point (Section 8.2).
 
 **Before Checkpoint 1:**
 - [ ] Add the actuator current-sense wiring (BTS7960 `R_IS`/`L_IS` to GPIO 1,
@@ -1048,10 +1081,10 @@ points rate).
 - [ ] Finalize exact hardware models and get Checkpoint 1 approval.
 
 **Build order:**
-- [ ] Add the two swappability checks to the repo: no vendor SDK imports in
+- [x] Add the two swappability checks to the repo: no vendor SDK imports in
       `app/`, and no `env()` outside `config/` (Section 8.1).
 - [ ] Collect pictures in the built bin, train the e-waste model, measure it on
       pictures kept out of training, and record its error rates (Section 8.3).
-- [ ] Build a device simulator that signs requests, to test retries, expired
+- [x] Build a device simulator that signs requests, to test retries, expired
       sessions and repeated `complete` calls before relying on real hardware.
       Do this first, so firmware and web work can proceed in parallel.

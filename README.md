@@ -59,6 +59,7 @@ firmware/
                         (not started yet)
 
 tools/simulator/      signs requests and drives the full deposit flow in Python
+tools/mock_station/   stands in for the bin station API, to test the controller
 scripts/              the two portability checks from System_Plan.md §8.1
 .github/workflows/    CI: the AGENTS.md §8 checks, required to merge into main
 sessions/             AI agent session recaps (working notes, not design docs)
@@ -193,6 +194,13 @@ step needs.
 - The device simulator: working, dependency-free, with the seven integration
   scenarios from `API_Design.md` §8.
 - The two swappability checks, verified to catch real violations.
+- The controller firmware for the ESP32-S3 in `firmware/controller/`: the
+  deposit sequence from `System_Plan.md` §8.2, the signed device API client, the
+  bin station link with its keepalive, and the scale, actuator, interlock and
+  bin-level modules. It builds; the bench tests in `firmware/README.md` are
+  still to do, and the interlock and flap level sensor have no pin yet.
+- A mock bin station in `tools/mock_station/`, answering the six bin station
+  endpoints with simulated parts, to test the controller before Track E.
 
 **Not built yet**
 
@@ -206,19 +214,15 @@ rules it must follow and the doc section they come from, and raises
 
 **Not yet matching the design**
 
-- `firmware/` still holds a NodeMCU controller and the `camera/` and `display/`
-  programs. It needs reworking for the ESP32-S3: the pin map, the `station` and
-  `interlock` modules and the actuator's current sense (`System_Plan.md` §2 and
-  §8.2). `camera/` and `display/` are not part of the design; the bin station
-  takes over their jobs.
+- `firmware/` still holds the old `camera/` and `display/` programs. They are
+  not part of the design; the bin station takes over their jobs.
 - Some choices made while building Tracks C and D are not in `docs/` yet: a
   required `cancel_reason` when cancelling a redemption, 404 for an inactive
   reward's page, the `home_recent_transactions` setting, and leaderboard ties
   ordered by user id.
-- The e-waste model and the sorting flap are planned (`System_Plan.md` §2,
-  §8.2 and §8.3) but not built: the web app's `BinFaultCode` has no
-  `MODEL_UNAVAILABLE` yet, and the controller has no flap level sensor and no
-  return.
+- The e-waste model is planned (`System_Plan.md` §8.3) but not built: it runs
+  in the bin station, which is not started. The controller's flap return is
+  written but can't move until the flap level sensor has a pin.
 - `firmware/AGENTS.md` still says only `Api` knows about HTTP, though the
   controller's `station` module also speaks HTTP to the bin station. Changing it
   needs the whole team.

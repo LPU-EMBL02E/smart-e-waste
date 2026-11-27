@@ -1403,5 +1403,8 @@ the kiosk page at once.
 When no call has come from the controller for longer than the controller timeout,
 the bin station disarms the scanner and shows `OFFLINE` on its own, so a student
 is never shown a ready screen by a bin whose controller is down. The next call
-from the controller ends it. The timeout is in the bin station's settings file and
-must be longer than the controller's event poll interval.
+from the controller ends it. Any call counts, `health` included: while the
+scanner is armed the controller calls `health` on its own at a short interval, so
+a slow call to the web app does not trip the timeout (`System_Plan.md` §8.2,
+"Station keepalive"). The timeout is in the bin station's settings file and must
+be longer than the controller's event poll interval and its keepalive interval.
