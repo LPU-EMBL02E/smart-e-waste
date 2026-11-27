@@ -60,6 +60,8 @@ __pycache__/
 # ---------------------------------------------------------------------------
 .idea/
 .vscode/
+# Visual Studio's per-user workspace and index files
+.vs/
 *.swp
 # LibreOffice lock files, present while a document is open
 .~lock.*
